@@ -14,11 +14,12 @@ public class ClientConnectionManager : MonoBehaviour
     
     void Start()
     {
-        // Get reference to NetworkManager
-        networkManager = GetComponent<NetworkManager>();
+        // Find the NetworkManager in the scene if not already assigned
+        if (networkManager == null)
+        networkManager = FindObjectOfType<MMONetworkManager>();
         
         // Set default values
-        addressInput.text = "52.204.110.199";  // Replace with your AWS IP
+        addressInput.text = "52.204.110.199";  // 
         portInput.text = "7777";
         
         // Add button listener

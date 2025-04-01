@@ -7,6 +7,13 @@ public class MMONetworkManager : NetworkManager
 
     private NetworkSpawnManager runtimeSpawnManager;
 
+    public override void Start()
+    {
+        base.Start();
+        // Explicitly register player prefab
+            NetworkClient.RegisterPrefab(playerPrefab);
+    }
+
     public override void OnServerAddPlayer(NetworkConnectionToClient conn)
     {
         GameObject player = Instantiate(playerPrefab);
@@ -30,6 +37,11 @@ public class MMONetworkManager : NetworkManager
         runtimeSpawnManager = spawnMgr.GetComponent<NetworkSpawnManager>();
 
         Debug.Log("SpawnManager instantiated and registered.");
+
+        foreach (var netId in FindObjectsOfType<NetworkIdentity>())
+{
+       Debug.Log($"Scene object: {netId.name} with sceneId: {netId.sceneId.ToString("X")}");
+}
     }
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)

@@ -17,6 +17,7 @@ using UnityEditor.Experimental.SceneManagement;
 
 namespace Mirror
 {
+    
     // Default = use interest management
     // ForceHidden = useful to hide monsters while they respawn etc.
     // ForceShown = useful to have score NetworkIdentities that always broadcast
