@@ -8,4 +8,5 @@ public struct AuthenticationRequestMessage : NetworkMessage
 public struct AuthenticationResponseMessage : NetworkMessage
 {
     public bool success;
+    public string userId; // Added user ID to the response
 }

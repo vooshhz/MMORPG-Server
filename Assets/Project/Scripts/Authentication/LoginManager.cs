@@ -19,6 +19,8 @@ public class LoginManager : MonoBehaviour
     private FirebaseUser user; // Currently logged-in Firebase user, holds task.Result.User to give object Email, UserId (Firebase UID) and auth t6okens
     [SerializeField] private string serverAddress = "52.204.110.199";
     [SerializeField] private ushort serverPort = 7777;
+    [SerializeField] private FirebaseAuthenticator authenticator;
+
     private void Start()
     {   
         // Check and fix Firebase dependencies asynchronously
@@ -55,6 +57,26 @@ public class LoginManager : MonoBehaviour
 
         // Assign the login button's onClick listener to trigger login
         loginButton.onClick.AddListener(LoginUser);
+        
+        // Get reference to the authenticator if not set in the inspector
+        if (authenticator == null)
+            authenticator = FindObjectOfType<FirebaseAuthenticator>();
+            
+        // If we have an authenticator, set up the UI connection for status messages
+        if (authenticator != null)
+        {
+            authenticator.authStatusText = messageText;
+            
+            // Optional: Subscribe to the authentication success event
+            authenticator.onAuthenticationSuccess.AddListener(OnServerAuthenticationSuccess);
+        }
+    }
+    
+    // Called when the server confirms successful authentication
+    private void OnServerAuthenticationSuccess(string userId)
+    {
+        Debug.Log($"Server confirmed authentication for user ID: {userId}");
+        // You can add additional logic here, like loading the main game scene
     }
 
     // Called when login button is clicked
@@ -136,11 +158,13 @@ public class LoginManager : MonoBehaviour
                 if (tokenTask.IsCanceled || tokenTask.IsFaulted)
                 {
                     Debug.LogError("Failed to get ID token: " + tokenTask.Exception);
+                    messageText.text = "Failed to get authentication token.";
                     return;
                 }
 
                 string idToken = tokenTask.Result;
                 Debug.Log("Got ID token: " + idToken);
+                messageText.text = "Got authentication token, connecting to game server...";
 
                 // Save the token to be picked up by FirebaseAuthenticator
                 FirebaseAuthenticator authenticator = 
@@ -156,9 +180,9 @@ public class LoginManager : MonoBehaviour
                 }
 
                 Debug.Log("[LoginManager] Starting client after Firebase login...");
+                messageText.text = "Connecting to game server...";
                 NetworkManager.singleton.StartClient();  // THIS kicks off Mirror connection
             });
         });
     }
-
 }
