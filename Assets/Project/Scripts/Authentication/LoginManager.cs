@@ -45,7 +45,7 @@ public class LoginManager : MonoBehaviour
                 auth = FirebaseAuth.DefaultInstance;
                 // Notify user Firebase initialized
                 messageText.text = "Firebase Initialized";
-                Debug.Log("Authentication connected to Firebase.");
+                GameLogger.Log(GameLogger.LogCategory.Auth, "Authentication connected to Firebase.");
             }
             else
             {

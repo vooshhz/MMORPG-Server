@@ -2,6 +2,9 @@ using Mirror;
 using UnityEngine;
 using TMPro;
 using UnityEngine.Events;
+using Firebase.Auth;
+using Firebase.Extensions;
+
 
 namespace MyGame.Client
 {
@@ -15,10 +18,50 @@ namespace MyGame.Client
         // Optional: Unity Event that gets triggered when authentication is successful
         public UnityEvent<string> onAuthenticationSuccess;
 
+        private float tokenRefreshIntervalMinutes = 45f;
+        private float timeSinceLastRefresh = 0f;
+
         public override void OnStartClient()
         {
             // Register handler to receive auth messages
             NetworkClient.RegisterHandler<AuthenticationResponseMessage>(OnAuthResponse, false);
+        }
+
+        private void Update()
+        {
+            if (NetworkClient.isConnected)
+            {
+                timeSinceLastRefresh += Time.deltaTime / 60f; // Convert to minutes
+                
+                if (timeSinceLastRefresh >= tokenRefreshIntervalMinutes)
+                {
+                    timeSinceLastRefresh = 0f;
+                    RefreshToken();
+                }
+            }
+        }
+
+        private void RefreshToken()
+        {
+            Debug.Log("Refreshing Firebase token...");
+            
+            if (FirebaseAuth.DefaultInstance.CurrentUser != null)
+            {
+                FirebaseAuth.DefaultInstance.CurrentUser.TokenAsync(true).ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCanceled || task.IsFaulted)
+                    {
+                        Debug.LogError($"Failed to refresh token: {task.Exception}");
+                        return;
+                    }
+                    
+                    idToken = task.Result;
+                    Debug.Log("Firebase token refreshed successfully");
+                    
+                    // Optionally notify server about the new token
+                    // NetworkClient.Send(new TokenRefreshMessage { token = idToken });
+                });
+            }
         }
 
         public override void OnClientAuthenticate()
