@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "213082999936",
+    "firebase_url": "https://willowfable3-default-rtdb.firebaseio.com",
+    "project_id": "willowfable3",
+    "storage_bucket": "willowfable3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:213082999936:android:bd16034241b413d3adaa65",
+        "android_client_info": {
+          "package_name": "com.willowfable3.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1j-FRLaFkwEBJWv2RaUwV6ToehexqDHg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
