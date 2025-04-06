@@ -20,6 +20,8 @@ public class CustomNetworkManager : NetworkManager
     {
         base.OnStartServer();
         Debug.Log("Server started!");
+         NetworkServer.RegisterHandler<CharacterPreviewRequestMessage>(OnCharacterPreviewRequest);
+
     }
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
@@ -32,5 +34,28 @@ public class CustomNetworkManager : NetworkManager
     {
         base.OnStopServer();
         Debug.Log("Server stopped!");
+    }
+
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        NetworkClient.RegisterHandler<CharacterPreviewResponseMessage>(OnCharacterPreviewResponse);
+    }
+
+    // Server-side handler
+    private void OnCharacterPreviewRequest(NetworkConnectionToClient conn, CharacterPreviewRequestMessage msg)
+    {
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId)) return;
+        
+        ServerPlayerDataManager.Instance.HandleCharacterPreviewRequest(conn, userId);
+    }
+
+    // Client-side handler
+    private void OnCharacterPreviewResponse(CharacterPreviewResponseMessage msg)
+    {
+        // Route to ClientPlayerDataManager
+        ClientPlayerDataManager.Instance.ReceiveCharacterPreviewData(msg.characters, msg.equipmentData);
     }
 }

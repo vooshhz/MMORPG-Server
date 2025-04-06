@@ -200,5 +200,69 @@ public class ServerPlayerDataManager : MonoBehaviour
         dbReference.Child(path).UpdateChildrenAsync(updates);
     }
     
-    // Add more save methods as needed for inventory, equipment, etc.
+    public void HandleCharacterPreviewRequest(NetworkConnectionToClient conn, string userId)
+    {
+        StartCoroutine(FetchCharacterPreviewData(conn, userId));
+    }
+
+    private IEnumerator FetchCharacterPreviewData(NetworkConnectionToClient conn, string userId)
+    {
+        // Fetch basic character data
+        var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync();
+        yield return new WaitUntil(() => characterListTask.IsCompleted);
+        
+        if (characterListTask.IsFaulted)
+        {
+            Debug.LogError($"Failed to fetch character data: {characterListTask.Exception}");
+            yield break;
+        }
+        
+        DataSnapshot snapshot = characterListTask.Result;
+        var characterInfos = new List<ClientPlayerDataManager.CharacterInfo>();
+        var equipmentPairs = new List<CharacterEquipmentPair>();
+        
+        // Process each character
+        foreach (DataSnapshot characterSnapshot in snapshot.Children)
+        {
+            string charId = characterSnapshot.Key;
+            
+            // Get character info
+            DataSnapshot infoData = characterSnapshot.Child("info");
+            var charInfo = new ClientPlayerDataManager.CharacterInfo
+            {
+                id = charId,
+                characterName = infoData.Child("characterName").Value?.ToString(),
+                characterClass = infoData.Child("characterClass").Value?.ToString(),
+                level = Convert.ToInt32(infoData.Child("level").Value),
+                experience = Convert.ToInt32(infoData.Child("experience").Value)
+            };
+            characterInfos.Add(charInfo);
+            
+            // Get equipment data
+            DataSnapshot equipData = characterSnapshot.Child("equipment");
+            var equipment = new ClientPlayerDataManager.EquipmentData
+            {
+                head = Convert.ToInt32(equipData.Child("head").Value),
+                body = Convert.ToInt32(equipData.Child("body").Value),
+                hair = Convert.ToInt32(equipData.Child("hair").Value),
+                torso = Convert.ToInt32(equipData.Child("torso").Value),
+                legs = Convert.ToInt32(equipData.Child("legs").Value)
+            };
+            
+            equipmentPairs.Add(new CharacterEquipmentPair
+            {
+                characterId = charId,
+                equipment = equipment
+            });
+        }
+        
+        // Send response
+        var response = new CharacterPreviewResponseMessage
+        {
+            characters = characterInfos.ToArray(),
+            equipmentData = equipmentPairs.ToArray()
+        };
+        
+        conn.Send(response);
+    }
 }

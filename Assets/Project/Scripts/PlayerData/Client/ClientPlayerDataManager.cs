@@ -173,4 +173,16 @@ public class ClientPlayerDataManager : MonoBehaviour
     {
         return locationData.TryGetValue(characterId, out var location) ? location : null;
     }
+
+    public void ReceiveCharacterPreviewData(CharacterInfo[] characters, CharacterEquipmentPair[] equipmentPairs)
+    {
+        // Store character info
+        ReceiveCharacterInfos(new List<CharacterInfo>(characters));
+        
+        // Convert equipment pairs to our dictionary format
+        foreach (var pair in equipmentPairs)
+        {
+            ReceiveEquipmentData(pair.characterId, pair.equipment);
+        }
+    }
 }

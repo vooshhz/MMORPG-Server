@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using Mirror;
 using System.Collections.Generic;
+using Firebase.Auth;
 
 public class CharacterSelectionManager : MonoBehaviour
 {
@@ -51,6 +52,17 @@ public class CharacterSelectionManager : MonoBehaviour
     private void Start()
     {
         Debug.Log("[CharacterSelectionManager] Start called");
+
+
+        // After authentication is complete
+        if (NetworkClient.isConnected)
+        {
+            NetworkClient.Send(new CharacterPreviewRequestMessage
+            {
+                userId = FirebaseAuth.DefaultInstance.CurrentUser.UserId
+            });
+        }
+
         
         // Get reference to data manager singleton
         dataManager = ClientPlayerDataManager.Instance;
@@ -68,8 +80,7 @@ public class CharacterSelectionManager : MonoBehaviour
         dataManager.OnEquipmentDataReceived += OnEquipmentDataReceived;
         
         // Request all character data from server
-        Debug.Log("[CharacterSelectionManager] Requesting character data...");
-        RequestCharacterData();
+        Debug.Log("[CharacterSelectionManager] Requesting character data...");        
     }
     
     private void OnDestroy()
