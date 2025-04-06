@@ -7,6 +7,7 @@ using Firebase.Extensions;
 using MyGame.Client;
 using Mirror;
 using kcp2k;
+using UnityEngine.SceneManagement; // Add this for scene loading
 
 // Login Manager handles Firebase login for users in Unity
 public class LoginManager : MonoBehaviour
@@ -15,8 +16,8 @@ public class LoginManager : MonoBehaviour
     public TMP_InputField passwordInput;
     public Button loginButton;
     public TMP_Text messageText;
-    private FirebaseAuth auth; // Singleton Firebase authentication instance, FirebaseAuth handles all Firebase Authentication - login, register, logout, password reset, etc
-    private FirebaseUser user; // Currently logged-in Firebase user, holds task.Result.User to give object Email, UserId (Firebase UID) and auth t6okens
+    private FirebaseAuth auth;
+    private FirebaseUser user;
     [SerializeField] private string serverAddress = "52.204.110.199";
     [SerializeField] private ushort serverPort = 7777;
     [SerializeField] private FirebaseAuthenticator authenticator;
@@ -76,7 +77,10 @@ public class LoginManager : MonoBehaviour
     private void OnServerAuthenticationSuccess(string userId)
     {
         Debug.Log($"Server confirmed authentication for user ID: {userId}");
-        // You can add additional logic here, like loading the main game scene
+        
+        // Load character selection scene
+        messageText.text = "Loading character selection...";
+        SceneManager.LoadScene("CharacterSelectionScene");
     }
 
     // Called when login button is clicked
