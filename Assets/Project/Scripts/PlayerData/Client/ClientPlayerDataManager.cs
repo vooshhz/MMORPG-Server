@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 public class ClientPlayerDataManager : MonoBehaviour
 {
+    public event Action OnNetworkIdentityReady;
     // Singleton pattern
     public static ClientPlayerDataManager Instance { get; private set; }
 
@@ -90,12 +91,23 @@ public class ClientPlayerDataManager : MonoBehaviour
     }
     
     public void RequestCharacterData(string characterId)
+{
+    if (NetworkClient.connection == null || 
+        NetworkClient.connection.identity == null)
     {
-        if (NetworkClient.connection == null) return;
-        NetworkClient.connection.identity.GetComponent<PlayerNetworkController>()
-            .CmdRequestCharacterData(characterId);
+        Debug.LogError("NetworkClient.connection or identity is null");
+        return;
     }
-    
+
+    var controller = NetworkClient.connection.identity.GetComponent<PlayerNetworkController>();
+    if (controller == null)
+    {
+        Debug.LogError("PlayerNetworkController not found on identity");
+        return;
+    }
+
+    controller.CmdRequestCharacterData(characterId);
+    }
     // Clear methods
     public void ClearAllData()
     {

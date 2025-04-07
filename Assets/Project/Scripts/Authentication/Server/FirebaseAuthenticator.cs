@@ -93,5 +93,17 @@ namespace MyGame.Server
             // Use the FirebaseTokenVerifier in the same namespace
             return FirebaseTokenVerifier.Verify(idToken, out uid);
         }
+        public override void OnClientAuthenticate()
+        {
+            Debug.Log("🟡 Sending token to server...");
+
+            string token = PlayerPrefs.GetString("FirebaseIdToken"); // or however you're storing it
+            var authRequest = new AuthenticationRequestMessage { token = token };
+
+            NetworkClient.connection.Send(authRequest);
+        }
     }
+
+
+    
 }

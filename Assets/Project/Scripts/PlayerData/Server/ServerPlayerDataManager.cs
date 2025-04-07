@@ -6,6 +6,7 @@ using Firebase.Database;
 using Firebase.Auth;
 using Firebase.Extensions;
 using System;
+using Firebase;
 
 public class ServerPlayerDataManager : MonoBehaviour
 {
@@ -21,9 +22,13 @@ public class ServerPlayerDataManager : MonoBehaviour
             return;
         }
         Instance = this;
-        
-        // Initialize Firebase (server-side)
-        dbReference = FirebaseDatabase.DefaultInstance.RootReference;
+
+                try {
+            dbReference = FirebaseDatabase.DefaultInstance.RootReference;
+            Debug.Log("Database reference initialized successfully");
+        } catch (Exception ex) {
+            Debug.LogError($"Failed to initialize Firebase Database: {ex.Message}");
+        }
     }
     
     // Handle request for all character data for a user
@@ -42,6 +47,7 @@ public class ServerPlayerDataManager : MonoBehaviour
     
     private IEnumerator FetchAllCharacterData(NetworkConnectionToClient conn, string userId)
     {
+        
         var characterListTask = dbReference.Child("users").Child(userId).Child("characters")
             .GetValueAsync();
         
@@ -207,6 +213,31 @@ public class ServerPlayerDataManager : MonoBehaviour
 
     private IEnumerator FetchCharacterPreviewData(NetworkConnectionToClient conn, string userId)
     {
+        Debug.Log($"FetchCharacterPreviewData started with userId: {userId}");
+        Debug.Log($"dbReference is null? {dbReference == null}");
+        
+        if (dbReference == null)
+        {
+            Debug.LogError("Database reference is null! Firebase Database not initialized");
+            
+            try {
+                Debug.Log("Attempting to initialize Firebase Database again...");
+                FirebaseApp app = FirebaseApp.DefaultInstance;
+                if (app == null)
+                {
+                    Debug.LogError("FirebaseApp.DefaultInstance is null!");
+                    yield break;
+                }
+                
+                app.Options.DatabaseUrl = new Uri("https://willowfable3-default-rtdb.firebaseio.com/");
+                dbReference = FirebaseDatabase.DefaultInstance.RootReference;
+                Debug.Log("Successfully re-initialized Firebase Database");
+            } catch (Exception ex) {
+                Debug.LogError($"Failed to initialize Firebase Database: {ex.Message}");
+                yield break;
+            }
+        }
+        
         // Fetch basic character data
         var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync();
         yield return new WaitUntil(() => characterListTask.IsCompleted);
