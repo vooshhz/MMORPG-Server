@@ -20,7 +20,8 @@ public class CustomNetworkManager : NetworkManager
     {
         base.OnStartServer();
         Debug.Log("Server started!");
-         NetworkServer.RegisterHandler<CharacterPreviewRequestMessage>(OnCharacterPreviewRequest);
+        NetworkServer.RegisterHandler<CharacterPreviewRequestMessage>(OnCharacterPreviewRequest);
+        NetworkServer.RegisterHandler<CharacterDetailRequestMessage>(OnCharacterDetailRequest);
 
     }
 
@@ -50,6 +51,10 @@ public class CustomNetworkManager : NetworkManager
         if (string.IsNullOrEmpty(userId)) return;
         
         ServerPlayerDataManager.Instance.HandleCharacterPreviewRequest(conn, userId);
+    }
+    private void OnCharacterDetailRequest(NetworkConnectionToClient conn, CharacterDetailRequestMessage msg)
+    {
+        ServerPlayerDataManager.Instance.HandleCharacterDataRequest(conn, msg.characterId);
     }
 
     // Client-side handler

@@ -29,3 +29,10 @@ public struct CharacterPreviewResponseMessage : NetworkMessage
     public ClientPlayerDataManager.CharacterInfo[] characters;
     public CharacterEquipmentPair[] equipmentData;
 }
+
+public struct CharacterDetailRequestMessage : NetworkMessage
+{
+    public string userId;
+    public string characterId;
+}
+

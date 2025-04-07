@@ -118,7 +118,7 @@ public class CharacterSelectionManager : MonoBehaviour
         
         // Request all character data from server through the data manager
         Debug.Log("[CharacterSelectionManager] Requesting all character data from server...");
-        dataManager.RequestAllCharacterData();
+        dataManager.RequestAllCharacterData(FirebaseAuth.DefaultInstance.CurrentUser.UserId);
     }
     
     private void UpdateCharacterPanels()
@@ -155,7 +155,7 @@ public class CharacterSelectionManager : MonoBehaviour
             
             // Request detailed data for this character
             Debug.Log($"[CharacterSelectionManager] Requesting detailed data for character: {charId}");
-            dataManager.RequestCharacterData(charId);
+            dataManager.RequestCharacterData(FirebaseAuth.DefaultInstance.CurrentUser.UserId, charId);
         }
     }
     

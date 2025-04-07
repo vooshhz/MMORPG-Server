@@ -78,36 +78,38 @@ public class ClientPlayerDataManager : MonoBehaviour
     }
     
     // Request methods
-    public void RequestAllCharacterData()
+    public void RequestAllCharacterData(string userId)
     {
-        if (NetworkClient.connection == null || !NetworkClient.connection.isReady) return;
-        
+        if (NetworkClient.connection == null || !NetworkClient.connection.isReady)
+        {
+            Debug.LogError("NetworkClient not ready.");
+            return;
+        }
+
         // Clear stored data
         ClearAllData();
-        
-        // Request data from server
-        NetworkClient.connection.identity.GetComponent<PlayerNetworkController>()
-            .CmdRequestAllCharacterData();
-    }
-    
-    public void RequestCharacterData(string characterId)
-{
-    if (NetworkClient.connection == null || 
-        NetworkClient.connection.identity == null)
-    {
-        Debug.LogError("NetworkClient.connection or identity is null");
-        return;
+
+        NetworkClient.Send(new CharacterPreviewRequestMessage
+        {
+            userId = userId
+        });
     }
 
-    var controller = NetworkClient.connection.identity.GetComponent<PlayerNetworkController>();
-    if (controller == null)
+    public void RequestCharacterData(string userId, string characterId)
     {
-        Debug.LogError("PlayerNetworkController not found on identity");
-        return;
+        if (NetworkClient.connection == null || !NetworkClient.connection.isReady)
+        {
+            Debug.LogError("NetworkClient not ready.");
+            return;
+        }
+
+        NetworkClient.Send(new CharacterDetailRequestMessage
+        {
+            userId = userId,
+            characterId = characterId
+        });
     }
 
-    controller.CmdRequestCharacterData(characterId);
-    }
     // Clear methods
     public void ClearAllData()
     {
