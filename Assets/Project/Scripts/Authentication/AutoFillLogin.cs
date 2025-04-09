@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-public class AutoFillTMPLogin : MonoBehaviour
+public class AutoFillLogin : MonoBehaviour
 {
     [Header("Input Fields")]
     [SerializeField] private TMP_InputField emailInput;

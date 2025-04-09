@@ -7,7 +7,7 @@ using Firebase.Extensions;
 using System;
 
 // This class manages user registration using Firebase Authentication
-public class RegisterManager : MonoBehaviour
+public class RegistrationManager : MonoBehaviour
 {
     public TMP_InputField emailInputField;
     public TMP_InputField passwordInputField;
