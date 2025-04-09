@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 public class ClientPlayerDataManager : MonoBehaviour
 {
+    private Dictionary<string, bool> characterDataCompleteness = new Dictionary<string, bool>();
     public event Action OnNetworkIdentityReady;
     // Singleton pattern
     public static ClientPlayerDataManager Instance { get; private set; }
@@ -21,6 +22,11 @@ public class ClientPlayerDataManager : MonoBehaviour
     public bool HasInventoryData { get; private set; }
     public bool HasEquipmentData { get; private set; }
     public bool HasLocationData { get; private set; }
+
+    public bool IsCharacterDataComplete(string characterId)
+    {
+        return characterDataCompleteness.ContainsKey(characterId) && characterDataCompleteness[characterId];
+    }
     
     // Character data
     [System.Serializable]
@@ -187,15 +193,16 @@ public class ClientPlayerDataManager : MonoBehaviour
     {
         return locationData.TryGetValue(characterId, out var location) ? location : null;
     }
-
     public void ReceiveCharacterPreviewData(CharacterInfo[] characters, CharacterEquipmentPair[] equipmentPairs)
     {
-        // Store character info
+        // This happens first - process character infos
         ReceiveCharacterInfos(new List<CharacterInfo>(characters));
         
-        // Convert equipment pairs to our dictionary format
+        // Track equipment data completeness
         foreach (var pair in equipmentPairs)
         {
+            // Mark this character as having complete data
+            characterDataCompleteness[pair.characterId] = true;
             ReceiveEquipmentData(pair.characterId, pair.equipment);
         }
     }

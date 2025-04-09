@@ -235,6 +235,13 @@ public class CharacterSelectionManager : MonoBehaviour
         for (int i = 0; i < Mathf.Min(characterIds.Count, 3); i++)
         {
             string charId = characterIds[i];
+            
+            // Only process characters with complete data
+            if (!dataManager.IsCharacterDataComplete(charId))
+            {
+                continue;
+            }
+            
             ClientPlayerDataManager.EquipmentData equipment = dataManager.GetEquipment(charId);
             
             if (equipment == null)
@@ -244,7 +251,6 @@ public class CharacterSelectionManager : MonoBehaviour
             }
                 
             Debug.Log($"[CharacterSelectionManager] Applying equipment to character {i+1} (ID: {charId})");
-            // Apply equipment to the corresponding character animator
             ApplyEquipmentToCharacter(i, equipment);
         }
     }
