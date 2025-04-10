@@ -4,6 +4,7 @@ using TMPro;
 using Mirror;
 using System.Collections.Generic;
 using Firebase.Auth;
+using UnityEngine.SceneManagement;
 
 public class CharacterSelectionManager : MonoBehaviour
 {
@@ -32,6 +33,10 @@ public class CharacterSelectionManager : MonoBehaviour
     [SerializeField] private TMP_Text levelText3;
     [SerializeField] private CharacterAnimator characterAnimator3;
     [SerializeField] private RawImage panelImage3;
+
+    [Header("Create Character")]
+    [SerializeField] private Button createCharacterButton;
+    [SerializeField] private string characterCreationSceneName = "CharacterCreationScene";
     
     private ClientPlayerDataManager dataManager;
     private RawImage selectedPanelImage;
@@ -61,6 +66,11 @@ public class CharacterSelectionManager : MonoBehaviour
             {
                 userId = FirebaseAuth.DefaultInstance.CurrentUser.UserId
             });
+
+            if (createCharacterButton != null)
+            {
+                createCharacterButton.onClick.AddListener(OnCreateCharacterClicked);
+            }
         }
 
         
@@ -312,5 +322,20 @@ public class CharacterSelectionManager : MonoBehaviour
         
         // If using the ClientPlayerDataManager for character selection
         dataManager.SelectCharacter(charId);
+    }
+
+    private void OnCreateCharacterClicked()
+    {
+        Debug.Log("[CharacterSelectionManager] Loading character creation scene...");
+    
+        if (GameSceneManager.Instance != null)
+        {
+            GameSceneManager.Instance.LoadScene(characterCreationSceneName);
+        }
+        else
+        {
+            // Fallback
+            SceneManager.LoadScene(characterCreationSceneName);
+        }
     }
 }
