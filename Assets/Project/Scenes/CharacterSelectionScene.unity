@@ -1626,7 +1626,7 @@ MonoBehaviour:
   levelText3: {fileID: 2133161559}
   characterAnimator3: {fileID: 1494553400}
   panelImage3: {fileID: 2108236770}
-  createCharacterButton: {fileID: 0}
+  createCharacterButton: {fileID: 1261396855}
   characterCreationSceneName: CharacterCreationScene
 --- !u!4 &1289918485
 Transform:

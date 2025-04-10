@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class GameSceneManager : MonoBehaviour
+public class SceneTransitionManager : MonoBehaviour
 {
-    public static GameSceneManager Instance { get; private set; }
+    public static SceneTransitionManager Instance { get; private set; }
     
     [Header("Fade Settings")]
     [SerializeField] private CanvasGroup fadeCanvasGroup;
@@ -51,20 +51,24 @@ public class GameSceneManager : MonoBehaviour
     /// <summary>
     /// Loads a scene with a fade transition
     /// </summary>
-    /// <param name="sceneName">The name of the scene to load</param>
+    /// <param name="sceneName">The scene to load</param>
     /// <param name="onComplete">Optional callback when scene load is complete</param>
-    public void LoadScene(string sceneName, Action onComplete = null)
+    public void LoadScene(SceneName sceneName, Action onComplete = null)
     {
         // Don't start another fade if we're already fading
         if (isFading)
         {
-            Debug.LogWarning("[GameSceneManager] Scene transition already in progress!");
+            Debug.LogWarning("[SceneTransitionManager] Scene transition already in progress!");
             return;
         }
         
+        // Convert enum to string for Unity's SceneManager
+        string sceneNameString = sceneName.ToString();
+        
         // Start fading out, then load the scene, then fade in
-        StartCoroutine(FadeAndLoadScene(sceneName, onComplete));
+        StartCoroutine(FadeAndLoadScene(sceneNameString, onComplete));
     }
+
     
     /// <summary>
     /// Fades the screen to black, loads the scene, then fades back in
@@ -94,8 +98,8 @@ public class GameSceneManager : MonoBehaviour
         // Invoke the completion callback
         onComplete?.Invoke();
         
-        isFading = false;
-    }
+        isFading = false;   
+    }  
     
     /// <summary>
     /// Fade the screen to black

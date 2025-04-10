@@ -227,7 +227,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeCanvasGroup: {fileID: 480216549}
-  fadeDuration: 0.5
+  fadeDuration: 1
   fadeBackground: {fileID: 121754467}
   fadeColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!4 &282688725
