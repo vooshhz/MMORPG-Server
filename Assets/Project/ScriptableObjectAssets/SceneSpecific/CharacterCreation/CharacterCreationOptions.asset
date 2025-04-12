@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dadcbfc17a743c7468a8c7be19faa184, type: 3}
   m_Name: CharacterCreationOptions
   m_EditorClassIdentifier: 
+  startingSceneName: 4
   availableClasses:
   - className: Warrior
     description: Strong melee fighter with high physical damage and defense.
@@ -20,7 +21,6 @@ MonoBehaviour:
     defaultHairItem: 30001
     defaultTorsoItem: 40001
     defaultLegsItem: 50001
-    tester: 0
   - className: Magician
     description: Spellcaster with powerful magic attacks and support abilities.
     defaultHeadItem: 20001
@@ -28,7 +28,6 @@ MonoBehaviour:
     defaultHairItem: 30002
     defaultTorsoItem: 40002
     defaultLegsItem: 50001
-    tester: 0
   - className: Luminary
     description: Blessed hero with balanced abilities and unique powers.
     defaultHeadItem: 20002
@@ -36,7 +35,6 @@ MonoBehaviour:
     defaultHairItem: 30001
     defaultTorsoItem: 40001
     defaultLegsItem: 50002
-    tester: 0
   - className: Hunter
     description: Ranged specialist with high accuracy and tracking skills.
     defaultHeadItem: 20001
@@ -44,7 +42,6 @@ MonoBehaviour:
     defaultHairItem: 30002
     defaultTorsoItem: 40002
     defaultLegsItem: 50002
-    tester: 0
   bodyOptions: 1127000012270000
   headOptions: 214e0000224e0000
   hairOptions: 3175000032750000

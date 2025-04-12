@@ -362,7 +362,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             return;
         }
 
-        StartCoroutine(CheckNameAvailability(conn, userId, msg));
+
         
         // Validate class
         bool validClass = characterCreationOptions.availableClasses.Any(c => c.className == msg.characterClass);
@@ -385,8 +385,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             return;
         }
         
-        // All validations passed, create the character
-        StartCoroutine(CreateCharacterInDatabase(conn, userId, msg));
+        StartCoroutine(CheckNameAvailability(conn, userId, msg));
     }
 
     private IEnumerator CreateCharacterInDatabase(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
