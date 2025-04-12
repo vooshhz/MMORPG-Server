@@ -27,7 +27,7 @@ public class CustomNetworkManager : NetworkManager
 
         NetworkServer.RegisterHandler<RequestCharacterCreationOptionsMessage>(OnRequestCharacterCreationOptions);
         NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);     
-         NetworkServer.RegisterHandler<SpawnPlayerRequestMessage>(OnSpawnPlayerRequest);   
+        NetworkServer.RegisterHandler<SpawnPlayerRequestMessage>(OnSpawnPlayerRequest);   
 
     }
 

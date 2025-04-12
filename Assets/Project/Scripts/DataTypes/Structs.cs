@@ -38,7 +38,6 @@ public struct CharacterLocationPair : NetworkMessage
 }
 public struct CharacterDetailRequestMessage : NetworkMessage
 {
-    public string userId;
     public string characterId;
 }
 

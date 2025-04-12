@@ -111,7 +111,6 @@ public class ClientPlayerDataManager : MonoBehaviour
 
         NetworkClient.Send(new CharacterDetailRequestMessage
         {
-            userId = userId,
             characterId = characterId
         });
     }
