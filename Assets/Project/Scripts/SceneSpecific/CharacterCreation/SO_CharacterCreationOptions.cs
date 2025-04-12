@@ -3,6 +3,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "CharacterCreationOptions", menuName = "Character/Character Creation Options")]
 public class CharacterCreationOptionsData : ScriptableObject
 {
+   
     [System.Serializable]
     public class ClassOption
     {
@@ -15,6 +16,9 @@ public class CharacterCreationOptionsData : ScriptableObject
         public int defaultLegsItem;
 
     }
+
+    [Header("Starting Scene")]
+    public SceneName startingSceneName = SceneName.CharacterSelectionScene;
     
     [Header("Available Classes")]
     public ClassOption[] availableClasses = new ClassOption[]

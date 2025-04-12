@@ -70,8 +70,7 @@ public class CustomNetworkManager : NetworkManager
 
     private void OnRequestCharacterCreationOptions(NetworkConnectionToClient conn, RequestCharacterCreationOptionsMessage msg)
     {
-        // Get the character creation options from ServerPlayerDataManager
-        ServerPlayerDataManager.Instance.SendCharacterCreationOptions(conn);
+        ServerPlayerDataManager.Instance.CheckCharacterLimitAndSendOptions(conn);
     }
 
     private void OnCreateCharacterRequest(NetworkConnectionToClient conn, CreateCharacterRequestMessage msg)

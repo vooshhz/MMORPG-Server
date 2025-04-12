@@ -58,7 +58,6 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         Debug.Log("[CharacterSelectionManager] Start called");
 
-
         // After authentication is complete
         if (NetworkClient.isConnected)
         {
@@ -90,7 +89,22 @@ public class CharacterSelectionManager : MonoBehaviour
         dataManager.OnEquipmentDataReceived += OnEquipmentDataReceived;
         
         // Request all character data from server
-        Debug.Log("[CharacterSelectionManager] Requesting character data...");        
+        Debug.Log("[CharacterSelectionManager] Requesting character data...");      
+
+        // If using the createCharacterButton, update its interactability based on character count
+        if (createCharacterButton != null)
+        {
+            createCharacterButton.onClick.AddListener(OnCreateCharacterClicked);
+            
+            // Check if we already have reached the character limit
+            if (dataManager != null && dataManager.GetAllCharacterIds().Count >= 3)
+            {
+                createCharacterButton.interactable = false;
+                // Optionally update button text
+                if (createCharacterButton.GetComponentInChildren<TextMeshProUGUI>() != null)
+                    createCharacterButton.GetComponentInChildren<TextMeshProUGUI>().text = "Character Limit Reached";
+            }
+        }
     }
     
     private void OnDestroy()
@@ -109,6 +123,17 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         Debug.Log("[CharacterSelectionManager] OnCharacterDataReceived event triggered");
         UpdateCharacterPanels();
+
+            // Update create character button based on character count
+    if (createCharacterButton != null && dataManager != null)
+    {
+        bool atLimit = dataManager.GetAllCharacterIds().Count >= 3;
+        createCharacterButton.interactable = !atLimit;
+        
+        // Optionally update button text
+        if (atLimit && createCharacterButton.GetComponentInChildren<TextMeshProUGUI>() != null)
+            createCharacterButton.GetComponentInChildren<TextMeshProUGUI>().text = "Character Limit Reached";
+    }
     }
     
     private void OnEquipmentDataReceived()

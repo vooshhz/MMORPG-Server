@@ -49,6 +49,7 @@ public struct CharacterCreationOptionsMessage : NetworkMessage
     public int[] hairOptions;
     public int[] torsoOptions;
     public int[] legsOptions;
+    public bool atCharacterLimit; 
 }
 
 public struct CreateCharacterRequestMessage : NetworkMessage

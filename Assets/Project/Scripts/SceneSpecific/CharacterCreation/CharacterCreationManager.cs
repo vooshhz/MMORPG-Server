@@ -49,6 +49,8 @@ public class CharacterCreationManager : MonoBehaviour
     // Creation state
     private bool hasReceivedOptions = false;
     private bool isCreatingCharacter = false;
+    private bool atCharacterLimit = false;
+
     
     private void Start()
     {
@@ -121,6 +123,7 @@ public class CharacterCreationManager : MonoBehaviour
         headOptions = msg.headOptions;
         torsoOptions = msg.torsoOptions;
         legsOptions = msg.legsOptions;
+        atCharacterLimit = msg.atCharacterLimit;  // Store the character limit flag
         
         // Set default values on character preview
         if (bodyOptions.Length > 0) characterPreview.bodyItemNumber = bodyOptions[0];
@@ -135,6 +138,15 @@ public class CharacterCreationManager : MonoBehaviour
         // Enable controls
         hasReceivedOptions = true;
         SetControlsInteractable(true);
+        
+        // But disable create button if at character limit
+        if (atCharacterLimit)
+        {
+            createButton.interactable = false;
+            // Optionally add a tooltip or text explaining why button is disabled
+            if (createButton.GetComponentInChildren<TextMeshProUGUI>() != null)
+                createButton.GetComponentInChildren<TextMeshProUGUI>().text = "Character Limit Reached";
+        }
         
         // Select default class
         SelectClass("Warrior");

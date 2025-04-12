@@ -361,6 +361,8 @@ public class ServerPlayerDataManager : MonoBehaviour
             SendCreateCharacterResponse(conn, false, "Invalid character name (must be 3-16 characters)");
             return;
         }
+
+        StartCoroutine(CheckNameAvailability(conn, userId, msg));
         
         // Validate class
         bool validClass = characterCreationOptions.availableClasses.Any(c => c.className == msg.characterClass);
@@ -415,11 +417,11 @@ public class ServerPlayerDataManager : MonoBehaviour
                 ["items"] = new Dictionary<string, object>()
             },
             ["location"] = new Dictionary<string, object>
-            {
-                ["sceneName"] = "StartingVillage",
-                ["x"] = 0,
-                ["y"] = 0,
-                ["z"] = 0
+{
+            ["sceneName"] = characterCreationOptions.startingSceneName.ToString(),
+            ["x"] = 0,
+            ["y"] = 0,
+            ["z"] = 0
             }
         };
         
@@ -451,4 +453,99 @@ public class ServerPlayerDataManager : MonoBehaviour
         conn.Send(response);
     }
 
+    private IEnumerator CheckNameAvailability(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
+    {
+    // First check if this name already exists in the database
+    var nameQuery = dbReference.Child("users").OrderByChild("characters")
+        .GetValueAsync();
+    
+    yield return new WaitUntil(() => nameQuery.IsCompleted);
+    
+    if (nameQuery.IsFaulted)
+    {
+        Debug.LogError($"Failed to check name availability: {nameQuery.Exception}");
+        SendCreateCharacterResponse(conn, false, "Database error while checking name");
+        yield break;
+    }
+    
+    DataSnapshot snapshot = nameQuery.Result;
+    bool nameExists = false;
+    
+    foreach (DataSnapshot userSnapshot in snapshot.Children)
+    {
+        DataSnapshot charactersSnapshot = userSnapshot.Child("characters");
+        foreach (DataSnapshot characterSnapshot in charactersSnapshot.Children)
+        {
+            string existingName = characterSnapshot.Child("info/characterName").Value?.ToString();
+            if (existingName != null && existingName.Equals(msg.characterName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                nameExists = true;
+                break;
+            }
+        }
+        
+        if (nameExists) break;
+    }
+    
+    if (nameExists)
+    {
+        SendCreateCharacterResponse(conn, false, "This character name is already taken");
+        yield break;
+    }
+    
+    // Name is available, proceed with character creation
+    StartCoroutine(CreateCharacterInDatabase(conn, userId, msg));
+    }
+
+    public void CheckCharacterLimitAndSendOptions(NetworkConnectionToClient conn)
+{
+    string userId = conn.authenticationData as string;
+    if (string.IsNullOrEmpty(userId))
+    {
+        Debug.LogError($"Connection {conn.connectionId} requested character limit check without valid auth");
+        return;
+    }
+    
+    StartCoroutine(CheckCharacterLimitCoroutine(conn, userId));
+}
+
+    private IEnumerator CheckCharacterLimitCoroutine(NetworkConnectionToClient conn, string userId)
+    {
+        // Get character count from database
+        var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync();
+        yield return new WaitUntil(() => characterListTask.IsCompleted);
+        
+        if (characterListTask.IsFaulted)
+        {
+            Debug.LogError($"Failed to fetch character count: {characterListTask.Exception}");
+            // Send options anyway, but don't restrict creation
+            SendCharacterCreationOptions(conn);
+            yield break;
+        }
+        
+        DataSnapshot snapshot = characterListTask.Result;
+        int characterCount = 0;
+        
+        // Count the characters
+        foreach (DataSnapshot characterSnapshot in snapshot.Children)
+        {
+            characterCount++;
+        }
+        
+        // Create and send the message with character limit info
+        var msg = new CharacterCreationOptionsMessage
+        {
+            availableClasses = characterCreationOptions.availableClasses.Select(c => c.className).ToArray(),
+            bodyOptions = characterCreationOptions.bodyOptions,
+            headOptions = characterCreationOptions.headOptions,
+            hairOptions = characterCreationOptions.hairOptions,
+            torsoOptions = characterCreationOptions.torsoOptions,
+            legsOptions = characterCreationOptions.legsOptions,
+            atCharacterLimit = (characterCount >= 3)  // Add this new field
+        };
+        
+        // Send to client
+        conn.Send(msg);
+        Debug.Log($"Sent character creation options to client {conn.connectionId}. At character limit: {msg.atCharacterLimit}");
+        }
 }
