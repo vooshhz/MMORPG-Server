@@ -56,7 +56,7 @@ public class EnterWorldButton : MonoBehaviour
             // Create default location data as a fallback
             locationData = new ClientPlayerDataManager.LocationData
             {
-                sceneName = SceneName.FarmScene.ToString(),
+                sceneName = SceneName.Farm_Scene.ToString(),
                 position = Vector3.zero
             };
         }
