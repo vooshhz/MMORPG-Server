@@ -22,6 +22,9 @@ public class CustomNetworkManager : NetworkManager
         Debug.Log("Server started!");
         NetworkServer.RegisterHandler<CharacterPreviewRequestMessage>(OnCharacterPreviewRequest);
         NetworkServer.RegisterHandler<CharacterDetailRequestMessage>(OnCharacterDetailRequest);
+
+        NetworkServer.RegisterHandler<RequestCharacterCreationOptionsMessage>(OnRequestCharacterCreationOptions);
+        NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);
         
 
     }

@@ -308,6 +308,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b826d205031b07940a95088fa05c9d43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  characterCreationOptions: {fileID: 11400000, guid: 160acc500b6874843a974e7cb46ebdb6, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
