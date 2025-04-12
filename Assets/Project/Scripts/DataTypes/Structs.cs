@@ -17,6 +17,12 @@ public struct CharacterPreviewRequestMessage : NetworkMessage
     public string userId;
 }
 
+
+    public struct SpawnPlayerRequestMessage : NetworkMessage
+    {
+        public string characterId;
+    }
+
 // Use arrays instead of Dictionary
 public struct CharacterEquipmentPair : NetworkMessage
 {
@@ -75,8 +81,4 @@ public struct CreateCharacterResponseMessage : NetworkMessage
     public string characterId;
 }
 
-public struct SpawnPlayerRequestMessage : NetworkMessage
-{
-    public string characterId;
-}
 

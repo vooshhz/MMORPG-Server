@@ -1,9 +1,8 @@
 using UnityEngine;
 using Mirror;
-using System;
 using System.Collections;
 
-public class PlayerSpawnController : NetworkBehaviour
+public class PlayerSpawnController : MonoBehaviour
 {
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private float spawnDelay = 0.5f;
