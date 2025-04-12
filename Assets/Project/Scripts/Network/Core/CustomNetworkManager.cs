@@ -48,6 +48,8 @@ public class CustomNetworkManager : NetworkManager
         NetworkClient.RegisterHandler<CharacterPreviewResponseMessage>(OnCharacterPreviewResponse);
     }
 
+    
+
     // Server-side handler
     private void OnCharacterPreviewRequest(NetworkConnectionToClient conn, CharacterPreviewRequestMessage msg)
     {

@@ -50,6 +50,8 @@ public class CharacterCreationManager : MonoBehaviour
     private bool hasReceivedOptions = false;
     private bool isCreatingCharacter = false;
     private bool atCharacterLimit = false;
+    private bool isSubmitting = false;
+
 
     
     private void Start()
@@ -226,7 +228,12 @@ public class CharacterCreationManager : MonoBehaviour
     {
         if (!hasReceivedOptions || isCreatingCharacter)
             return;
-            
+        
+        // Set the flag to prevent double-submission
+        isSubmitting = true;
+        // Disable the button
+        createButton.interactable = false;
+        createButton.GetComponentInChildren<TextMeshProUGUI>().text = "Creating...";
         // Validate name
         string characterName = nameInput.text.Trim();
         if (string.IsNullOrEmpty(characterName) || characterName.Length < 3 || characterName.Length > 16)
@@ -260,6 +267,8 @@ public class CharacterCreationManager : MonoBehaviour
     private void OnCreateCharacterResponse(CreateCharacterResponseMessage msg)
     {
         isCreatingCharacter = false;
+        // Reset the flag
+        isSubmitting = false;
         
         if (msg.success)
         {
@@ -277,6 +286,7 @@ public class CharacterCreationManager : MonoBehaviour
             
             // Re-enable controls
             SetControlsInteractable(true);
+            createButton.interactable = true;
             createButton.GetComponentInChildren<TextMeshProUGUI>().text = "Create";
             
             // Show error message (in a real implementation, you'd have a UI element for this)
