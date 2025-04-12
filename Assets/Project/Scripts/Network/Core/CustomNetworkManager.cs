@@ -25,6 +25,8 @@ public class CustomNetworkManager : NetworkManager
 
         NetworkServer.RegisterHandler<RequestCharacterCreationOptionsMessage>(OnRequestCharacterCreationOptions);
         NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);
+
+        
         
 
     }
@@ -48,7 +50,10 @@ public class CustomNetworkManager : NetworkManager
         NetworkClient.RegisterHandler<CharacterPreviewResponseMessage>(OnCharacterPreviewResponse);
     }
 
-    
+    public struct SpawnPlayerRequestMessage : NetworkMessage
+    {
+        public string characterId;
+    }
 
     // Server-side handler
     private void OnCharacterPreviewRequest(NetworkConnectionToClient conn, CharacterPreviewRequestMessage msg)
