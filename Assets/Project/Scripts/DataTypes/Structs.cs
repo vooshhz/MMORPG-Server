@@ -81,4 +81,13 @@ public struct CreateCharacterResponseMessage : NetworkMessage
     public string characterId;
 }
 
+public struct SceneChangeRequestMessage : NetworkMessage
+{
+    public string sceneName;
+}
+
+public struct SceneChangeApprovedMessage : NetworkMessage
+{
+    public string sceneName;
+}
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using Mirror;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using System;
 
 public class CustomNetworkManager : NetworkManager
 {
@@ -28,8 +29,55 @@ public class CustomNetworkManager : NetworkManager
         NetworkServer.RegisterHandler<RequestCharacterCreationOptionsMessage>(OnRequestCharacterCreationOptions);
         NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);     
         NetworkServer.RegisterHandler<SpawnPlayerRequestMessage>(OnSpawnPlayerRequest);   
+
+        NetworkServer.RegisterHandler<SceneChangeRequestMessage>(OnSceneChangeRequest);
         
 
+    }
+
+    private void OnSceneChangeRequest(NetworkConnectionToClient conn, SceneChangeRequestMessage msg)
+    {
+        // Verify user is authenticated
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Debug.LogError($"Connection {conn.connectionId} tried to change scene without valid auth");
+            return;
+        }
+        
+        // Verify the requested scene is valid 
+        if (Enum.TryParse<SceneName>(msg.sceneName, out SceneName targetScene))
+        {
+            // Check if scene change is allowed
+            bool isAllowed = IsSceneChangeAllowed(conn, targetScene);
+            
+            if (isAllowed)
+            {
+                // For character selection and similar scenes, change scene for this client only
+                if (targetScene == SceneName.CharacterSelectionScene || 
+                    targetScene == SceneName.CharacterCreationScene)
+                {
+                    conn.Send(new SceneChangeApprovedMessage { 
+                        sceneName = targetScene.ToString() 
+                    });
+                }
+                // For game world scenes, handle via server's scene management
+                else
+                {
+                    ServerChangeScene(targetScene.ToString());
+                }
+            }
+        }
+        else
+        {
+            Debug.LogError($"Invalid scene name requested: {msg.sceneName}");
+        }
+    }
+    private bool IsSceneChangeAllowed(NetworkConnectionToClient conn, SceneName targetScene)
+    {
+        // Add your validation logic here
+        // For example, check if player has the right to access this scene
+        return true; // For now, allow all scene changes
     }
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)

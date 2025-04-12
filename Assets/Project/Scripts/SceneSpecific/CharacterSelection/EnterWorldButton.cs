@@ -38,45 +38,21 @@ public class EnterWorldButton : MonoBehaviour
     }
     
     private void OnEnterWorldClicked()
+{
+    if (string.IsNullOrEmpty(dataManager.SelectedCharacterId))
     {
-        if (string.IsNullOrEmpty(dataManager.SelectedCharacterId))
-        {
-            Debug.LogWarning("No character selected!");
-            return;
-        }
-        
-        Debug.Log($"Entering world with character: {dataManager.SelectedCharacterId}");
-        
-        // Get character's location data
-        var locationData = dataManager.GetLocation(dataManager.SelectedCharacterId);
-        
-        if (locationData == null)
-        {
-            Debug.LogWarning("No location data available for selected character! Using default location.");
-            // Create default location data as a fallback
-            locationData = new ClientPlayerDataManager.LocationData
-            {
-                sceneName = SceneName.Farm_Scene.ToString(),
-                position = Vector3.zero
-            };
-        }
-        
-        // Parse the scene name to SceneName enum
-        if (System.Enum.TryParse(locationData.sceneName, out SceneName targetScene))
-        {
-            // Start scene transition with fade
-            SceneTransitionManager.Instance?.FadeOut(() => {
-                // Send spawn request after fade out
-                NetworkClient.Send(new SpawnPlayerRequestMessage
-                {
-                    characterId = dataManager.SelectedCharacterId
-                });
-            });
-        }
-        else
-        {
-            Debug.LogError($"Invalid scene name in character data: {locationData.sceneName}");
-        }
+        Debug.LogWarning("No character selected!");
+        return;
     }
-
+    
+    Debug.Log($"Entering world with character: {dataManager.SelectedCharacterId}");
+    
+    // Send spawn request directly - no need to handle scene transition here
+    NetworkClient.Send(new SpawnPlayerRequestMessage
+    {
+        characterId = dataManager.SelectedCharacterId
+    });
+    
+    // The server will handle scene change and NetworkSceneManager will handle fades
+}
    }
