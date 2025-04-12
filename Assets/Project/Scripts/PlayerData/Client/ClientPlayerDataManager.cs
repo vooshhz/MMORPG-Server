@@ -194,7 +194,7 @@ public class ClientPlayerDataManager : MonoBehaviour
     {
         return locationData.TryGetValue(characterId, out var location) ? location : null;
     }
-    public void ReceiveCharacterPreviewData(CharacterInfo[] characters, CharacterEquipmentPair[] equipmentPairs)
+    public void ReceiveCharacterPreviewData(CharacterInfo[] characters, CharacterEquipmentPair[] equipmentPairs, CharacterLocationPair[] locationPairs)
     {
         // This happens first - process character infos
         ReceiveCharacterInfos(new List<CharacterInfo>(characters));
@@ -205,6 +205,14 @@ public class ClientPlayerDataManager : MonoBehaviour
             // Mark this character as having complete data
             characterDataCompleteness[pair.characterId] = true;
             ReceiveEquipmentData(pair.characterId, pair.equipment);
+        }
+        // Process location data
+        if (locationPairs != null)
+        {
+            foreach (var pair in locationPairs)
+            {
+                ReceiveLocationData(pair.characterId, pair.location);
+            }
         }
     }
     // In ClientPlayerDataManager.cs

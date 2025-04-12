@@ -28,8 +28,14 @@ public struct CharacterPreviewResponseMessage : NetworkMessage
 {
     public ClientPlayerDataManager.CharacterInfo[] characters;
     public CharacterEquipmentPair[] equipmentData;
+    public CharacterLocationPair[] locationData; // Add this line
 }
 
+public struct CharacterLocationPair : NetworkMessage
+{
+    public string characterId;
+    public ClientPlayerDataManager.LocationData location;
+}
 public struct CharacterDetailRequestMessage : NetworkMessage
 {
     public string userId;

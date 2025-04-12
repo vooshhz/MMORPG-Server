@@ -72,7 +72,7 @@ public class CustomNetworkManager : NetworkManager
     private void OnCharacterPreviewResponse(CharacterPreviewResponseMessage msg)
     {
         // Route to ClientPlayerDataManager
-        ClientPlayerDataManager.Instance.ReceiveCharacterPreviewData(msg.characters, msg.equipmentData);
+        ClientPlayerDataManager.Instance.ReceiveCharacterPreviewData(msg.characters, msg.equipmentData, msg.locationData);
     }
 
     private void OnRequestCharacterCreationOptions(NetworkConnectionToClient conn, RequestCharacterCreationOptionsMessage msg)

@@ -212,7 +212,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         StartCoroutine(FetchCharacterPreviewData(conn, userId));
     }
 
-    private IEnumerator FetchCharacterPreviewData(NetworkConnectionToClient conn, string userId)
+  private IEnumerator FetchCharacterPreviewData(NetworkConnectionToClient conn, string userId)
     {
         Debug.Log($"FetchCharacterPreviewData started with userId: {userId}");
         Debug.Log($"dbReference is null? {dbReference == null}");
@@ -252,6 +252,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         DataSnapshot snapshot = characterListTask.Result;
         var characterInfos = new List<ClientPlayerDataManager.CharacterInfo>();
         var equipmentPairs = new List<CharacterEquipmentPair>();
+        var locationPairs = new List<CharacterLocationPair>(); // Add this line
         
         // Process each character
         foreach (DataSnapshot characterSnapshot in snapshot.Children)
@@ -286,16 +287,52 @@ public class ServerPlayerDataManager : MonoBehaviour
                 characterId = charId,
                 equipment = equipment
             });
+            
+            // Get location data (add this section)
+            DataSnapshot locationData = characterSnapshot.Child("location");
+            if (locationData.Exists)
+            {
+                string sceneName = locationData.Child("sceneName").Value?.ToString();
+                float x = 0f;
+                float y = 0f;
+                float z = 0f;
+                
+                // Safely convert values with defaults if missing
+                if (locationData.Child("x").Exists)
+                    x = Convert.ToSingle(locationData.Child("x").Value);
+                if (locationData.Child("y").Exists)
+                    y = Convert.ToSingle(locationData.Child("y").Value);
+                if (locationData.Child("z").Exists)
+                    z = Convert.ToSingle(locationData.Child("z").Value);
+                
+                locationPairs.Add(new CharacterLocationPair
+                {
+                    characterId = charId,
+                    location = new ClientPlayerDataManager.LocationData
+                    {
+                        sceneName = sceneName,
+                        position = new Vector3(x, y, z)
+                    }
+                });
+                
+                Debug.Log($"Loaded location data for character {charId}: Scene={sceneName}, Pos=({x},{y},{z})");
+            }
+            else
+            {
+                Debug.LogWarning($"No location data found for character {charId}");
+            }
         }
         
-        // Send response
+        // Send response with location data included
         var response = new CharacterPreviewResponseMessage
         {
             characters = characterInfos.ToArray(),
-            equipmentData = equipmentPairs.ToArray()
+            equipmentData = equipmentPairs.ToArray(),
+            locationData = locationPairs.ToArray() // Add this line
         };
         
         conn.Send(response);
+        Debug.Log($"Sent character preview response with {characterInfos.Count} characters, {equipmentPairs.Count} equipment sets, and {locationPairs.Count} location data sets");
     }
 
     // Validate a character creation request

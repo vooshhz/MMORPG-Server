@@ -19,6 +19,22 @@ public class EnterWorldButton : MonoBehaviour
         
         // Initially disable button until character is selected
         enterWorldButton.interactable = !string.IsNullOrEmpty(dataManager.SelectedCharacterId);
+        
+        // Add this line to listen for character selection
+        dataManager.OnCharacterSelected += OnCharacterSelected;
+    }
+
+    // Add this method
+    private void OnCharacterSelected(string characterId)
+    {
+        enterWorldButton.interactable = !string.IsNullOrEmpty(characterId);
+    }
+
+    // Don't forget to unsubscribe when destroyed
+    private void OnDestroy()
+    {
+        if (dataManager != null)
+            dataManager.OnCharacterSelected -= OnCharacterSelected;
     }
     
     private void OnEnterWorldClicked()
@@ -36,8 +52,13 @@ public class EnterWorldButton : MonoBehaviour
         
         if (locationData == null)
         {
-            Debug.LogError("No location data available for selected character!");
-            return;
+            Debug.LogWarning("No location data available for selected character! Using default location.");
+            // Create default location data as a fallback
+            locationData = new ClientPlayerDataManager.LocationData
+            {
+                sceneName = SceneName.FarmScene.ToString(),
+                position = Vector3.zero
+            };
         }
         
         // Parse the scene name to SceneName enum
@@ -57,4 +78,5 @@ public class EnterWorldButton : MonoBehaviour
             Debug.LogError($"Invalid scene name in character data: {locationData.sceneName}");
         }
     }
-}
+
+   }
