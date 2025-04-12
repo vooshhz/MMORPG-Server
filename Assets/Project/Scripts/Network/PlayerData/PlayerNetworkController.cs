@@ -5,7 +5,8 @@ using UnityEngine;
 public class PlayerNetworkController : NetworkBehaviour
 {
     private ClientPlayerDataManager clientDataManager;
-    
+    public string characterId { get; private set; }
+
     private void Start()
     {
         if (isLocalPlayer)
@@ -13,7 +14,10 @@ public class PlayerNetworkController : NetworkBehaviour
             clientDataManager = ClientPlayerDataManager.Instance;
         }
     }
-    
+    public void SetCharacterId(string id)
+    {
+        characterId = id;
+    }
     [Command]
     public void CmdRequestAllCharacterData()
     {

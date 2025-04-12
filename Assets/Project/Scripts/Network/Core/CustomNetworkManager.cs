@@ -1,5 +1,7 @@
 using UnityEngine;
 using Mirror;
+using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class CustomNetworkManager : NetworkManager
 {
@@ -24,10 +26,8 @@ public class CustomNetworkManager : NetworkManager
         NetworkServer.RegisterHandler<CharacterDetailRequestMessage>(OnCharacterDetailRequest);
 
         NetworkServer.RegisterHandler<RequestCharacterCreationOptionsMessage>(OnRequestCharacterCreationOptions);
-        NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);
-
-        
-        
+        NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);     
+         NetworkServer.RegisterHandler<SpawnPlayerRequestMessage>(OnSpawnPlayerRequest);   
 
     }
 
@@ -84,5 +84,49 @@ public class CustomNetworkManager : NetworkManager
     {
         // Pass to ServerPlayerDataManager to handle
         ServerPlayerDataManager.Instance.HandleCreateCharacterRequest(conn, msg);
+    }
+
+    private void OnSpawnPlayerRequest(NetworkConnectionToClient conn, SpawnPlayerRequestMessage msg)
+    {
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Debug.LogError($"Connection {conn.connectionId} tried to spawn player without valid auth");
+            return;
+        }
+        
+        string characterId = msg.characterId;
+        
+        // Get location data
+        ServerPlayerDataManager.Instance.GetCharacterLocation(conn, userId, characterId, 
+            (locationData) => StartCoroutine(HandlePlayerSpawn(conn, characterId, locationData)));
+    }
+
+  private IEnumerator HandlePlayerSpawn(NetworkConnectionToClient conn, string characterId, ClientPlayerDataManager.LocationData locationData)
+    {
+        // Get scene name as string
+        string sceneName = locationData.sceneName;
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        // Check if we need to change scene
+        if (sceneName != currentScene)
+        {
+            // Handle scene loading
+            ServerChangeScene(sceneName);
+            
+            // Wait a moment for scene to load
+            yield return new WaitForSeconds(1.0f);
+        }
+        
+        // Get position data
+        Vector3 position = locationData.position;
+        
+        // Spawn the player
+        if (PlayerSpawnController.Instance != null)
+        {
+            PlayerSpawnController.Instance.SpawnPlayerCharacter(conn, characterId, position);
+        }
+        
+        Debug.Log($"Player spawned for character {characterId} at position {position} in scene {sceneName}");
     }
 }

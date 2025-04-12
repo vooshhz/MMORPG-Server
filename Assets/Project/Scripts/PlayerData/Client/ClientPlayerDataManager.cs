@@ -167,6 +167,7 @@ public class ClientPlayerDataManager : MonoBehaviour
     public void SelectCharacter(string characterId)
     {
         SelectedCharacterId = characterId;
+        OnCharacterSelected?.Invoke(characterId);
     }
     
     public List<string> GetAllCharacterIds()
@@ -206,4 +207,6 @@ public class ClientPlayerDataManager : MonoBehaviour
             ReceiveEquipmentData(pair.characterId, pair.equipment);
         }
     }
+    // In ClientPlayerDataManager.cs
+    public event Action<string> OnCharacterSelected;
 }

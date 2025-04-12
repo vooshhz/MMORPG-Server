@@ -547,4 +547,38 @@ public class ServerPlayerDataManager : MonoBehaviour
         conn.Send(msg);
         Debug.Log($"Sent character creation options to client {conn.connectionId}. At character limit: {msg.atCharacterLimit}");
         }
+
+    public void GetCharacterLocation(NetworkConnectionToClient conn, string userId, string characterId, Action<ClientPlayerDataManager.LocationData> callback)
+    {
+        StartCoroutine(FetchCharacterLocationForSpawn(conn, userId, characterId, callback));
+    }
+
+    private IEnumerator FetchCharacterLocationForSpawn(NetworkConnectionToClient conn, string userId, string characterId, Action<ClientPlayerDataManager.LocationData> callback)
+    {
+        var locationTask = dbReference.Child("users").Child(userId)
+            .Child("characters").Child(characterId).Child("location").GetValueAsync();
+        
+        yield return new WaitUntil(() => locationTask.IsCompleted);
+        
+        if (locationTask.IsFaulted)
+        {
+            Debug.LogError($"Failed to fetch location data: {locationTask.Exception}");
+            yield break;
+        }
+        
+        DataSnapshot snapshot = locationTask.Result;
+        
+        string sceneName = snapshot.Child("sceneName").Value?.ToString();
+        float x = Convert.ToSingle(snapshot.Child("x").Value);
+        float y = Convert.ToSingle(snapshot.Child("y").Value);
+        float z = Convert.ToSingle(snapshot.Child("z").Value);
+        
+        var locationData = new ClientPlayerDataManager.LocationData
+        {
+            sceneName = sceneName,
+            position = new Vector3(x, y, z)
+        };
+        
+        callback(locationData);
+    }
 }

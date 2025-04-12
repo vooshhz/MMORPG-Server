@@ -7,13 +7,28 @@ public class PlayerCameraSetup : MonoBehaviour
     
     private void Start()
     {
-        // Find the local player object (the one with isLocalPlayer = true)
-        PlayerNetworkController localPlayer = FindObjectOfType<PlayerNetworkController>();
-        
-        if (localPlayer != null && localPlayer.isLocalPlayer)
+        // Subscribe to the character sync completed event
+        CharacterSyncManager.OnSyncCompleted += SetupCamera;
+    }
+    
+    private void OnDestroy()
+    {
+        CharacterSyncManager.OnSyncCompleted -= SetupCamera;
+    }
+    
+    private void SetupCamera()
+    {
+        // Find the local player object
+        PlayerNetworkController[] players = FindObjectsOfType<PlayerNetworkController>();
+        foreach (var player in players)
         {
-            // Set the virtual camera to follow the player
-            virtualCamera.Follow = localPlayer.transform;
+            if (player.isLocalPlayer)
+            {
+                // Set the virtual camera to follow the player
+                virtualCamera.Follow = player.transform;
+                Debug.Log("Camera attached to local player");
+                break;
+            }
         }
     }
 }

@@ -70,3 +70,8 @@ public struct CreateCharacterResponseMessage : NetworkMessage
     public string characterId;
 }
 
+public struct SpawnPlayerRequestMessage : NetworkMessage
+{
+    public string characterId;
+}
+
