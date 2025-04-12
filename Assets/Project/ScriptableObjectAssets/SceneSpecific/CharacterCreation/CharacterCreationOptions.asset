@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dadcbfc17a743c7468a8c7be19faa184, type: 3}
+  m_Name: CharacterCreationOptions
+  m_EditorClassIdentifier: 
+  availableClasses:
+  - className: Warrior
+    description: Strong melee fighter with high physical damage and defense.
+    defaultHeadItem: 20001
+    defaultBodyItem: 10001
+    defaultHairItem: 30001
+    defaultTorsoItem: 40001
+    defaultLegsItem: 50001
+    tester: 0
+  - className: Magician
+    description: Spellcaster with powerful magic attacks and support abilities.
+    defaultHeadItem: 20001
+    defaultBodyItem: 10001
+    defaultHairItem: 30002
+    defaultTorsoItem: 40002
+    defaultLegsItem: 50001
+    tester: 0
+  - className: Luminary
+    description: Blessed hero with balanced abilities and unique powers.
+    defaultHeadItem: 20002
+    defaultBodyItem: 10001
+    defaultHairItem: 30001
+    defaultTorsoItem: 40001
+    defaultLegsItem: 50002
+    tester: 0
+  - className: Hunter
+    description: Ranged specialist with high accuracy and tracking skills.
+    defaultHeadItem: 20001
+    defaultBodyItem: 10002
+    defaultHairItem: 30002
+    defaultTorsoItem: 40002
+    defaultLegsItem: 50002
+    tester: 0
+  bodyOptions: 1127000012270000
+  headOptions: 214e0000224e0000
+  hairOptions: 3175000032750000
+  torsoOptions: 419c0000429c0000
+  legsOptions: 51c3000052c30000

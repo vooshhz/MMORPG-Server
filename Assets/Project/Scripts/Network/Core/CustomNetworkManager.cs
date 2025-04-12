@@ -22,6 +22,7 @@ public class CustomNetworkManager : NetworkManager
         Debug.Log("Server started!");
         NetworkServer.RegisterHandler<CharacterPreviewRequestMessage>(OnCharacterPreviewRequest);
         NetworkServer.RegisterHandler<CharacterDetailRequestMessage>(OnCharacterDetailRequest);
+        
 
     }
 
@@ -62,5 +63,17 @@ public class CustomNetworkManager : NetworkManager
     {
         // Route to ClientPlayerDataManager
         ClientPlayerDataManager.Instance.ReceiveCharacterPreviewData(msg.characters, msg.equipmentData);
+    }
+
+    private void OnRequestCharacterCreationOptions(NetworkConnectionToClient conn, RequestCharacterCreationOptionsMessage msg)
+    {
+        // Get the character creation options from ServerPlayerDataManager
+        ServerPlayerDataManager.Instance.SendCharacterCreationOptions(conn);
+    }
+
+    private void OnCreateCharacterRequest(NetworkConnectionToClient conn, CreateCharacterRequestMessage msg)
+    {
+        // Pass to ServerPlayerDataManager to handle
+        ServerPlayerDataManager.Instance.HandleCreateCharacterRequest(conn, msg);
     }
 }

@@ -3,16 +3,17 @@ using Mirror;
 using System.Collections;
 using System.Collections.Generic;
 using Firebase.Database;
-using Firebase.Auth;
-using Firebase.Extensions;
 using System;
 using Firebase;
+using System.Linq;
 
 public class ServerPlayerDataManager : MonoBehaviour
 {
     public static ServerPlayerDataManager Instance { get; private set; }
     
     private DatabaseReference dbReference;
+    [SerializeField] private CharacterCreationOptionsData characterCreationOptions;
+
     
     private void Awake()
     {
@@ -296,4 +297,158 @@ public class ServerPlayerDataManager : MonoBehaviour
         
         conn.Send(response);
     }
+
+    // Validate a character creation request
+    public bool ValidateCharacterCreation(string className, int bodyItem, int headItem, int hairItem, int torsoItem, int legsItem)
+    {
+        // Validate class
+        bool validClass = false;
+        foreach (var classOption in characterCreationOptions.availableClasses)
+        {
+            if (classOption.className == className)
+            {
+                validClass = true;
+                break;
+            }
+        }
+        
+        if (!validClass)
+            return false;
+        
+        // Validate equipment options
+        bool validBody = System.Array.IndexOf(characterCreationOptions.bodyOptions, bodyItem) >= 0;
+        bool validHead = System.Array.IndexOf(characterCreationOptions.headOptions, headItem) >= 0;
+        bool validHair = System.Array.IndexOf(characterCreationOptions.hairOptions, hairItem) >= 0;
+        bool validTorso = System.Array.IndexOf(characterCreationOptions.torsoOptions, torsoItem) >= 0;
+        bool validLegs = System.Array.IndexOf(characterCreationOptions.legsOptions, legsItem) >= 0;
+        
+        return validClass && validBody && validHead && validHair && validTorso && validLegs;
+    }
+
+    public void SendCharacterCreationOptions(NetworkConnectionToClient conn)
+    {
+        // Convert scriptable object data to message
+        var msg = new CharacterCreationOptionsMessage
+        {
+            availableClasses = characterCreationOptions.availableClasses.Select(c => c.className).ToArray(),
+            bodyOptions = characterCreationOptions.bodyOptions,
+            headOptions = characterCreationOptions.headOptions,
+            hairOptions = characterCreationOptions.hairOptions,
+            torsoOptions = characterCreationOptions.torsoOptions,
+            legsOptions = characterCreationOptions.legsOptions
+        };
+        
+        // Send to client
+        conn.Send(msg);
+        Debug.Log($"Sent character creation options to client {conn.connectionId}");
+    }
+
+// Handle character creation request
+    public void HandleCreateCharacterRequest(NetworkConnectionToClient conn, CreateCharacterRequestMessage msg)
+    {
+        // Get user ID from connection's authentication data
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Debug.LogError($"Connection {conn.connectionId} tried to create character without valid auth");
+            SendCreateCharacterResponse(conn, false, "Authentication error");
+            return;
+        }
+        
+        // Validate character name
+        if (string.IsNullOrEmpty(msg.characterName) || msg.characterName.Length < 3 || msg.characterName.Length > 16)
+        {
+            SendCreateCharacterResponse(conn, false, "Invalid character name (must be 3-16 characters)");
+            return;
+        }
+        
+        // Validate class
+        bool validClass = characterCreationOptions.availableClasses.Any(c => c.className == msg.characterClass);
+        if (!validClass)
+        {
+            SendCreateCharacterResponse(conn, false, "Invalid character class");
+            return;
+        }
+        
+        // Validate equipment options
+        bool validBody = characterCreationOptions.bodyOptions.Contains(msg.bodyItem);
+        bool validHead = characterCreationOptions.headOptions.Contains(msg.headItem);
+        bool validHair = characterCreationOptions.hairOptions.Contains(msg.hairItem);
+        bool validTorso = characterCreationOptions.torsoOptions.Contains(msg.torsoItem);
+        bool validLegs = characterCreationOptions.legsOptions.Contains(msg.legsItem);
+        
+        if (!validBody || !validHead || !validHair || !validTorso || !validLegs)
+        {
+            SendCreateCharacterResponse(conn, false, "Invalid customization options");
+            return;
+        }
+        
+        // All validations passed, create the character
+        StartCoroutine(CreateCharacterInDatabase(conn, userId, msg));
+    }
+
+    private IEnumerator CreateCharacterInDatabase(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
+    {
+        // Generate a unique character ID
+        string characterId = System.Guid.NewGuid().ToString();
+        
+        // Create the character data structure
+        Dictionary<string, object> characterData = new Dictionary<string, object>
+        {
+            ["info"] = new Dictionary<string, object>
+            {
+                ["characterName"] = msg.characterName,
+                ["characterClass"] = msg.characterClass,
+                ["level"] = 1,
+                ["experience"] = 0
+            },
+            ["equipment"] = new Dictionary<string, object>
+            {
+                ["head"] = msg.headItem,
+                ["body"] = msg.bodyItem,
+                ["hair"] = msg.hairItem,
+                ["torso"] = msg.torsoItem,
+                ["legs"] = msg.legsItem
+            },
+            ["inventory"] = new Dictionary<string, object>
+            {
+                ["items"] = new Dictionary<string, object>()
+            },
+            ["location"] = new Dictionary<string, object>
+            {
+                ["sceneName"] = "StartingVillage",
+                ["x"] = 0,
+                ["y"] = 0,
+                ["z"] = 0
+            }
+        };
+        
+        // Add to Firebase database
+        var dbTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).SetValueAsync(characterData);
+        
+        yield return new WaitUntil(() => dbTask.IsCompleted);
+        
+        if (dbTask.IsFaulted)
+        {
+            Debug.LogError($"Failed to create character: {dbTask.Exception}");
+            SendCreateCharacterResponse(conn, false, "Database error");
+            yield break;
+        }
+        
+        // Success! Send response to client
+        SendCreateCharacterResponse(conn, true, "Character created successfully", characterId);
+    }
+
+    private void SendCreateCharacterResponse(NetworkConnectionToClient conn, bool success, string message, string characterId = null)
+    {
+        var response = new CreateCharacterResponseMessage
+        {
+            success = success,
+            message = message,
+            characterId = characterId
+        };
+        
+        conn.Send(response);
+    }
+
 }
