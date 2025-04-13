@@ -1,34 +1,47 @@
 using UnityEngine;
 using Cinemachine;
+using Mirror;
 
-public class PlayerCameraSetup : MonoBehaviour
+// Attach this to your player prefab
+public class PlayerCameraSetup : NetworkBehaviour
 {
-    [SerializeField] private CinemachineVirtualCamera virtualCamera;
+    private CinemachineVirtualCamera virtualCamera;
     
-    private void Start()
+    // This runs only on the local player when it spawns
+    public override void OnStartLocalPlayer()
     {
-        // Subscribe to the character sync completed event
-        CharacterSyncManager.OnSyncCompleted += SetupCamera;
-    }
-    
-    private void OnDestroy()
-    {
-        CharacterSyncManager.OnSyncCompleted -= SetupCamera;
+        base.OnStartLocalPlayer();
+        
+        Debug.Log("PlayerCameraSetup: Local player spawned, searching for camera");
+        SetupCamera();
     }
     
     private void SetupCamera()
     {
-        // Find the local player object
-        PlayerNetworkController[] players = FindObjectsOfType<PlayerNetworkController>();
-        foreach (var player in players)
+        // Find the virtual camera in the scene
+        virtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
+        
+        if (virtualCamera == null)
         {
-            if (player.isLocalPlayer)
-            {
-                // Set the virtual camera to follow the player
-                virtualCamera.Follow = player.transform;
-                Debug.Log("Camera attached to local player");
-                break;
-            }
+            Debug.LogError("No CinemachineVirtualCamera found in scene!");
+            return;
         }
+        
+        Debug.Log($"Found camera: {virtualCamera.name}, attaching to player: {gameObject.name}");
+        
+        // Set the camera to follow this player
+        virtualCamera.Follow = transform;
+        
+        // Optionally set LookAt target as well
+        virtualCamera.LookAt = transform;
+        
+        Debug.Log("Camera successfully attached to local player");
+    }
+    
+    // This can be called when the player changes scenes if needed
+    public void RefindCamera()
+    {
+        if (!isLocalPlayer) return;
+        SetupCamera();
     }
 }
