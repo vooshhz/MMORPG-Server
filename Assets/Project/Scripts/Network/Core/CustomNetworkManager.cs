@@ -174,4 +174,30 @@ public class CustomNetworkManager : NetworkManager
         
         Debug.Log($"Player spawned for character {characterId} at position {position} in scene {sceneName}");
     }
+
+    public override void OnClientDisconnect()
+{
+    base.OnClientDisconnect();
+    Debug.Log("Disconnected from server, cleaning up session...");
+    
+    // Sign out from Firebase
+    if (Firebase.Auth.FirebaseAuth.DefaultInstance != null)
+    {
+        Firebase.Auth.FirebaseAuth.DefaultInstance.SignOut();
+    }
+    
+    // Clear client-side data
+    if (ClientPlayerDataManager.Instance != null)
+    {
+        ClientPlayerDataManager.Instance.ClearAllData();
+    }
+    
+    // Reset UI state if needed
+    
+    // Return to login scene
+    if (SceneTransitionManager.Instance != null)
+    {
+        SceneTransitionManager.Instance.LoadScene(SceneName.LoginScene);
+    }
+}
 }

@@ -209,6 +209,27 @@ public class ServerPlayerDataManager : MonoBehaviour
     
     public void HandleCharacterPreviewRequest(NetworkConnectionToClient conn, string userId)
     {
+        if (dbReference == null)
+        {
+            Debug.LogError("Database reference is null! Attempting to reinitialize...");
+            try 
+            {
+                dbReference = FirebaseDatabase.DefaultInstance.RootReference;
+                if (dbReference == null)
+                {
+                    Debug.LogError("Still couldn't initialize database reference. Disconnecting client.");
+                    conn.Disconnect();
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Exception reinitializing database: {ex.Message}");
+                conn.Disconnect();
+                return;
+            }
+        }
+        
         StartCoroutine(FetchCharacterPreviewData(conn, userId));
     }
 
