@@ -1,47 +1,34 @@
 using UnityEngine;
-using Cinemachine;
 using Mirror;
+using Cinemachine;
+using System.Collections;
 
-// Attach this to your player prefab
 public class PlayerCameraSetup : NetworkBehaviour
 {
-    private CinemachineVirtualCamera virtualCamera;
-    
-    // This runs only on the local player when it spawns
+    private CinemachineVirtualCamera vcam;
+
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
-        
-        Debug.Log("PlayerCameraSetup: Local player spawned, searching for camera");
-        SetupCamera();
+        StartCoroutine(AssignCameraAfterDelay());
     }
-    
-    private void SetupCamera()
+
+    private IEnumerator AssignCameraAfterDelay()
     {
-        // Find the virtual camera in the scene
-        virtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
-        
-        if (virtualCamera == null)
+        yield return null; // wait one frame, ensure camera is in scene
+
+        if (vcam == null)
         {
-            Debug.LogError("No CinemachineVirtualCamera found in scene!");
-            return;
+            vcam = FindObjectOfType<CinemachineVirtualCamera>();
         }
-        
-        Debug.Log($"Found camera: {virtualCamera.name}, attaching to player: {gameObject.name}");
-        
-        // Set the camera to follow this player
-        virtualCamera.Follow = transform;
-        
-        // Optionally set LookAt target as well
-        virtualCamera.LookAt = transform;
-        
-        Debug.Log("Camera successfully attached to local player");
-    }
-    
-    // This can be called when the player changes scenes if needed
-    public void RefindCamera()
-    {
-        if (!isLocalPlayer) return;
-        SetupCamera();
+
+        if (vcam != null)
+        {
+            vcam.Follow = transform;
+        }
+        else
+        {
+            Debug.LogWarning("Virtual Camera not found in scene.");
+        }
     }
 }

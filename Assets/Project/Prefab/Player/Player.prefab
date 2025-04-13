@@ -314,7 +314,7 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  moveSpeed: 5
+  moveSpeed: 15
 --- !u!1 &2277288764084278183
 GameObject:
   m_ObjectHideFlags: 0
