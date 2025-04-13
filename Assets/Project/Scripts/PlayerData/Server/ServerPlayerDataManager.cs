@@ -17,14 +17,21 @@ public class ServerPlayerDataManager : MonoBehaviour
     
     private void Awake()
     {
+        // If there's already an instance and it's not this one
         if (Instance != null && Instance != this)
         {
+            // Destroy this duplicate
             Destroy(gameObject);
             return;
         }
+        
+        // This is the first and only instance
         Instance = this;
+        
+        // Make sure it persists across scene loads
+        DontDestroyOnLoad(gameObject);
 
-                try {
+        try {
             dbReference = FirebaseDatabase.DefaultInstance.RootReference;
             Debug.Log("Database reference initialized successfully");
         } catch (Exception ex) {

@@ -147,7 +147,7 @@ public class CustomNetworkManager : NetworkManager
             (locationData) => StartCoroutine(HandlePlayerSpawn(conn, characterId, locationData)));
     }
 
-  private IEnumerator HandlePlayerSpawn(NetworkConnectionToClient conn, string characterId, ClientPlayerDataManager.LocationData locationData)
+ private IEnumerator HandlePlayerSpawn(NetworkConnectionToClient conn, string characterId, ClientPlayerDataManager.LocationData locationData)
     {
         // Get scene name as string
         string sceneName = locationData.sceneName;
@@ -156,12 +156,26 @@ public class CustomNetworkManager : NetworkManager
         // Check if we need to change scene
         if (sceneName != currentScene)
         {
-            // Handle scene loading
-            ServerChangeScene(sceneName);
+            Debug.Log($"Need to change scene from {currentScene} to {sceneName} before spawning player");
             
-            // Wait a moment for scene to load
-            yield return new WaitForSeconds(1.0f);
+            // Tell client to change scene first
+            conn.Send(new SceneChangeApprovedMessage { 
+                sceneName = sceneName 
+            });
+            
+            // Wait for scene change to complete (add a longer delay)
+            yield return new WaitForSeconds(2.0f);
+            
+            // Check scene again - it may still not be correct on the server
+            if (SceneManager.GetActiveScene().name != sceneName)
+            {
+                ServerChangeScene(sceneName);
+                yield return new WaitForSeconds(1.0f);
+            }
         }
+        
+        // Double check we're in the right scene now
+        Debug.Log($"Current scene before spawning: {SceneManager.GetActiveScene().name}, target scene: {sceneName}");
         
         // Get position data
         Vector3 position = locationData.position;
@@ -170,11 +184,13 @@ public class CustomNetworkManager : NetworkManager
         if (PlayerSpawnController.Instance != null)
         {
             PlayerSpawnController.Instance.SpawnPlayerCharacter(conn, characterId, position);
+            Debug.Log($"Player spawned for character {characterId} at position {position} in scene {SceneManager.GetActiveScene().name}");
         }
-        
-        Debug.Log($"Player spawned for character {characterId} at position {position} in scene {sceneName}");
+        else
+        {
+            Debug.LogError("PlayerSpawnController.Instance is null! Cannot spawn player.");
+        }
     }
-
     public override void OnClientDisconnect()
 {
     base.OnClientDisconnect();
