@@ -6,6 +6,7 @@ using System;
 public class PlayerCharacterData : MonoBehaviour
 {
     [Header("Sync Info")]
+    [SerializeField] private string lastSyncedTimeString = "Not synced yet";
     public DateTime lastSyncedTime;
     
     [Header("Character Info")]
@@ -48,4 +49,63 @@ public class PlayerCharacterData : MonoBehaviour
     
     [Header("State Tracking")]
     public bool isFullyLoaded;
+
+    // Reference to the character animator
+    [Header("Visual References")]
+    [SerializeField] private CharacterAnimator characterAnimator;
+
+    private void Awake()
+    {
+        // Find the CharacterAnimator if not assigned in inspector
+        if (characterAnimator == null)
+        {
+            characterAnimator = GetComponentInChildren<CharacterAnimator>();
+        }
+    }
+
+    // Updates the last synced time and string representation
+    public void UpdateSyncTime()
+    {
+        lastSyncedTime = DateTime.Now;
+        lastSyncedTimeString = lastSyncedTime.ToString("yyyy-MM-dd HH:mm:ss");
+    }
+
+    // Applies equipment data to the CharacterAnimator
+    public void ApplyEquipmentToCharacter()
+    {
+        if (characterAnimator == null)
+        {
+            Debug.LogError("CharacterAnimator not found. Cannot apply equipment.");
+            return;
+        }
+
+        // Apply equipment item numbers to animator
+        characterAnimator.headItemNumber = headItemNumber;
+        characterAnimator.bodyItemNumber = bodyItemNumber;
+        characterAnimator.hairItemNumber = hairItemNumber;
+        characterAnimator.torsoItemNumber = torsoItemNumber;
+        characterAnimator.legsItemNumber = legsItemNumber;
+
+        // Refresh the character visual
+        characterAnimator.RefreshCurrentFrame();
+
+        Debug.Log($"Equipment applied to character {characterName}: " +
+                  $"Head={headItemNumber}, Body={bodyItemNumber}, Hair={hairItemNumber}, " +
+                  $"Torso={torsoItemNumber}, Legs={legsItemNumber}");
+    }
+
+    // Method to apply character info data
+    public void ApplyCharacterInfo()
+    {
+        // Set any visual elements related to character info
+        // For example, name tags, level indicators, etc.
+        Debug.Log($"Character info applied: {characterName}, Level {level} {characterClass}");
+    }
+
+    // Method to apply inventory data
+    public void ApplyInventory()
+    {
+        // Update any inventory UI or relevant components
+        Debug.Log($"Inventory applied with {inventoryItems.Count} items");
+    }
 }

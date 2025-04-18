@@ -88,11 +88,19 @@ public class CharacterSyncManager : NetworkBehaviour
         
         // Mark as fully loaded
         characterData.isFullyLoaded = true;
-        characterData.lastSyncedTime = DateTime.Now;
+        
+        // Update sync time and apply data to components
+        characterData.UpdateSyncTime();
+        characterData.ApplyEquipmentToCharacter();
+        characterData.ApplyCharacterInfo();
+        characterData.ApplyInventory();
         
         OnStatsSynced?.Invoke();
         OnSyncCompleted?.Invoke();
+        
+        Debug.Log($"Character sync completed for {characterData.characterName} (ID: {characterId})");
     }
+
     [Command]
     private void CmdRequestCharacterData(string characterId)
     {
