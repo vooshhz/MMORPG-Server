@@ -183,6 +183,7 @@ GameObject:
   - component: {fileID: 1127817709133769374}
   - component: {fileID: 281779251133400017}
   - component: {fileID: -24477444119134524}
+  - component: {fileID: 9070382842375476215}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -315,6 +316,21 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   moveSpeed: 15
+--- !u!114 &9070382842375476215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286690282312744990}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba517ef0309390141afc343f508bee0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
 --- !u!1 &2277288764084278183
 GameObject:
   m_ObjectHideFlags: 0
@@ -393,6 +409,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b0cb4bbaccdc314691e1f9f19e6ae66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  lastSyncedTimeString: Not synced yet
   characterId: 
   characterName: 
   characterClass: 
@@ -414,6 +431,7 @@ MonoBehaviour:
   currentSceneName: 
   position: {x: 0, y: 0, z: 0}
   isFullyLoaded: 0
+  characterAnimator: {fileID: 0}
 --- !u!1 &4329665544636570309
 GameObject:
   m_ObjectHideFlags: 0

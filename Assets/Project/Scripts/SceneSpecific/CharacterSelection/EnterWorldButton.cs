@@ -5,6 +5,7 @@ using Mirror;
 public class EnterWorldButton : MonoBehaviour
 {
     [SerializeField] private Button enterWorldButton;
+    [SerializeField] private GameObject loadingIndicator; // Optional loading indicator
     
     private ClientPlayerDataManager dataManager;
     
@@ -22,6 +23,10 @@ public class EnterWorldButton : MonoBehaviour
         
         // Add this line to listen for character selection
         dataManager.OnCharacterSelected += OnCharacterSelected;
+        
+        // Hide loading indicator initially
+        if (loadingIndicator != null)
+            loadingIndicator.SetActive(false);
     }
 
     // Add this method
@@ -38,21 +43,28 @@ public class EnterWorldButton : MonoBehaviour
     }
     
     private void OnEnterWorldClicked()
-{
-    if (string.IsNullOrEmpty(dataManager.SelectedCharacterId))
     {
-        Debug.LogWarning("No character selected!");
-        return;
+        if (string.IsNullOrEmpty(dataManager.SelectedCharacterId))
+        {
+            Debug.LogWarning("No character selected!");
+            return;
+        }
+        
+        Debug.Log($"Entering world with character: {dataManager.SelectedCharacterId}");
+        
+        // Disable button to prevent multiple clicks
+        enterWorldButton.interactable = false;
+        
+        // Show loading indicator if available
+        if (loadingIndicator != null)
+            loadingIndicator.SetActive(true);
+        
+        // Send spawn request to server
+        NetworkClient.Send(new SpawnPlayerRequestMessage
+        {
+            characterId = dataManager.SelectedCharacterId
+        });
+        
+        // The server will handle scene change and player spawning
     }
-    
-    Debug.Log($"Entering world with character: {dataManager.SelectedCharacterId}");
-    
-    // Send spawn request directly - no need to handle scene transition here
-    NetworkClient.Send(new SpawnPlayerRequestMessage
-    {
-        characterId = dataManager.SelectedCharacterId
-    });
-    
-    // The server will handle scene change and NetworkSceneManager will handle fades
 }
-   }

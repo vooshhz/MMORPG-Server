@@ -856,6 +856,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enterWorldButton: {fileID: 460816413}
+  loadingIndicator: {fileID: 0}
 --- !u!1 &487074418
 GameObject:
   m_ObjectHideFlags: 0
@@ -1090,7 +1091,7 @@ GameObject:
   - component: {fileID: 623977142}
   - component: {fileID: 623977141}
   m_Layer: 0
-  m_Name: PlayerDataManager
+  m_Name: ClientPlayerDataManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

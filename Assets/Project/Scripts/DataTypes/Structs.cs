@@ -17,11 +17,10 @@ public struct CharacterPreviewRequestMessage : NetworkMessage
     public string userId;
 }
 
-
-    public struct SpawnPlayerRequestMessage : NetworkMessage
-    {
-        public string characterId;
-    }
+public struct SpawnPlayerRequestMessage : NetworkMessage
+{
+    public string characterId;
+}
 
 // Use arrays instead of Dictionary
 public struct CharacterEquipmentPair : NetworkMessage
@@ -34,7 +33,7 @@ public struct CharacterPreviewResponseMessage : NetworkMessage
 {
     public ClientPlayerDataManager.CharacterInfo[] characters;
     public CharacterEquipmentPair[] equipmentData;
-    public CharacterLocationPair[] locationData; // Add this line
+    public CharacterLocationPair[] locationData;
 }
 
 public struct CharacterLocationPair : NetworkMessage
@@ -42,6 +41,7 @@ public struct CharacterLocationPair : NetworkMessage
     public string characterId;
     public ClientPlayerDataManager.LocationData location;
 }
+
 public struct CharacterDetailRequestMessage : NetworkMessage
 {
     public string characterId;
@@ -89,5 +89,13 @@ public struct SceneChangeRequestMessage : NetworkMessage
 public struct SceneChangeApprovedMessage : NetworkMessage
 {
     public string sceneName;
+    public string characterId; // Add character ID for player spawning after scene change
+    public bool spawnAfterChange; // Flag to indicate if player should be spawned after this scene change
 }
 
+// New message: Client confirms scene load is complete
+public struct SceneChangeCompletedMessage : NetworkMessage
+{
+    public string sceneName;
+    public string characterId; // Send back the character ID for player spawning
+}

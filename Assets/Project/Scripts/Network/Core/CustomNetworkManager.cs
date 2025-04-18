@@ -3,9 +3,22 @@ using Mirror;
 using System.Collections;
 using UnityEngine.SceneManagement;
 using System;
+using System.Collections.Generic;
 
 public class CustomNetworkManager : NetworkManager
 {
+    // Track pending spawn requests that are waiting for scene transitions
+    private Dictionary<string, PendingSpawnRequest> pendingSpawnRequests = new Dictionary<string, PendingSpawnRequest>();
+    
+    // Class to track pending spawn requests
+    private class PendingSpawnRequest
+    {
+        public NetworkConnectionToClient connection;
+        public string characterId;
+        public string targetScene;
+        public Vector3 spawnPosition;
+        public float requestTime;
+    }
 
     public override void OnServerAddPlayer(NetworkConnectionToClient conn)
     {
@@ -25,14 +38,39 @@ public class CustomNetworkManager : NetworkManager
         Debug.Log("Server started!");
         NetworkServer.RegisterHandler<CharacterPreviewRequestMessage>(OnCharacterPreviewRequest);
         NetworkServer.RegisterHandler<CharacterDetailRequestMessage>(OnCharacterDetailRequest);
-
         NetworkServer.RegisterHandler<RequestCharacterCreationOptionsMessage>(OnRequestCharacterCreationOptions);
         NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);     
         NetworkServer.RegisterHandler<SpawnPlayerRequestMessage>(OnSpawnPlayerRequest);   
-
         NetworkServer.RegisterHandler<SceneChangeRequestMessage>(OnSceneChangeRequest);
+        NetworkServer.RegisterHandler<SceneChangeCompletedMessage>(OnSceneChangeCompleted);
         
-
+        // Start routine to clean up stale pending spawn requests
+        StartCoroutine(CleanupStalePendingRequests());
+    }
+    
+    // Clean up pending spawn requests that have been waiting too long (30 seconds)
+    private IEnumerator CleanupStalePendingRequests()
+    {
+        while (true)
+        {
+            List<string> keysToRemove = new List<string>();
+            
+            foreach (var kvp in pendingSpawnRequests)
+            {
+                if (Time.time - kvp.Value.requestTime > 30f)
+                {
+                    keysToRemove.Add(kvp.Key);
+                    Debug.LogWarning($"Removing stale spawn request for character {kvp.Value.characterId} that has been pending for over 30 seconds");
+                }
+            }
+            
+            foreach (var key in keysToRemove)
+            {
+                pendingSpawnRequests.Remove(key);
+            }
+            
+            yield return new WaitForSeconds(10f);
+        }
     }
 
     private void OnSceneChangeRequest(NetworkConnectionToClient conn, SceneChangeRequestMessage msg)
@@ -53,16 +91,17 @@ public class CustomNetworkManager : NetworkManager
             
             if (isAllowed)
             {
-                // For character selection and similar scenes, change scene for this client only
-                if (targetScene == SceneName.CharacterSelectionScene || 
-                    targetScene == SceneName.CharacterCreationScene)
-                {
-                    conn.Send(new SceneChangeApprovedMessage { 
-                        sceneName = targetScene.ToString() 
-                    });
-                }
-                // For game world scenes, handle via server's scene management
-                else
+                // Send scene change approval without spawning player
+                conn.Send(new SceneChangeApprovedMessage { 
+                    sceneName = targetScene.ToString(),
+                    characterId = "",
+                    spawnAfterChange = false
+                });
+                
+                // For game world scenes, handle via server's scene management if needed
+                if (targetScene != SceneName.CharacterSelectionScene && 
+                    targetScene != SceneName.CharacterCreationScene &&
+                    targetScene != SceneName.LoginScene)
                 {
                     ServerChangeScene(targetScene.ToString());
                 }
@@ -73,6 +112,7 @@ public class CustomNetworkManager : NetworkManager
             Debug.LogError($"Invalid scene name requested: {msg.sceneName}");
         }
     }
+    
     private bool IsSceneChangeAllowed(NetworkConnectionToClient conn, SceneName targetScene)
     {
         // Add your validation logic here
@@ -92,13 +132,11 @@ public class CustomNetworkManager : NetworkManager
         Debug.Log("Server stopped!");
     }
 
-
     public override void OnStartClient()
     {
         base.OnStartClient();
         NetworkClient.RegisterHandler<CharacterPreviewResponseMessage>(OnCharacterPreviewResponse);
     }
-
 
     // Server-side handler
     private void OnCharacterPreviewRequest(NetworkConnectionToClient conn, CharacterPreviewRequestMessage msg)
@@ -108,6 +146,7 @@ public class CustomNetworkManager : NetworkManager
         
         ServerPlayerDataManager.Instance.HandleCharacterPreviewRequest(conn, userId);
     }
+    
     private void OnCharacterDetailRequest(NetworkConnectionToClient conn, CharacterDetailRequestMessage msg)
     {
         ServerPlayerDataManager.Instance.HandleCharacterDataRequest(conn, msg.characterId);
@@ -144,76 +183,112 @@ public class CustomNetworkManager : NetworkManager
         
         // Get location data
         ServerPlayerDataManager.Instance.GetCharacterLocation(conn, userId, characterId, 
-            (locationData) => StartCoroutine(HandlePlayerSpawn(conn, characterId, locationData)));
+            (locationData) => HandlePlayerSpawnWithLocation(conn, characterId, locationData));
     }
-
- private IEnumerator HandlePlayerSpawn(NetworkConnectionToClient conn, string characterId, ClientPlayerDataManager.LocationData locationData)
+    
+    private void HandlePlayerSpawnWithLocation(NetworkConnectionToClient conn, string characterId, ClientPlayerDataManager.LocationData locationData)
     {
         // Get scene name as string
-        string sceneName = locationData.sceneName;
+        string targetScene = locationData.sceneName;
         string currentScene = SceneManager.GetActiveScene().name;
-
-        // Check if we need to change scene
-        if (sceneName != currentScene)
-        {
-            Debug.Log($"Need to change scene from {currentScene} to {sceneName} before spawning player");
-            
-            // Tell client to change scene first
-            conn.Send(new SceneChangeApprovedMessage { 
-                sceneName = sceneName 
-            });
-            
-            // Wait for scene change to complete (add a longer delay)
-            yield return new WaitForSeconds(2.0f);
-            
-            // Check scene again - it may still not be correct on the server
-            if (SceneManager.GetActiveScene().name != sceneName)
-            {
-                ServerChangeScene(sceneName);
-                yield return new WaitForSeconds(1.0f);
-            }
-        }
-        
-        // Double check we're in the right scene now
-        Debug.Log($"Current scene before spawning: {SceneManager.GetActiveScene().name}, target scene: {sceneName}");
-        
-        // Get position data
         Vector3 position = locationData.position;
         
+        // Create a unique key for this pending request
+        string requestKey = conn.connectionId + "_" + characterId;
+        
+        // Check if we need to change scene
+        if (targetScene != currentScene)
+        {
+            Debug.Log($"Need to change scene from {currentScene} to {targetScene} before spawning player {characterId}");
+            
+            // Store the spawn request for later
+            pendingSpawnRequests[requestKey] = new PendingSpawnRequest
+            {
+                connection = conn,
+                characterId = characterId,
+                targetScene = targetScene,
+                spawnPosition = position,
+                requestTime = Time.time
+            };
+            
+            // Tell client to change scene first, and that we'll spawn player after
+            conn.Send(new SceneChangeApprovedMessage
+            { 
+                sceneName = targetScene,
+                characterId = characterId,
+                spawnAfterChange = true
+            });
+            
+            // Server will wait for scene change confirmation before spawning player
+        }
+        else
+        {
+            // Same scene, spawn immediately
+            SpawnPlayerInScene(conn, characterId, position);
+        }
+    }
+    
+    private void OnSceneChangeCompleted(NetworkConnectionToClient conn, SceneChangeCompletedMessage msg)
+    {
+        Debug.Log($"Client confirmed scene change to {msg.sceneName} is complete");
+        
+        // Check if there's a character to spawn
+        if (!string.IsNullOrEmpty(msg.characterId))
+        {
+            // Create the request key
+            string requestKey = conn.connectionId + "_" + msg.characterId;
+            
+            // Check if we have a pending spawn request
+            if (pendingSpawnRequests.TryGetValue(requestKey, out PendingSpawnRequest request))
+            {
+                Debug.Log($"Found pending spawn request for character {msg.characterId}, spawning now");
+                
+                // Spawn the player
+                SpawnPlayerInScene(conn, request.characterId, request.spawnPosition);
+                
+                // Remove from pending requests
+                pendingSpawnRequests.Remove(requestKey);
+            }
+        }
+    }
+    
+    private void SpawnPlayerInScene(NetworkConnectionToClient conn, string characterId, Vector3 position)
+    {
         // Spawn the player
         if (PlayerSpawnController.Instance != null)
         {
             PlayerSpawnController.Instance.SpawnPlayerCharacter(conn, characterId, position);
-            Debug.Log($"Player spawned for character {characterId} at position {position} in scene {SceneManager.GetActiveScene().name}");
+            Debug.Log($"Player spawned for character {characterId} at position {position}");
         }
         else
         {
             Debug.LogError("PlayerSpawnController.Instance is null! Cannot spawn player.");
         }
     }
+    
     public override void OnClientDisconnect()
-{
-    base.OnClientDisconnect();
-    Debug.Log("Disconnected from server, cleaning up session...");
-    
-    // Sign out from Firebase
-    if (Firebase.Auth.FirebaseAuth.DefaultInstance != null)
     {
-        Firebase.Auth.FirebaseAuth.DefaultInstance.SignOut();
+        base.OnClientDisconnect();
+        Debug.Log("Disconnected from server, cleaning up session...");
+        
+        // Sign out from Firebase
+        if (Firebase.Auth.FirebaseAuth.DefaultInstance != null)
+        {
+            Firebase.Auth.FirebaseAuth.DefaultInstance.SignOut();
+        }
+        
+        // Clear client-side data
+        if (ClientPlayerDataManager.Instance != null)
+        {
+            ClientPlayerDataManager.Instance.ClearAllData();
+        }
+        
+        // Reset UI state if needed
+        
+        // Return to login scene
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.LoadScene(SceneName.LoginScene);
+        }
     }
-    
-    // Clear client-side data
-    if (ClientPlayerDataManager.Instance != null)
-    {
-        ClientPlayerDataManager.Instance.ClearAllData();
-    }
-    
-    // Reset UI state if needed
-    
-    // Return to login scene
-    if (SceneTransitionManager.Instance != null)
-    {
-        SceneTransitionManager.Instance.LoadScene(SceneName.LoginScene);
-    }
-}
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 using Mirror;
 using System;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 public class NetworkSceneManager : MonoBehaviour
 {
@@ -49,7 +50,35 @@ public class NetworkSceneManager : MonoBehaviour
             
         // Fade in when a new scene is loaded
         transitionManager.FadeIn();
+        
+        // Now tell the server that the scene change is complete
+        if (NetworkClient.isConnected && !string.IsNullOrEmpty(scene.name))
+        {
+            // Get scene enum value from scene name
+            if (System.Enum.TryParse<SceneName>(scene.name, out SceneName sceneEnum))
+            {
+                string characterId = ""; // Default empty
+                
+                // If we have a pending scene change with character to spawn, include that ID
+                if (_pendingSceneChange?.spawnAfterChange == true)
+                {
+                    characterId = _pendingSceneChange.Value.characterId;
+                    _pendingSceneChange = null;
+                }
+                // Send confirmation to server
+                NetworkClient.Send(new SceneChangeCompletedMessage
+                {
+                    sceneName = scene.name,
+                    characterId = characterId
+                });
+                
+                Debug.Log($"Notified server that scene change to {scene.name} is complete");
+            }
+        }
     }
+    
+    // Store pending scene change that will require player spawning
+    private SceneChangeApprovedMessage? _pendingSceneChange;
     
     // Request scene change from server (use this for post-auth scenes)
     public void RequestSceneChange(SceneName targetScene)
@@ -81,6 +110,13 @@ public class NetworkSceneManager : MonoBehaviour
     {
         if (System.Enum.TryParse<SceneName>(msg.sceneName, out SceneName targetScene))
         {
+            // Store this as a pending scene change if player spawning is needed after
+            if (msg.spawnAfterChange)
+            {
+                _pendingSceneChange = msg;
+                Debug.Log($"Scene change approved with pending player spawn for character {msg.characterId}");
+            }
+            
             // Use Unity's scene management for client-only scenes
             transitionManager.LoadScene(targetScene);
         }

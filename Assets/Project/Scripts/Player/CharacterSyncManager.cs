@@ -29,7 +29,7 @@ public class CharacterSyncManager : NetworkBehaviour
         
         // Get references
         var playerController = GetComponent<PlayerNetworkController>();
-        var characterData = GetComponent<PlayerCharacterData>();
+        var characterData = GetComponentInChildren<PlayerCharacterData>();
         
         if (characterData == null)
         {
