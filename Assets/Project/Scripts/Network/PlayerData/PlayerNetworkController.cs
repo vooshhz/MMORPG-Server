@@ -77,4 +77,14 @@ public class PlayerNetworkController : NetworkBehaviour
         clientDataManager.ReceiveLocationData(characterId, locationData);
 }
 
+[TargetRpc]
+public void TargetInitializePlayer(NetworkConnection target, string characterId)
+{
+    this.characterId = characterId;
+    Debug.Log($"[Client] 🔐 TargetInitializePlayer called. characterId = {characterId}");
+
+    // Start sync now that characterId is set
+    GetComponent<CharacterSyncManager>()?.StartCoroutine("SyncCharacterData");
+}
+
 }

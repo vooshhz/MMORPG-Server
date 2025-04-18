@@ -16,11 +16,6 @@ public class CharacterSyncManager : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
-        
-        if (isLocalPlayer)
-        {
-            StartCoroutine(SyncCharacterData());
-        }
     }
     
     private IEnumerator SyncCharacterData()
@@ -39,7 +34,9 @@ public class CharacterSyncManager : NetworkBehaviour
         
         string characterId = playerController.characterId;
         characterData.characterId = characterId;
-        
+        Debug.Log($"[Client] 🧠 SyncCharacterData started. characterId = {playerController.characterId}");
+        yield return new WaitUntil(() => !string.IsNullOrEmpty(playerController.characterId));
+
         // Request data
         CmdRequestCharacterData(characterId);
         

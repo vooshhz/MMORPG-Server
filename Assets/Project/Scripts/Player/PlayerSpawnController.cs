@@ -57,15 +57,18 @@ public class PlayerSpawnController : MonoBehaviour
         // Set up player with character data
         var playerNetworkController = playerObject.GetComponent<PlayerNetworkController>();
         
+        // Spawn the player object on the network
+        NetworkServer.AddPlayerForConnection(conn, playerObject);
+
         // Store the character ID in the player object (need to add this property to PlayerNetworkController)
         if (playerNetworkController != null)
         {
-            // We'll add this property to PlayerNetworkController
+            // Server-side assignment (optional, if you use it server-side)
             playerNetworkController.SetCharacterId(characterId);
+
+            // 🔥 Send characterId to the client via TargetRpc
+            playerNetworkController.TargetInitializePlayer(conn, characterId);
         }
-        
-        // Spawn the player object on the network
-        NetworkServer.AddPlayerForConnection(conn, playerObject);
         
         return playerObject;
     }
