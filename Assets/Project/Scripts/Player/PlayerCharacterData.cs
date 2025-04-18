@@ -75,8 +75,14 @@ public class PlayerCharacterData : MonoBehaviour
     {
         if (characterAnimator == null)
         {
-            Debug.LogError("CharacterAnimator not found. Cannot apply equipment.");
-            return;
+            // Try to find it if missing
+            characterAnimator = GetComponentInChildren<CharacterAnimator>(true);
+            
+            if (characterAnimator == null)
+            {
+                Debug.LogError($"CharacterAnimator not found for {characterName}. Cannot apply equipment.");
+                return;
+            }
         }
 
         // Apply equipment item numbers to animator
@@ -86,12 +92,10 @@ public class PlayerCharacterData : MonoBehaviour
         characterAnimator.torsoItemNumber = torsoItemNumber;
         characterAnimator.legsItemNumber = legsItemNumber;
 
-        // Refresh the character visual
+        // Refresh the character visual - ensure this calls the right method
         characterAnimator.RefreshCurrentFrame();
-
-        Debug.Log($"Equipment applied to character {characterName}: " +
-                  $"Head={headItemNumber}, Body={bodyItemNumber}, Hair={hairItemNumber}, " +
-                  $"Torso={torsoItemNumber}, Legs={legsItemNumber}");
+        
+        Debug.Log($"Equipment applied to animator: Head={headItemNumber}, Body={bodyItemNumber}, Hair={hairItemNumber}");
     }
 
     // Method to apply character info data
