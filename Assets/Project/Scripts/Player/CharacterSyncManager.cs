@@ -27,43 +27,72 @@ public class CharacterSyncManager : NetworkBehaviour
     {
         OnSyncStarted?.Invoke();
         
-        // Request latest data from server
+        // Get references
         var playerController = GetComponent<PlayerNetworkController>();
-        string characterId = playerController.characterId;
+        var characterData = GetComponent<PlayerCharacterData>();
         
-        // Request equipment data
+        if (characterData == null)
+        {
+            Debug.LogError("PlayerCharacterData component not found!");
+            yield break;
+        }
+        
+        string characterId = playerController.characterId;
+        characterData.characterId = characterId;
+        
+        // Request data
         CmdRequestCharacterData(characterId);
         
-        // Wait for equipment to be synced
+        // Wait and store equipment data
         yield return new WaitUntil(() => ClientPlayerDataManager.Instance.HasEquipmentData);
-        
+        var equipment = ClientPlayerDataManager.Instance.GetEquipment(characterId);
+        characterData.headItemNumber = equipment.head;
+        characterData.bodyItemNumber = equipment.body;
+        characterData.hairItemNumber = equipment.hair;
+        characterData.torsoItemNumber = equipment.torso;
+        characterData.legsItemNumber = equipment.legs;
         OnEquipmentSynced?.Invoke();
         
-        // Apply equipment to character model
-        var characterAnimator = GetComponent<CharacterAnimator>();
-        var equipment = ClientPlayerDataManager.Instance.GetEquipment(characterId);
-        
-        characterAnimator.headItemNumber = equipment.head;
-        characterAnimator.bodyItemNumber = equipment.body;
-        characterAnimator.hairItemNumber = equipment.hair;
-        characterAnimator.torsoItemNumber = equipment.torso;
-        characterAnimator.legsItemNumber = equipment.legs;
-        characterAnimator.RefreshCurrentFrame();
-        
-        // Wait for inventory to be synced
+        // Wait and store inventory data
         yield return new WaitUntil(() => ClientPlayerDataManager.Instance.HasInventoryData);
-        
+        var inventoryItems = ClientPlayerDataManager.Instance.GetInventory(characterId);
+        characterData.inventoryItems.Clear();
+        foreach (var item in inventoryItems)
+        {
+            characterData.inventoryItems.Add(new PlayerCharacterData.InventoryItem 
+            { 
+                itemCode = item.itemCode, 
+                quantity = item.quantity 
+            });
+        }
         OnInventorySynced?.Invoke();
         
-        // Wait for stats to be synced
+        // Wait and store character info
         yield return new WaitUntil(() => ClientPlayerDataManager.Instance.HasCharacterData);
+        var charInfo = ClientPlayerDataManager.Instance.GetCharacterInfo(characterId);
+        if (charInfo != null)
+        {
+            characterData.characterName = charInfo.characterName;
+            characterData.characterClass = charInfo.characterClass;
+            characterData.level = charInfo.level;
+            characterData.experience = charInfo.experience;
+        }
+        
+        // Store location data if available
+        var location = ClientPlayerDataManager.Instance.GetLocation(characterId);
+        if (location != null)
+        {
+            characterData.currentSceneName = location.sceneName;
+            characterData.position = location.position;
+        }
+        
+        // Mark as fully loaded
+        characterData.isFullyLoaded = true;
+        characterData.lastSyncedTime = DateTime.Now;
         
         OnStatsSynced?.Invoke();
-        
-        // All sync completed
         OnSyncCompleted?.Invoke();
     }
-    
     [Command]
     private void CmdRequestCharacterData(string characterId)
     {

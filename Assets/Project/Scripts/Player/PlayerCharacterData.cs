@@ -3,7 +3,7 @@ using Mirror;
 using System.Collections.Generic;
 using System;
 
-public class PlayerCharacterDataComponent : MonoBehaviour
+public class PlayerCharacterData : MonoBehaviour
 {
     [Header("Sync Info")]
     public DateTime lastSyncedTime;
