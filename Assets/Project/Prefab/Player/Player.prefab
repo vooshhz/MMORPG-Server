@@ -177,10 +177,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7489207336736685494}
+  - component: {fileID: 8964273521914711783}
   - component: {fileID: 6974192654799864614}
   - component: {fileID: 1029620345013056995}
   - component: {fileID: 1127817709133769374}
-  - component: {fileID: 8964273521914711783}
   - component: {fileID: 281779251133400017}
   - component: {fileID: -24477444119134524}
   m_Layer: 0
@@ -206,6 +206,18 @@ Transform:
   - {fileID: 8872820061606944767}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!210 &8964273521914711783
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286690282312744990}
+  m_Enabled: 1
+  m_SortingLayerID: -1343391403
+  m_SortingLayer: 6
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
 --- !u!114 &6974192654799864614
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -272,18 +284,6 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
---- !u!210 &8964273521914711783
-SortingGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 286690282312744990}
-  m_Enabled: 1
-  m_SortingLayerID: -1343391403
-  m_SortingLayer: 6
-  m_SortingOrder: 0
-  m_SortAtRoot: 0
 --- !u!114 &281779251133400017
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -325,6 +325,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8872820061606944767}
   - component: {fileID: 3687151634576420681}
+  - component: {fileID: 7023480268146789745}
   m_Layer: 0
   m_Name: Character
   m_TagString: Untagged
@@ -380,6 +381,39 @@ MonoBehaviour:
   torsoItemNumber: 40001
   legsItemNumber: 50001
   frameRate: 0.1
+--- !u!114 &7023480268146789745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2277288764084278183}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b0cb4bbaccdc314691e1f9f19e6ae66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  characterId: 
+  characterName: 
+  characterClass: 
+  level: 0
+  experience: 0
+  headItemNumber: 0
+  bodyItemNumber: 0
+  hairItemNumber: 0
+  torsoItemNumber: 0
+  legsItemNumber: 0
+  inventoryItems: []
+  health: 0
+  maxHealth: 0
+  mana: 0
+  maxMana: 0
+  strength: 0
+  intelligence: 0
+  dexterity: 0
+  currentSceneName: 
+  position: {x: 0, y: 0, z: 0}
+  isFullyLoaded: 0
 --- !u!1 &4329665544636570309
 GameObject:
   m_ObjectHideFlags: 0
