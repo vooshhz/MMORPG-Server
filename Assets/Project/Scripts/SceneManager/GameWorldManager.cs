@@ -34,6 +34,12 @@ public class GameWorldManager : MonoBehaviour
     
     private IEnumerator ChangeSceneAndSpawnPlayer(SceneName targetScene, string characterId, Vector3? overridePosition)
     {
+         // When saving player state before scene change, include the override position
+        if (NetworkClient.localPlayer != null)
+        {
+            // Save player's current position/state before scene change
+            SavePlayerState(characterId, overridePosition);
+        }
         if (!NetworkClient.isConnected)
         {
             Debug.LogError("Cannot change scene: Not connected to server");
@@ -54,19 +60,19 @@ public class GameWorldManager : MonoBehaviour
         // when the SceneChangeApprovedMessage is received with spawnAfterChange=true
     }
     
-    private void SavePlayerState(string characterId)
+    private void SavePlayerState(string characterId, Vector3? overridePosition = null)
     {
-        // Save player position and other relevant state
         if (NetworkClient.localPlayer != null)
         {
-            var playerTransform = NetworkClient.localPlayer.transform;
+            // Use override position if provided, otherwise use current position
+            Vector3 position = overridePosition ?? NetworkClient.localPlayer.transform.position;
             var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             
-            // Send message to server to save position/scene
+            // Send message to server with position (potentially overridden)
             NetworkClient.Send(new SavePlayerStateMessage
             {
                 characterId = characterId,
-                position = playerTransform.position,
+                position = position,
                 sceneName = currentScene
             });
         }

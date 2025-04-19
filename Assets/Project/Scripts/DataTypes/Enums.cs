@@ -52,7 +52,9 @@ public enum SceneName
     LoginScene,
     CharacterSelectionScene,
     CharacterCreationScene,
-    Farm_Scene
+    Farm_Scene,
+    FarmPath_Scene
+
 }
 public enum EventType
 {
