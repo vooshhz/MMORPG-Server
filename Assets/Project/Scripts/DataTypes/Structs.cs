@@ -1,5 +1,6 @@
 using Mirror;
-using System.Collections.Generic;
+using System.Collections;
+using UnityEngine;
 
 public struct AuthenticationRequestMessage : NetworkMessage
 {
@@ -98,4 +99,11 @@ public struct SceneChangeCompletedMessage : NetworkMessage
 {
     public string sceneName;
     public string characterId; // Send back the character ID for player spawning
+}
+
+public struct SavePlayerStateMessage : NetworkMessage
+{
+    public string characterId;
+    public Vector3 position;
+    public string sceneName;
 }

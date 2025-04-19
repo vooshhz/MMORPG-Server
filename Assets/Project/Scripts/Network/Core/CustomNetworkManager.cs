@@ -43,6 +43,7 @@ public class CustomNetworkManager : NetworkManager
         NetworkServer.RegisterHandler<SpawnPlayerRequestMessage>(OnSpawnPlayerRequest);   
         NetworkServer.RegisterHandler<SceneChangeRequestMessage>(OnSceneChangeRequest);
         NetworkServer.RegisterHandler<SceneChangeCompletedMessage>(OnSceneChangeCompleted);
+        NetworkServer.RegisterHandler<SavePlayerStateMessage>(OnSavePlayerState);
         
         // Start routine to clean up stale pending spawn requests
         StartCoroutine(CleanupStalePendingRequests());
@@ -290,5 +291,23 @@ public class CustomNetworkManager : NetworkManager
         {
             SceneTransitionManager.Instance.LoadScene(SceneName.LoginScene);
         }
+    }
+
+    private void OnSavePlayerState(NetworkConnectionToClient conn, SavePlayerStateMessage msg)
+    {
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Debug.LogError("Connection tried to save player state without valid auth");
+            return;
+        }
+        
+        // Save player state to database
+        ServerPlayerDataManager.Instance.SaveCharacterPosition(
+            userId, 
+            msg.characterId, 
+            msg.position, 
+            msg.sceneName
+        );
     }
 }
