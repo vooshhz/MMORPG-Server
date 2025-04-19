@@ -37,8 +37,8 @@ public class GameWorldManager : MonoBehaviour
          // When saving player state before scene change, include the override position
         if (NetworkClient.localPlayer != null)
         {
-            // Save player's current position/state before scene change
-            SavePlayerState(characterId, overridePosition);
+            Debug.LogError("Cannot change scene: Not connected to server");
+            yield break;
         }
         if (!NetworkClient.isConnected)
         {
@@ -55,6 +55,8 @@ public class GameWorldManager : MonoBehaviour
         
         // Step 2: Request scene change through NetworkSceneManager
         networkSceneManager.RequestSceneChange(targetScene);
+
+        StartCoroutine(EnablePlayerAfterSceneChange());
         
         // After scene change, the SpawnPlayerRequestMessage will be sent by NetworkSceneManager
         // when the SceneChangeApprovedMessage is received with spawnAfterChange=true
@@ -75,6 +77,17 @@ public class GameWorldManager : MonoBehaviour
                 position = position,
                 sceneName = currentScene
             });
+        }
+    }
+
+    private IEnumerator EnablePlayerAfterSceneChange()
+    {
+        yield return new WaitForSeconds(0.5f); // Small delay to ensure scene is loaded
+        
+        if (NetworkClient.localPlayer != null && !NetworkClient.localPlayer.gameObject.activeSelf)
+        {
+            Debug.Log("Enabling disabled player after scene change");
+            NetworkClient.localPlayer.gameObject.SetActive(true);
         }
     }
 }

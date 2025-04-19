@@ -73,6 +73,12 @@ public class NetworkSceneManager : MonoBehaviour
                 });
                 
                 Debug.Log($"Notified server that scene change to {scene.name} is complete");
+
+                // Force player objects to be active
+                if (NetworkClient.localPlayer != null)
+                {
+                    NetworkClient.localPlayer.gameObject.SetActive(true);
+                }
             }
         }
     }

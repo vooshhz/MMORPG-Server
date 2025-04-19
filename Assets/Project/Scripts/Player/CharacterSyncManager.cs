@@ -35,6 +35,20 @@ public class CharacterSyncManager : NetworkBehaviour
         string characterId = playerController.characterId;
         characterData.characterId = characterId;
         Debug.Log($"[Client] 🧠 SyncCharacterData started. characterId = {characterId}");
+
+        // Ensure the player is properly set up with authority
+        if (isLocalPlayer)
+        {
+            Debug.Log("Ensuring local player authority");
+            gameObject.SetActive(true);
+            
+            // Force input components to be enabled
+            var playerMovement = GetComponent<PlayerMovement>();
+            if (playerMovement != null)
+            {
+                playerMovement.enabled = true;
+            }
+        }
         
         // Request data
         CmdRequestCharacterData(characterId);
