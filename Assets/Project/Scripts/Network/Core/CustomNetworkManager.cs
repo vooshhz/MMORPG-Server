@@ -230,7 +230,7 @@ public class CustomNetworkManager : NetworkManager
     }
     
     private void OnSceneChangeCompleted(NetworkConnectionToClient conn, SceneChangeCompletedMessage msg)
-    {
+    {   
         Debug.Log($"Client confirmed scene change to {msg.sceneName} is complete");
         
         // Check if there's a character to spawn
@@ -244,11 +244,21 @@ public class CustomNetworkManager : NetworkManager
             {
                 Debug.Log($"Found pending spawn request for character {msg.characterId}, spawning now");
                 
-                // Spawn the player
+                // Spawn the player - MAKE SURE we're using the saved position
                 SpawnPlayerInScene(conn, request.characterId, request.spawnPosition);
                 
                 // Remove from pending requests
                 pendingSpawnRequests.Remove(requestKey);
+            }
+            else
+            {
+                // This might be a portal transition - look up saved location data
+                string userId = conn.authenticationData as string;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    ServerPlayerDataManager.Instance.GetCharacterLocation(conn, userId, msg.characterId, 
+                        (locationData) => SpawnPlayerInScene(conn, msg.characterId, locationData.position));
+                }
             }
         }
     }

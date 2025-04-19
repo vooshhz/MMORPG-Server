@@ -42,10 +42,10 @@ public class NetworkSceneManager : MonoBehaviour
     }
     
     // Called when a scene is loaded
-    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Don't fade in for the initial scene (prevents black screen at start)
-        if (scene.buildIndex == 0 && mode == UnityEngine.SceneManagement.LoadSceneMode.Single)
+        // Don't fade in for the initial scene
+        if (scene.buildIndex == 0 && mode == LoadSceneMode.Single)
             return;
             
         // Fade in when a new scene is loaded
@@ -55,16 +55,23 @@ public class NetworkSceneManager : MonoBehaviour
         if (NetworkClient.isConnected && !string.IsNullOrEmpty(scene.name))
         {
             // Get scene enum value from scene name
-            if (System.Enum.TryParse<SceneName>(scene.name, out SceneName sceneEnum))
+            if (Enum.TryParse<SceneName>(scene.name, out SceneName sceneEnum))
             {
-                string characterId = ""; // Default empty
+                string characterId = ""; 
                 
-                // If we have a pending scene change with character to spawn, include that ID
-                if (_pendingSceneChange?.spawnAfterChange == true)
+                // IMPORTANT: Include the character ID in the response to server
+                if (NetworkClient.localPlayer != null && 
+                    NetworkClient.localPlayer.GetComponent<PlayerNetworkController>() != null)
+                {
+                    characterId = NetworkClient.localPlayer.GetComponent<PlayerNetworkController>().characterId;
+                }
+                // Also check pending scene change
+                else if (_pendingSceneChange?.spawnAfterChange == true)
                 {
                     characterId = _pendingSceneChange.Value.characterId;
                     _pendingSceneChange = null;
                 }
+                
                 // Send confirmation to server
                 NetworkClient.Send(new SceneChangeCompletedMessage
                 {
@@ -72,13 +79,7 @@ public class NetworkSceneManager : MonoBehaviour
                     characterId = characterId
                 });
                 
-                Debug.Log($"Notified server that scene change to {scene.name} is complete");
-
-                // Force player objects to be active
-                if (NetworkClient.localPlayer != null)
-                {
-                    NetworkClient.localPlayer.gameObject.SetActive(true);
-                }
+                Debug.Log($"Notified server that scene change to {scene.name} is complete with characterId: {characterId}");
             }
         }
     }

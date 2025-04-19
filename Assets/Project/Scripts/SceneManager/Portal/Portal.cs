@@ -1,5 +1,6 @@
 using UnityEngine;
 using Mirror;
+using System.Collections;
 public class Portal : MonoBehaviour
 {
     [SerializeField] private SceneName targetScene;
@@ -21,24 +22,43 @@ public class Portal : MonoBehaviour
     }
     
     private void UsePortal(GameObject player)
+{
+    Debug.Log($"Portal used: Transitioning to {targetScene}");
+    
+    NetworkIdentity identity = player.GetComponent<NetworkIdentity>();
+    if (!identity || !identity.isLocalPlayer)
+        return;
+    
+    PlayerNetworkController playerController = player.GetComponent<PlayerNetworkController>();
+    if (!playerController)
+        return;
+        
+    string characterId = playerController.characterId;
+    if (string.IsNullOrEmpty(characterId))
+        return;
+    
+    Vector3 destination = new Vector3(destinationX, destinationY, 0f);
+    
+    // Save player state with the destination position before scene change
+    if (NetworkClient.isConnected)
     {
-        Debug.Log($"Portal used: Transitioning to {targetScene}");
+        // Send message to server with the destination position
+        NetworkClient.Send(new SavePlayerStateMessage
+        {
+            characterId = characterId,
+            position = destination, // Use destination, not current position
+            sceneName = targetScene.ToString()
+        });
         
-        NetworkIdentity identity = player.GetComponent<NetworkIdentity>();
-        if (!identity || !identity.isLocalPlayer)
-            return;
-        
-        PlayerNetworkController playerController = player.GetComponent<PlayerNetworkController>();
-        if (!playerController)
-            return;
-            
-        string characterId = playerController.characterId;
-        if (string.IsNullOrEmpty(characterId))
-            return;
-        
-        Vector3 destination = new Vector3(destinationX, destinationY, 0f);
-        
-        // Simple scene change request without saving position
-        NetworkSceneManager.Instance.RequestSceneChange(targetScene);
+        // Request scene change after saving state
+        StartCoroutine(RequestSceneChangeAfterDelay(targetScene));
     }
+}
+
+private IEnumerator RequestSceneChangeAfterDelay(SceneName sceneToLoad)
+{
+    // Small delay to ensure SavePlayerState message is processed first
+    yield return new WaitForSeconds(0.1f);
+    NetworkSceneManager.Instance.RequestSceneChange(sceneToLoad);
+}
 }
