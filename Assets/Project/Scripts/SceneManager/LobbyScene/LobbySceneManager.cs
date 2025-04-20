@@ -11,7 +11,6 @@ public class LobbySceneManager : MonoBehaviour
     
     private void Awake()
     {
-        // Singleton pattern
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -27,25 +26,22 @@ public class LobbySceneManager : MonoBehaviour
     
     private void OnEnable()
     {
-        // Register for network messages
         NetworkClient.RegisterHandler<LobbySceneTransitionResponseMessage>(HandleSceneTransitionResponse);
     }
     
     private void OnDisable()
     {
-        // Unregister to prevent memory leaks
         if (NetworkClient.active)
             NetworkClient.UnregisterHandler<LobbySceneTransitionResponseMessage>();
     }
     
-    // Request a scene transition from the server
     public void RequestSceneTransition(LobbyScene targetScene)
     {
         if (!NetworkClient.isConnected)
         {
             Debug.LogWarning("Cannot request scene transition: Not connected to server");
             
-            // For the login scene specifically, we can load it directly without server approval
+            // For login scene, load directly without server approval
             if (targetScene == LobbyScene.LoginScene)
             {
                 PerformSceneTransition(targetScene);
@@ -58,14 +54,12 @@ public class LobbySceneManager : MonoBehaviour
         if (debugMode)
             Debug.Log($"Requesting transition to {targetScene}");
         
-        // Send request to server
         NetworkClient.Send(new LobbySceneTransitionRequestMessage
         {
             targetScene = targetScene.ToString()
         });
     }
     
-    // Handler for server response
     private void HandleSceneTransitionResponse(LobbySceneTransitionResponseMessage msg)
     {
         if (debugMode)
@@ -73,7 +67,6 @@ public class LobbySceneManager : MonoBehaviour
         
         if (msg.approved)
         {
-            // Parse the scene name to enum
             if (Enum.TryParse<LobbyScene>(msg.sceneName, out LobbyScene targetScene))
             {
                 PerformSceneTransition(targetScene);
@@ -89,13 +82,12 @@ public class LobbySceneManager : MonoBehaviour
         }
     }
     
-    // Actually perform the scene transition
     private void PerformSceneTransition(LobbyScene targetScene)
     {
         if (debugMode)
             Debug.Log($"Performing transition to {targetScene}");
         
-        // Load the scene
+        // Direct scene loading without fading
         SceneManager.LoadScene(targetScene.ToString());
     }
 }

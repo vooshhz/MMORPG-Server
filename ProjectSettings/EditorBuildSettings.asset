@@ -6,21 +6,24 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Project/Scenes/ServerScene.unity
+    path: Assets/Project/Scenes/ServerScenes/ServerScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
-    path: Assets/Project/Scenes/LoginScene.unity
+    path: Assets/Project/Scenes/ClientScene/ClientScene.unity
+    guid: 3579ad62a8f0ed44faad268cd83b3599
+  - enabled: 1
+    path: Assets/Project/Scenes/LobbyScenes/LoginScene.unity
     guid: 9332aee21997f3b4a95eec4066a77943
   - enabled: 1
-    path: Assets/Project/Scenes/CharacterSelectionScene.unity
+    path: Assets/Project/Scenes/LobbyScenes/CharacterSelectionScene.unity
     guid: 06f72cd15a7ba0643ad6086b6105431e
   - enabled: 1
-    path: Assets/Project/Scenes/CharacterCreationScene.unity
+    path: Assets/Project/Scenes/LobbyScenes/CharacterCreationScene.unity
     guid: b11cfdf773f8cfa4ea9ed3ccbef552a6
   - enabled: 1
-    path: Assets/Project/Scenes/Farm_Scene.unity
+    path: Assets/Project/Scenes/GameScenes/Farm_Scene.unity
     guid: c65baca3831641649915ee4cdbda5002
   - enabled: 1
-    path: Assets/Project/Scenes/Farm_Yard_Scene.unity
+    path: Assets/Project/Scenes/GameScenes/Farm_Yard_Scene.unity
     guid: a830b3baacb707940930f4b65c6d15a4
   m_configObjects: {}
