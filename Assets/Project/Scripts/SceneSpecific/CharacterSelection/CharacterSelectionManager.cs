@@ -353,9 +353,9 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         Debug.Log("[CharacterSelectionManager] Loading character creation scene...");
     
-        if (SceneTransitionManager.Instance != null)
+        if (LobbySceneManager.Instance != null)
         {
-            SceneTransitionManager.Instance.LoadScene(LobbyScene.CharacterCreationScene);
+            LobbySceneManager.Instance.RequestSceneTransition(LobbyScene.CharacterCreationScene);
         }
     }
 }

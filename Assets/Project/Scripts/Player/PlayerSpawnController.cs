@@ -21,32 +21,32 @@ public class PlayerSpawnController : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
     
-    public void StartPlayerSpawnProcess(string characterId, LobbyScene sceneToLoad)
-    {
-        StartCoroutine(SpawnPlayerCoroutine(characterId, sceneToLoad));
-    }
+    // public void StartPlayerSpawnProcess(string characterId, LobbyScene sceneToLoad)
+    // {
+    //     StartCoroutine(SpawnPlayerCoroutine(characterId, sceneToLoad));
+    // }
     
-    private IEnumerator SpawnPlayerCoroutine(string characterId, LobbyScene sceneToLoad)
-    {
-        // Trigger scene transition with fade
-        if (SceneTransitionManager.Instance != null)
-        {
-            bool sceneLoadComplete = false;
-            SceneTransitionManager.Instance.LoadScene(sceneToLoad, () => { sceneLoadComplete = true; });
+    // private IEnumerator SpawnPlayerCoroutine(string characterId, LobbyScene sceneToLoad)
+    // {
+    //     // Trigger scene transition with fade
+    //     if (SceneTransitionManager.Instance != null)
+    //     {
+    //         bool sceneLoadComplete = false;
+    //         SceneTransitionManager.Instance.LoadScene(sceneToLoad, () => { sceneLoadComplete = true; });
             
-            // Wait for scene load to complete
-            yield return new WaitUntil(() => sceneLoadComplete);
-        }
+    //         // Wait for scene load to complete
+    //         yield return new WaitUntil(() => sceneLoadComplete);
+    //     }
         
-        // Additional delay to ensure scene is fully set up
-        yield return new WaitForSeconds(spawnDelay);
+    //     // Additional delay to ensure scene is fully set up
+    //     yield return new WaitForSeconds(spawnDelay);
         
-        // Send request to server to spawn player
-        NetworkClient.Send(new SpawnPlayerRequestMessage
-        {
-            characterId = characterId
-        });
-    }
+    //     // Send request to server to spawn player
+    //     NetworkClient.Send(new SpawnPlayerRequestMessage
+    //     {
+    //         characterId = characterId
+    //     });
+    // }
     
     // Call this from your NetworkManager when player is ready to be added to the scene
     public GameObject SpawnPlayerCharacter(NetworkConnectionToClient conn, string characterId, Vector3 position)

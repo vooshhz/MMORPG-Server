@@ -300,14 +300,6 @@ public class CustomNetworkManager : NetworkManager
         {
             ClientPlayerDataManager.Instance.ClearAllData();
         }
-        
-        // Reset UI state if needed
-        
-        // Return to login scene
-        if (SceneTransitionManager.Instance != null)
-        {
-            SceneTransitionManager.Instance.LoadScene(LobbyScene.LoginScene);
-        }
     }
 
     private void OnSavePlayerState(NetworkConnectionToClient conn, SavePlayerStateMessage msg)
