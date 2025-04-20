@@ -323,7 +323,7 @@ MonoBehaviour:
   evaluationMethod: 0
   evaluationInterval: 3
   timeInterpolationGui: 0
-  spawnedCharactersParent: {fileID: 0}
+  spawnedCharactersParent: {fileID: 51885232}
 --- !u!114 &1352269082
 MonoBehaviour:
   m_ObjectHideFlags: 0

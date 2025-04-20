@@ -214,8 +214,18 @@ public class CustomNetworkManager : NetworkManager
 
         string sceneName = locationData.sceneName;
         Vector3 spawnPos = locationData.position;
-
-        StartCoroutine(SpawnPlayerRoutine(conn, userId, characterId, sceneName, spawnPos));
+        
+        // First send a scene change message to the client
+        conn.Send(new SceneChangeApprovedMessage
+        {
+            sceneName = sceneName,
+            characterId = characterId,
+            spawnAfterChange = true
+        });
+        
+        // Store this as a pending spawn request
+        // The actual spawn will happen when the client confirms scene change in OnSceneChangeCompleted
+        // Don't start the coroutine here - this avoids race conditions
     }
 
     private IEnumerator SpawnPlayerRoutine(NetworkConnectionToClient conn, string userId, string characterId, string sceneName, Vector3 spawnPos)
@@ -231,10 +241,8 @@ public class CustomNetworkManager : NetworkManager
             SpawnedCharacterTracker.Instance.RemoveCharacter(characterId);
         }
 
-        // STEP 3: Instantiate and parent under SpawnedCharacters
+        // STEP 3: Instantiate player WITHOUT setting a parent
         GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-        if (spawnedCharactersParent != null)
-            player.transform.SetParent(spawnedCharactersParent);
 
         // STEP 4: Move to target scene
         SceneManager.MoveGameObjectToScene(player, targetScene);
@@ -252,19 +260,17 @@ public class CustomNetworkManager : NetworkManager
     
     private void OnSceneChangeCompleted(NetworkConnectionToClient conn, SceneChangeCompletedMessage msg)
     {
-        Debug.Log($"✅ Client confirmed scene load: {msg.sceneName} for character {msg.characterId}");
-
         string userId = conn.authenticationData as string;
         if (string.IsNullOrEmpty(userId)) return;
 
-        string characterId = msg.characterId;
-
-        // Lookup the character's saved location
-        ServerPlayerDataManager.Instance.GetCharacterLocation(conn, userId, characterId, (locationData) =>
+        Debug.Log($"✅ Client confirmed scene load: {msg.sceneName} for character {msg.characterId}");
+        
+        // Get player's location data and spawn them
+        ServerPlayerDataManager.Instance.GetCharacterLocation(conn, userId, msg.characterId, (locationData) =>
         {
-            HandlePlayerSpawnWithLocation(conn, characterId, locationData);
+            StartCoroutine(SpawnPlayerRoutine(conn, userId, msg.characterId, msg.sceneName, locationData.position));
         });
-    }
+}
 
     
     private void SpawnPlayerInScene(NetworkConnectionToClient conn, string characterId, Vector3 position)
@@ -339,11 +345,12 @@ public class CustomNetworkManager : NetworkManager
     [Client]
     protected void OnSceneChangeApproved(SceneChangeApprovedMessage msg)
     {
-        Debug.Log($"[Client] Scene change approved: {msg.sceneName}, spawnAfterChange={msg.spawnAfterChange}");
-
+        Debug.Log($"[Client] Scene change approved: {msg.sceneName}, characterId={msg.characterId}");
+        
+        // Store the character ID
         ClientPlayerDataManager.Instance.SetSelectedCharacterId(msg.characterId);
-
-        // Use the proper way to request a scene change from the client
+        
+        // Load the scene
         SceneManager.LoadScene(msg.sceneName);
     }
 }
