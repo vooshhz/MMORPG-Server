@@ -53,7 +53,7 @@ public class SceneTransitionManager : MonoBehaviour
     /// </summary>
     /// <param name="sceneName">The scene to load</param>
     /// <param name="onComplete">Optional callback when scene load is complete</param>
-    public void LoadScene(SceneName sceneName, Action onComplete = null)
+    public void LoadScene(LobbyScene sceneName, Action onComplete = null)
     {
         // Don't start another fade if we're already fading
         if (isFading)

@@ -107,3 +107,17 @@ public struct SavePlayerStateMessage : NetworkMessage
     public Vector3 position;
     public string sceneName;
 }
+
+// Client to server: Request to change to a lobby scene
+public struct LobbySceneTransitionRequestMessage : NetworkMessage
+{
+    public string targetScene; // Name of the requested scene
+}
+
+// Server to client: Response to scene change request
+public struct LobbySceneTransitionResponseMessage : NetworkMessage
+{
+    public bool approved;     // Whether the transition is allowed
+    public string sceneName;  // Name of the approved scene
+    public string message;    // Optional message (especially for denials)
+}

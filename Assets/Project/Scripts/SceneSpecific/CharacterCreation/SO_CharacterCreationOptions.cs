@@ -18,7 +18,7 @@ public class CharacterCreationOptionsData : ScriptableObject
     }
 
     [Header("Starting Scene")]
-    public SceneName startingSceneName = SceneName.CharacterSelectionScene;
+    public LobbyScene startingSceneName = LobbyScene.CharacterSelectionScene;
     
     [Header("Available Classes")]
     public ClassOption[] availableClasses = new ClassOption[]

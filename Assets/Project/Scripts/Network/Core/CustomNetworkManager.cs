@@ -41,14 +41,78 @@ public class CustomNetworkManager : NetworkManager
         NetworkServer.RegisterHandler<RequestCharacterCreationOptionsMessage>(OnRequestCharacterCreationOptions);
         NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);     
         NetworkServer.RegisterHandler<SpawnPlayerRequestMessage>(OnSpawnPlayerRequest);   
-        NetworkServer.RegisterHandler<SceneChangeRequestMessage>(OnSceneChangeRequest);
         NetworkServer.RegisterHandler<SceneChangeCompletedMessage>(OnSceneChangeCompleted);
         NetworkServer.RegisterHandler<SavePlayerStateMessage>(OnSavePlayerState);
+        NetworkServer.RegisterHandler<LobbySceneTransitionRequestMessage>(OnLobbySceneTransitionRequest);
         
         // Start routine to clean up stale pending spawn requests
         StartCoroutine(CleanupStalePendingRequests());
     }
     
+    private void OnLobbySceneTransitionRequest(NetworkConnectionToClient conn, LobbySceneTransitionRequestMessage msg)
+    {
+        // Get the authenticated user ID from the connection
+        string userId = conn.authenticationData as string;
+        
+        // Check if user is authenticated
+        if (string.IsNullOrEmpty(userId))
+        {
+            // Allow transition to login scene even without auth
+            if (msg.targetScene == LobbyScene.LoginScene.ToString())
+            {
+                SendLobbySceneTransitionResponse(conn, true, LobbyScene.LoginScene.ToString());
+                return;
+            }
+            
+            // Deny other transitions if not authenticated
+            Debug.LogWarning($"Connection {conn.connectionId} requested scene transition without valid auth");
+            SendLobbySceneTransitionResponse(conn, false, msg.targetScene, "Authentication required");
+            return;
+        }
+        
+        // Parse the requested scene name
+        if (Enum.TryParse<LobbyScene>(msg.targetScene, out LobbyScene targetScene))
+        {
+            // Check if the transition is allowed
+            if (IsLobbySceneTransitionAllowed(conn, targetScene))
+            {
+                // Approve the transition
+                SendLobbySceneTransitionResponse(conn, true, targetScene.ToString());
+            }
+            else
+            {
+                // Deny the transition
+                SendLobbySceneTransitionResponse(conn, false, targetScene.ToString(), "Transition not allowed");
+            }
+        }
+        else
+        {
+            // Invalid scene name
+            Debug.LogError($"Invalid lobby scene name requested: {msg.targetScene}");
+            SendLobbySceneTransitionResponse(conn, false, msg.targetScene, "Invalid scene name");
+        }
+    }
+
+    // Check if a scene transition is allowed
+    private bool IsLobbySceneTransitionAllowed(NetworkConnectionToClient conn, LobbyScene targetScene)
+    {
+        // Add your validation logic here
+        // For example, check if player has completed necessary steps
+        
+        // For now, allow all transitions for authenticated users
+        return true;
+    }
+
+    // Send response to client
+    private void SendLobbySceneTransitionResponse(NetworkConnectionToClient conn, bool approved, string sceneName, string message = "")
+    {
+        conn.Send(new LobbySceneTransitionResponseMessage
+        {
+            approved = approved,
+            sceneName = sceneName,
+            message = message
+        });
+    }
     // Clean up pending spawn requests that have been waiting too long (30 seconds)
     private IEnumerator CleanupStalePendingRequests()
     {
@@ -72,53 +136,6 @@ public class CustomNetworkManager : NetworkManager
             
             yield return new WaitForSeconds(10f);
         }
-    }
-
-    private void OnSceneChangeRequest(NetworkConnectionToClient conn, SceneChangeRequestMessage msg)
-    {
-        // Verify user is authenticated
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId))
-        {
-            Debug.LogError($"Connection {conn.connectionId} tried to change scene without valid auth");
-            return;
-        }
-        
-        // Verify the requested scene is valid 
-        if (Enum.TryParse<SceneName>(msg.sceneName, out SceneName targetScene))
-        {
-            // Check if scene change is allowed
-            bool isAllowed = IsSceneChangeAllowed(conn, targetScene);
-            
-            if (isAllowed)
-            {
-                // Send scene change approval without spawning player
-                conn.Send(new SceneChangeApprovedMessage { 
-                    sceneName = targetScene.ToString(),
-                    characterId = "",
-                    spawnAfterChange = false
-                });
-                
-                // For game world scenes, handle via server's scene management if needed
-                if (targetScene != SceneName.CharacterSelectionScene && 
-                    targetScene != SceneName.CharacterCreationScene &&
-                    targetScene != SceneName.LoginScene)
-                {
-                    ServerChangeScene(targetScene.ToString());
-                }
-            }
-        }
-        else
-        {
-            Debug.LogError($"Invalid scene name requested: {msg.sceneName}");
-        }
-    }
-    
-    private bool IsSceneChangeAllowed(NetworkConnectionToClient conn, SceneName targetScene)
-    {
-        // Add your validation logic here
-        // For example, check if player has the right to access this scene
-        return true; // For now, allow all scene changes
     }
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
@@ -289,7 +306,7 @@ public class CustomNetworkManager : NetworkManager
         // Return to login scene
         if (SceneTransitionManager.Instance != null)
         {
-            SceneTransitionManager.Instance.LoadScene(SceneName.LoginScene);
+            SceneTransitionManager.Instance.LoadScene(LobbyScene.LoginScene);
         }
     }
 

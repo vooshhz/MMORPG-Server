@@ -4,7 +4,7 @@ using Mirror;
 public class SceneTransitionTrigger : MonoBehaviour
 {
     [Header("Destination Settings")]
-    [SerializeField] private SceneName destinationScene;
+    [SerializeField] private LobbyScene destinationScene;
     [SerializeField] private float spawnX;
     [SerializeField] private float spawnY;
 

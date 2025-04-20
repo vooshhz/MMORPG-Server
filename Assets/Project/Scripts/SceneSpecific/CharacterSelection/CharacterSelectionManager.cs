@@ -355,7 +355,7 @@ public class CharacterSelectionManager : MonoBehaviour
     
         if (SceneTransitionManager.Instance != null)
         {
-            SceneTransitionManager.Instance.LoadScene(SceneName.CharacterCreationScene);
+            SceneTransitionManager.Instance.LoadScene(LobbyScene.CharacterCreationScene);
         }
     }
 }

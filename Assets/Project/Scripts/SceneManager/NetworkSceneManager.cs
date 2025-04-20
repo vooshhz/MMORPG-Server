@@ -55,7 +55,7 @@ public class NetworkSceneManager : MonoBehaviour
         if (NetworkClient.isConnected && !string.IsNullOrEmpty(scene.name))
         {
             // Get scene enum value from scene name
-            if (System.Enum.TryParse<SceneName>(scene.name, out SceneName sceneEnum))
+            if (System.Enum.TryParse<LobbyScene>(scene.name, out LobbyScene sceneEnum))
             {
                 string characterId = ""; // Default empty
                 
@@ -81,7 +81,7 @@ public class NetworkSceneManager : MonoBehaviour
     private SceneChangeApprovedMessage? _pendingSceneChange;
     
     // Request scene change from server (use this for post-auth scenes)
-    public void RequestSceneChange(SceneName targetScene)
+    public void RequestSceneChange(LobbyScene targetScene)
     {
         if (!NetworkClient.isConnected)
         {
@@ -99,7 +99,7 @@ public class NetworkSceneManager : MonoBehaviour
     }
     
     // For pre-auth scenes that don't need server authorization
-    public void ChangeSceneLocally(SceneName targetScene)
+    public void ChangeSceneLocally(LobbyScene targetScene)
     {
         // Use your existing SceneTransitionManager for local scene changes
         transitionManager.LoadScene(targetScene);
@@ -108,7 +108,7 @@ public class NetworkSceneManager : MonoBehaviour
     // Handler for approved scene changes
     private void OnSceneChangeApproved(SceneChangeApprovedMessage msg)
     {
-        if (System.Enum.TryParse<SceneName>(msg.sceneName, out SceneName targetScene))
+        if (System.Enum.TryParse<LobbyScene>(msg.sceneName, out LobbyScene targetScene))
         {
             // Store this as a pending scene change if player spawning is needed after
             if (msg.spawnAfterChange)

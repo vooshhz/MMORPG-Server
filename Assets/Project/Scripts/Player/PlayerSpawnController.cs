@@ -21,12 +21,12 @@ public class PlayerSpawnController : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
     
-    public void StartPlayerSpawnProcess(string characterId, SceneName sceneToLoad)
+    public void StartPlayerSpawnProcess(string characterId, LobbyScene sceneToLoad)
     {
         StartCoroutine(SpawnPlayerCoroutine(characterId, sceneToLoad));
     }
     
-    private IEnumerator SpawnPlayerCoroutine(string characterId, SceneName sceneToLoad)
+    private IEnumerator SpawnPlayerCoroutine(string characterId, LobbyScene sceneToLoad)
     {
         // Trigger scene transition with fade
         if (SceneTransitionManager.Instance != null)

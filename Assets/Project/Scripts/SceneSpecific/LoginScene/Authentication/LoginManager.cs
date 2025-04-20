@@ -81,9 +81,9 @@ public class LoginManager : MonoBehaviour
         // Load character selection scene
         messageText.text = "Loading character selection...";
         
-        if (NetworkSceneManager.Instance != null)
+        if (LobbySceneManager.Instance != null)
         {
-            NetworkSceneManager.Instance.RequestSceneChange(SceneName.CharacterSelectionScene);
+            LobbySceneManager.Instance.RequestSceneTransition(LobbyScene.CharacterSelectionScene);
         }        
     }
 

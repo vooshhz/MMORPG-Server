@@ -275,9 +275,9 @@ public class CharacterCreationManager : MonoBehaviour
             Debug.Log($"Character created successfully! ID: {msg.characterId}");
             
             // Return to character selection screen
-            if (NetworkSceneManager.Instance != null)
+            if (LobbySceneManager.Instance != null)
             {
-                NetworkSceneManager.Instance.RequestSceneChange(SceneName.CharacterSelectionScene);
+                LobbySceneManager.Instance.RequestSceneTransition(LobbyScene.CharacterSelectionScene);
             } 
         }
         else

@@ -27,12 +27,12 @@ public class GameWorldManager : MonoBehaviour
     }
     
     // Primary method for changing scenes with player persistence
-    public void ChangeGameScene(SceneName targetScene, string characterId, Vector3? overridePosition = null)
+    public void ChangeGameScene(LobbyScene targetScene, string characterId, Vector3? overridePosition = null)
     {
         StartCoroutine(ChangeSceneAndSpawnPlayer(targetScene, characterId, overridePosition));
     }
     
-    private IEnumerator ChangeSceneAndSpawnPlayer(SceneName targetScene, string characterId, Vector3? overridePosition)
+    private IEnumerator ChangeSceneAndSpawnPlayer(LobbyScene targetScene, string characterId, Vector3? overridePosition)
     {
         if (!NetworkClient.isConnected)
         {
