@@ -210,22 +210,17 @@ public class CustomNetworkManager : NetworkManager
     private void HandlePlayerSpawnWithLocation(NetworkConnectionToClient conn, string characterId, ClientPlayerDataManager.LocationData locationData)
     {
         string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId)) return;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Debug.LogError("Connection has no valid authentication data!");
+            return;
+        }
 
         string sceneName = locationData.sceneName;
         Vector3 spawnPos = locationData.position;
-        
-        // First send a scene change message to the client
-        conn.Send(new SceneChangeApprovedMessage
-        {
-            sceneName = sceneName,
-            characterId = characterId,
-            spawnAfterChange = true
-        });
-        
-        // Store this as a pending spawn request
-        // The actual spawn will happen when the client confirms scene change in OnSceneChangeCompleted
-        // Don't start the coroutine here - this avoids race conditions
+
+        Debug.Log($"Starting spawn routine for character {characterId} in scene {sceneName} at position {spawnPos}");
+        StartCoroutine(SpawnPlayerRoutine(conn, userId, characterId, sceneName, spawnPos));
     }
 
     private IEnumerator SpawnPlayerRoutine(NetworkConnectionToClient conn, string userId, string characterId, string sceneName, Vector3 spawnPos)
@@ -260,17 +255,27 @@ public class CustomNetworkManager : NetworkManager
     
     private void OnSceneChangeCompleted(NetworkConnectionToClient conn, SceneChangeCompletedMessage msg)
     {
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId)) return;
-
         Debug.Log($"✅ Client confirmed scene load: {msg.sceneName} for character {msg.characterId}");
-        
-        // Get player's location data and spawn them
-        ServerPlayerDataManager.Instance.GetCharacterLocation(conn, userId, msg.characterId, (locationData) =>
+
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId)) 
         {
-            StartCoroutine(SpawnPlayerRoutine(conn, userId, msg.characterId, msg.sceneName, locationData.position));
+            Debug.LogError("Connection has no valid authentication data!");
+            return;
+        }
+
+        string characterId = msg.characterId;
+
+        // Add more logging here
+        Debug.Log($"Getting location data for userId: {userId}, characterId: {characterId}");
+
+        // Lookup the character's saved location
+        ServerPlayerDataManager.Instance.GetCharacterLocation(conn, userId, characterId, (locationData) =>
+        {
+            Debug.Log($"Got location data: Scene={locationData.sceneName}, Pos={locationData.position}");
+            HandlePlayerSpawnWithLocation(conn, characterId, locationData);
         });
-}
+    }
 
     
     private void SpawnPlayerInScene(NetworkConnectionToClient conn, string characterId, Vector3 position)
