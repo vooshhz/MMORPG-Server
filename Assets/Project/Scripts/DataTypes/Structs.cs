@@ -121,3 +121,4 @@ public struct LobbySceneTransitionResponseMessage : NetworkMessage
     public string sceneName;  // Name of the approved scene
     public string message;    // Optional message (especially for denials)
 }
+
