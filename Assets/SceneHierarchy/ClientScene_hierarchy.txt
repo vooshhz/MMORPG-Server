@@ -1,24 +1,15 @@
 Scene: ClientScene (Assets/Project/Scenes/ClientScene/ClientScene.unity)
-Extraction Time: 2025-04-20 9:16:58 PM
+Extraction Time: 2025-04-20 10:20:09 PM
 ------------------------------------------------------
 
 + LobbySceneManager [Active]
-  Position: (1.69, -1.02, -0.16)
-  Rotation: (0.00, 0.00, 0.00)
-  Scale: (1.00, 1.00, 1.00)
   Components:
     - LobbySceneManager
 + NetworkManager [Active]
-  Position: (0.00, 0.00, 0.00)
-  Rotation: (0.00, 0.00, 0.00)
-  Scale: (1.00, 1.00, 1.00)
   Components:
     - CustomNetworkManager
     - KcpTransport
     - FirebaseAuthenticator
 + ClientBootstrapper [Active]
-  Position: (403.82, 231.87, 1.61)
-  Rotation: (0.00, 0.00, 0.00)
-  Scale: (1.00, 1.00, 1.00)
   Components:
     - ClientBootstrapper

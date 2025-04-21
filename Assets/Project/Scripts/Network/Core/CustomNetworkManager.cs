@@ -45,12 +45,33 @@ public class CustomNetworkManager : NetworkManager
         NetworkServer.RegisterHandler<SceneChangeCompletedMessage>(OnSceneChangeCompleted);
         NetworkServer.RegisterHandler<SavePlayerStateMessage>(OnSavePlayerState);
         NetworkServer.RegisterHandler<LobbySceneTransitionRequestMessage>(OnLobbySceneTransitionRequest);
+        NetworkServer.RegisterHandler<SceneChangeRequestMessage>(OnSceneChangeRequest);
+
 
         
         // Start routine to clean up stale pending spawn requests
         StartCoroutine(CleanupStalePendingRequests());
     }
     
+    private void OnSceneChangeRequest(NetworkConnectionToClient conn, SceneChangeRequestMessage msg)
+    {
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Debug.LogError($"Connection {conn.connectionId} tried to change scene without valid auth");
+            return;
+        }
+        
+        string characterId = msg.characterId;
+        
+        // Send approval to client
+        conn.Send(new SceneChangeApprovedMessage
+        {
+            sceneName = msg.sceneName,
+            characterId = characterId,
+            spawnAfterChange = true
+        });
+    }
     private void OnLobbySceneTransitionRequest(NetworkConnectionToClient conn, LobbySceneTransitionRequestMessage msg)
     {
         // Get the authenticated user ID from the connection

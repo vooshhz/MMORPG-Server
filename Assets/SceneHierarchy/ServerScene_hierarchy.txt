@@ -1,36 +1,21 @@
 Scene: ServerScene (Assets/Project/Scenes/ServerScenes/ServerScene.unity)
-Extraction Time: 2025-04-20 9:17:00 PM
+Extraction Time: 2025-04-20 10:20:11 PM
 ------------------------------------------------------
 
 + NetworkManager [Active]
-  Position: (0.00, 0.00, 0.00)
-  Rotation: (0.00, 0.00, 0.00)
-  Scale: (1.00, 1.00, 1.00)
   Components:
     - CustomNetworkManager
     - ServerBootstrapper
     - KcpTransport
     - FirebaseAuthenticator
 + ServerPlayerDataManager [Active]
-  Position: (0.00, 0.00, 0.00)
-  Rotation: (0.00, 0.00, 0.00)
-  Scale: (1.00, 1.00, 1.00)
   Components:
     - ServerPlayerDataManager
 + PlayerSpawnController [Active]
-  Position: (0.00, 0.00, 0.00)
-  Rotation: (0.00, 0.00, 0.00)
-  Scale: (1.00, 1.00, 1.00)
   Components:
     - PlayerSpawnController
 + SpawnedCharacterTracker [Active]
-  Position: (0.00, 0.00, 0.00)
-  Rotation: (0.00, 0.00, 0.00)
-  Scale: (1.00, 1.00, 1.00)
   Components:
     - SpawnedCharacterTracker
 + SpawnedCharacters [Active]
-  Position: (0.00, 0.00, 0.00)
-  Rotation: (0.00, 0.00, 0.00)
-  Scale: (1.00, 1.00, 1.00)
   Components:

@@ -48,15 +48,16 @@ public enum GridBoolProperty
 
 public enum LobbyScene
 {
-    Farm_Scene,
-    Farm_Yard_Scene,
-
-
-
     ServerScene,
     LoginScene,
     CharacterSelectionScene,
     CharacterCreationScene,
+}
+
+public enum GameScene
+{
+    Farm_Scene,
+    Farm_Yard_Scene,
 }
 public enum EventType
 {
