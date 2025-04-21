@@ -1,0 +1,148 @@
+Scene: LoginScene (Assets/Project/Scenes/LobbyScenes/LoginScene.unity)
+Extraction Time: 2025-04-20 9:16:59 PM
+------------------------------------------------------
+
++ Main Camera [Active]
+  Position: (0.00, 0.00, -10.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - Camera
+    - AudioListener
+    - UniversalAdditionalCameraData
++ Global Light 2D [Active]
+  Position: (0.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - Light2D
++ Canvas [Active]
+  Position: (395.50, 222.50, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (0.41, 0.41, 0.41)
+  Components:
+    - Canvas
+    - CanvasScaler
+    - GraphicRaycaster
+    - VerticalLayoutGroup
+    + EmailInput [Active]
+      Position: (-960.00, -540.08, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CanvasRenderer
+        - Image
+        - TMP_InputField
+        + Text Area [Active]
+          Position: (0.00, -0.50, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - RectMask2D
+            + Placeholder [Active]
+              Position: (0.00, 0.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+                - LayoutElement
+            + Text [Active]
+              Position: (0.00, 0.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+    + PasswordInput [Active]
+      Position: (-960.00, -540.08, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CanvasRenderer
+        - Image
+        - TMP_InputField
+        + Text Area [Active]
+          Position: (0.00, -0.50, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - RectMask2D
+            + Placeholder [Active]
+              Position: (0.00, 0.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+                - LayoutElement
+            + Text [Active]
+              Position: (0.00, 0.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+    + LoginButton [Active]
+      Position: (-960.00, -540.08, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CanvasRenderer
+        - Image
+        - Button
+        + Text (TMP) [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - TextMeshProUGUI
+    + RegisterButton [Active]
+      Position: (-960.00, -540.08, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CanvasRenderer
+        - Image
+        - Button
+        + Text (TMP) [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - TextMeshProUGUI
+    + Text (TMP) [Active]
+      Position: (-960.00, -540.08, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CanvasRenderer
+        - TextMeshProUGUI
++ EventSystem [Active]
+  Position: (0.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - EventSystem
+    - StandaloneInputModule
++ BackgroundImage [Active]
+  Position: (0.00, 0.40, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - SpriteRenderer
++ AutoFillLogin [Active]
+  Position: (0.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - AutoFillLogin
+    + AuthenticationManager [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - LoginManager
+        - RegistrationManager

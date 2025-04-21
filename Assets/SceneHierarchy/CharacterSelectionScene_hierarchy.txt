@@ -1,0 +1,350 @@
+Scene: CharacterSelectionScene (Assets/Project/Scenes/LobbyScenes/CharacterSelectionScene.unity)
+Extraction Time: 2025-04-20 9:16:59 PM
+------------------------------------------------------
+
++ Main Camera [Active]
+  Position: (0.00, 0.00, -10.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - Camera
+    - AudioListener
+    - UniversalAdditionalCameraData
++ CharacterSelectionCanvas [Active]
+  Position: (395.50, 222.50, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (0.41, 0.41, 0.41)
+  Components:
+    - Canvas
+    - CanvasScaler
+    - GraphicRaycaster
+    + CharacterPanels [Active]
+      Position: (-899.75, 203.87, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - HorizontalLayoutGroup
+        + CharacterPanel1 [Active]
+          Position: (0.00, -100.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - Image
+            - VerticalLayoutGroup
+            - Button
+            + CharacterNameText [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + CharacterClassText [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + CharacterLevelText [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + RawImage [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - RawImage
+        + CharacterPanel2 [Active]
+          Position: (0.00, -100.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - Image
+            - VerticalLayoutGroup
+            - Button
+            + CharacterNameText [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + CharacterClassText [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + CharacterLevelText [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + RawImage [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - RawImage
+        + CharacterPanel3 [Active]
+          Position: (0.00, -100.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - Image
+            - VerticalLayoutGroup
+            - Button
+            + CharacterNameText [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + CharacterClassText [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + CharacterLevelText [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + RawImage [Active]
+              Position: (0.00, -700.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - RawImage
+    + CharacterCreationButton [Active]
+      Position: (-797.00, 470.08, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CanvasRenderer
+        - Image
+        - Button
+        + Text (TMP) [Active]
+          Position: (180.00, -45.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - TextMeshProUGUI
+    + EnterWorld [Active]
+      Position: (822.57, 469.68, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CanvasRenderer
+        - Image
+        - Button
+        - EnterWorldButton
+        + Text (TMP) [Active]
+          Position: (-180.00, -45.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - TextMeshProUGUI
+    + LogoutButton [Active]
+      Position: (-26.00, -518.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CanvasRenderer
+        - Image
+        - Button
+        - LogoutButton
+        + Text (TMP) [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - TextMeshProUGUI
++ CharacterPreview1 [Active]
+  Position: (-50.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - SortingGroup
+    - CharacterAnimator
+    + CharacterCamera [Active]
+      Position: (0.00, 1.50, -10.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Camera
+        - UniversalAdditionalCameraData
+    + Character [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        + hair [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + head [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + body [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + torso [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + legs [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
++ CharacterPreview2 [Active]
+  Position: (-40.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - SortingGroup
+    - CharacterAnimator
+    + CharacterCamera [Active]
+      Position: (0.00, 1.50, -10.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Camera
+        - UniversalAdditionalCameraData
+    + Character [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        + hair [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + head [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + body [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + torso [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + legs [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
++ CharacterPreview3 [Active]
+  Position: (-30.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - SortingGroup
+    - CharacterAnimator
+    + CharacterCamera [Active]
+      Position: (0.00, 1.50, -10.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Camera
+        - UniversalAdditionalCameraData
+    + Character [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        + hair [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + head [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + body [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + torso [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + legs [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
++ ClientPlayerDataManager [Active]
+  Position: (265.87, 418.18, -3.67)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - ClientPlayerDataManager
++ CharacterSelectionManager [Active]
+  Position: (-50.00, 1.50, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - CharacterSelectionManager
++ EventSystem [Active]
+  Position: (0.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - EventSystem
+    - StandaloneInputModule

@@ -1,0 +1,100 @@
+Scene: Farm_Scene (Assets/Project/Scenes/GameScenes/Farm_Scene.unity)
+Extraction Time: 2025-04-20 9:16:58 PM
+------------------------------------------------------
+
++ Grid [Active]
+  Position: (0.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - Grid
+    + Ground1 [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Tilemap
+        - TilemapRenderer
+    + Ground2 [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Tilemap
+        - TilemapRenderer
+    + Ground3 [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Tilemap
+        - TilemapRenderer
+    + GroundDecorations1 [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Tilemap
+        - TilemapRenderer
+    + GroundDecorations2 [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Tilemap
+        - TilemapRenderer
+    + Instances [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Tilemap
+        - TilemapRenderer
+    + Front1 [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Tilemap
+        - TilemapRenderer
+    + Front2 [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Tilemap
+        - TilemapRenderer
+    + Collisions [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Tilemap
+        - TilemapRenderer
++ Cameras [Active]
+  Position: (0.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    + VirtualCamera [Active]
+      Position: (0.00, 0.00, -10.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CinemachineVirtualCamera
+        + cm [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CinemachinePipeline
+            - CinemachineComposer
+            - CinemachineTransposer
+    + SceneCamera [Active]
+      Position: (0.00, 0.00, -10.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Camera
+        - UniversalAdditionalCameraData
+        - CinemachineBrain

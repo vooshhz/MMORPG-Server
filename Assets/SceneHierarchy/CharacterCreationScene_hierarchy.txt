@@ -1,0 +1,385 @@
+Scene: CharacterCreationScene (Assets/Project/Scenes/LobbyScenes/CharacterCreationScene.unity)
+Extraction Time: 2025-04-20 9:16:59 PM
+------------------------------------------------------
+
++ Main Camera [Active]
+  Position: (0.00, 0.00, -10.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - Camera
+    - AudioListener
+    - UniversalAdditionalCameraData
++ CharacterCreationCanvas [Active]
+  Position: (395.50, 222.50, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - Canvas
+    - CanvasScaler
+    - GraphicRaycaster
+    + Panel [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CanvasRenderer
+        - Image
+        + CharacterName [Active]
+          Position: (0.00, 138.30, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - Image
+            - TMP_InputField
+            + Text Area [Active]
+              Position: (0.00, -0.50, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - RectMask2D
+                + Placeholder [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+                    - LayoutElement
+                + Text [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+        + ClassSelection [Active]
+          Position: (-300.00, -153.08, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - HorizontalLayoutGroup
+            + Warrior [Active]
+              Position: (0.00, -100.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+            + Magician [Active]
+              Position: (0.00, -100.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+            + Luminary [Active]
+              Position: (0.00, -100.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+            + Hunter [Active]
+              Position: (0.00, -100.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+        + Text (TMP) [Active]
+          Position: (-30.70, 182.46, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - TextMeshProUGUI
+        + RawImage [Active]
+          Position: (0.00, -1.23, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - RawImage
+        + CharacterCustomizationBody [Active]
+          Position: (-243.20, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - HorizontalLayoutGroup
+            + LeftButton [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+            + Text [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + RightButton [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+        + CharacterCustomizationHair [Active]
+          Position: (-243.20, -35.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - HorizontalLayoutGroup
+            + LeftButton [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+            + Text [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + RightButton [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+        + CharacterCustomizationTorso [Active]
+          Position: (-243.20, -70.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - HorizontalLayoutGroup
+            + LeftButton [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+            + Text [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + RightButton [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+        + CharacterCustomizationPants [Active]
+          Position: (-243.20, -105.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - HorizontalLayoutGroup
+            + LeftButton [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+            + Text [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - TextMeshProUGUI
+            + RightButton [Active]
+              Position: (-50.00, -50.00, 0.00)
+              Rotation: (0.00, 0.00, 0.00)
+              Scale: (1.00, 1.00, 1.00)
+              Components:
+                - CanvasRenderer
+                - Image
+                - Button
+                + Text (TMP) [Active]
+                  Position: (0.00, 0.00, 0.00)
+                  Rotation: (0.00, 0.00, 0.00)
+                  Scale: (1.00, 1.00, 1.00)
+                  Components:
+                    - CanvasRenderer
+                    - TextMeshProUGUI
+    + CreateCharacterButton [Active]
+      Position: (299.07, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - CanvasRenderer
+        - Image
+        - Button
+        + Text (TMP) [Active]
+          Position: (-80.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - CanvasRenderer
+            - TextMeshProUGUI
++ EventSystem [Active]
+  Position: (0.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - EventSystem
+    - StandaloneInputModule
++ CharacterPreview [Active]
+  Position: (-30.00, 0.00, 0.00)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - SortingGroup
+    - CharacterAnimator
+    + CharacterCamera [Active]
+      Position: (0.00, 1.50, -10.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        - Camera
+        - UniversalAdditionalCameraData
+    + Character [Active]
+      Position: (0.00, 0.00, 0.00)
+      Rotation: (0.00, 0.00, 0.00)
+      Scale: (1.00, 1.00, 1.00)
+      Components:
+        + hair [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + head [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + body [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + torso [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
+        + legs [Active]
+          Position: (0.00, 0.00, 0.00)
+          Rotation: (0.00, 0.00, 0.00)
+          Scale: (1.00, 1.00, 1.00)
+          Components:
+            - SpriteRenderer
++ CharacterCreationManager [Active]
+  Position: (365.30, 233.11, 0.05)
+  Rotation: (0.00, 0.00, 0.00)
+  Scale: (1.00, 1.00, 1.00)
+  Components:
+    - CharacterCreationManager
