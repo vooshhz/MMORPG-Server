@@ -193,6 +193,8 @@ public class CustomNetworkManager : NetworkManager
 
     private void OnSpawnPlayerRequest(NetworkConnectionToClient conn, SpawnPlayerRequestMessage msg)
     {
+        Debug.Log($"[SERVER] Received SpawnPlayerRequestMessage for character: {msg.characterId}");
+
         string userId = conn.authenticationData as string;
         if (string.IsNullOrEmpty(userId))
         {
@@ -221,6 +223,15 @@ public class CustomNetworkManager : NetworkManager
 
         Debug.Log($"Starting spawn routine for character {characterId} in scene {sceneName} at position {spawnPos}");
         StartCoroutine(SpawnPlayerRoutine(conn, userId, characterId, sceneName, spawnPos));
+        
+        Debug.Log($"[SERVER] Sending SceneChangeApprovedMessage for scene: {sceneName}");
+
+        conn.Send(new SceneChangeApprovedMessage
+        {
+            sceneName = sceneName,
+            characterId = characterId,
+            spawnAfterChange = true
+        });
     }
 
     private IEnumerator SpawnPlayerRoutine(NetworkConnectionToClient conn, string userId, string characterId, string sceneName, Vector3 spawnPos)
@@ -351,11 +362,15 @@ public class CustomNetworkManager : NetworkManager
     protected void OnSceneChangeApproved(SceneChangeApprovedMessage msg)
     {
         Debug.Log($"[Client] Scene change approved: {msg.sceneName}, characterId={msg.characterId}");
-        
+        Debug.Log($"[CLIENT] RECEIVED SceneChangeApprovedMessage - sceneName={msg.sceneName}, characterId={msg.characterId}");
+
         // Store the character ID
         ClientPlayerDataManager.Instance.SetSelectedCharacterId(msg.characterId);
-        
+        Debug.Log($"[CLIENT] About to load scene: {msg.sceneName}");
+
         // Load the scene
         SceneManager.LoadScene(msg.sceneName);
+
+        Debug.Log($"[Client] SceneManager.LoadScene({msg.sceneName}) - LOADING NOW");
     }
 }
