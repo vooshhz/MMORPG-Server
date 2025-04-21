@@ -14,14 +14,28 @@ public class ScenePortal : MonoBehaviour
         PlayerNetworkController player = other.GetComponent<PlayerNetworkController>();
         if (player == null || !player.isLocalPlayer)
             return;
-            
+                
         Debug.Log($"Player entered portal to {targetScene} at position {spawnPosition}");
         
-        // Request scene transition
+        // Make sure we have a valid characterId
+        string characterId = player.characterId;
+        if (string.IsNullOrEmpty(characterId))
+        {
+            characterId = ClientPlayerDataManager.Instance.SelectedCharacterId;
+            Debug.Log($"Using characterId from ClientPlayerDataManager: {characterId}");
+        }
+        
+        if (string.IsNullOrEmpty(characterId))
+        {
+            Debug.LogError("No valid characterId found for scene transition!");
+            return;
+        }
+        
+        // Request scene transition with the valid characterId
         NetworkClient.Send(new SceneChangeRequestMessage
         {
             sceneName = targetScene.ToString(),
-            characterId = player.characterId
+            characterId = characterId
         });
         
         // You could add a loading indicator here

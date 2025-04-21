@@ -346,18 +346,31 @@ public class CustomNetworkManager : NetworkManager
         base.OnClientSceneChanged();
 
         Debug.Log("✅ Client finished loading scene — sending confirmation to server");
+        
+        string characterId = ClientPlayerDataManager.Instance.SelectedCharacterId;
+        
+        // If we don't have a characterId in the Manager, try to get it from the last player object
+        if (string.IsNullOrEmpty(characterId))
+        {
+            var playerNetController = FindObjectOfType<PlayerNetworkController>();
+            if (playerNetController != null)
+            {
+                characterId = playerNetController.characterId;
+                Debug.Log($"Retrieved characterId from player object: {characterId}");
+            }
+        }
 
-        if (!string.IsNullOrEmpty(ClientPlayerDataManager.Instance.SelectedCharacterId))
+        if (!string.IsNullOrEmpty(characterId))
         {
             NetworkClient.Send(new SceneChangeCompletedMessage
             {
                 sceneName = SceneManager.GetActiveScene().name,
-                characterId = ClientPlayerDataManager.Instance.SelectedCharacterId
+                characterId = characterId
             });
         }
         else
         {
-            Debug.LogWarning("⚠️ No characterId found in ClientPlayerDataManager. SceneChangeCompletedMessage not sent.");
+            Debug.LogWarning("⚠️ No characterId found. SceneChangeCompletedMessage not sent.");
         }
     }
 
