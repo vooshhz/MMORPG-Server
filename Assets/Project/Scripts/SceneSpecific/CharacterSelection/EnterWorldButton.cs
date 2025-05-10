@@ -25,6 +25,9 @@ public class EnterWorldButton : MonoBehaviour
         // Hide loading indicator initially
         if (loadingIndicator != null)
             loadingIndicator.SetActive(false);
+        
+        enterWorldButton.onClick.AddListener(OnEnterWorldClicked);
+
     }
 
     // Add this method
@@ -40,5 +43,28 @@ public class EnterWorldButton : MonoBehaviour
             dataManager.OnCharacterSelected -= OnCharacterSelected;
     }
     
+    private void OnEnterWorldClicked()
+    {
+        // Get selected character ID
+        string characterId = dataManager.SelectedCharacterId;
+        
+        if (string.IsNullOrEmpty(characterId))
+        {
+            Debug.LogWarning("No character selected!");
+            return;
+        }
+        
+        // Show loading state
+        enterWorldButton.interactable = false;
+        if (loadingIndicator != null)
+            loadingIndicator.SetActive(true);
+            
+        // Send request to server
+        Debug.Log($"Requesting to enter world with character: {characterId}");
+        NetworkClient.Send(new SpawnPlayerRequestMessage
+        {
+            characterId = characterId
+        });
+    }
 
 }

@@ -28,6 +28,11 @@ public class CustomNetworkManager : NetworkManager
         NetworkServer.RegisterHandler<RequestCharacterCreationOptionsMessage>(OnRequestCharacterCreationOptions);
         NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);       
         NetworkServer.RegisterHandler<LobbySceneTransitionRequestMessage>(OnLobbySceneTransitionRequest);
+
+        NetworkServer.RegisterHandler<SpawnPlayerRequestMessage>(OnSpawnPlayerRequest);
+        NetworkServer.RegisterHandler<GameSceneTransitionRequestMessage>(OnGameSceneTransitionRequest);
+
+
     }
     
     private void OnLobbySceneTransitionRequest(NetworkConnectionToClient conn, LobbySceneTransitionRequestMessage msg)
@@ -110,6 +115,8 @@ public class CustomNetworkManager : NetworkManager
     {
         base.OnStartClient();
         NetworkClient.RegisterHandler<CharacterPreviewResponseMessage>(OnCharacterPreviewResponse);
+        NetworkClient.RegisterHandler<GameSceneTransitionResponseMessage>(OnGameSceneTransitionResponse);
+
     }
 
     // Server-side handler
@@ -162,4 +169,41 @@ public class CustomNetworkManager : NetworkManager
         }
     }
 
+    private void OnSpawnPlayerRequest(NetworkConnectionToClient conn, SpawnPlayerRequestMessage msg)
+    {
+        // Delegate to ServerPlayerDataManager
+        ServerPlayerDataManager.Instance.HandlePlayerSpawnRequest(conn, msg.characterId);
+    }
+
+    // Handle game scene transition requests
+    private void OnGameSceneTransitionRequest(NetworkConnectionToClient conn, GameSceneTransitionRequestMessage msg)
+    {
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Debug.LogWarning($"Connection {conn.connectionId} requested scene transition without valid auth");
+            // Send denial response
+            return;
+        }
+        
+        // Delegate to ServerPlayerDataManager
+        ServerPlayerDataManager.Instance.HandleGameSceneTransitionRequest(conn, msg.characterId, msg.targetScene);
+    }
+
+    // Client handler for game scene transition response
+    private void OnGameSceneTransitionResponse(GameSceneTransitionResponseMessage msg)
+    {
+        Debug.Log($"Received scene transition response from server: {msg.sceneName}");
+        
+        // If GameSceneManager exists, let it handle the response
+        if (GameSceneManager.Instance != null)
+        {
+            GameSceneManager.Instance.HandleSceneTransitionResponse(msg);
+        }
+        else
+        {
+            Debug.LogError("GameSceneManager not found! Cannot handle scene transition.");
+        }
+    }
+    
 }

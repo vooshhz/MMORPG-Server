@@ -651,4 +651,84 @@ public class ServerPlayerDataManager : MonoBehaviour
         conn.Send(msg);
         Debug.Log($"Sent character creation options to client {conn.connectionId}. At character limit: {msg.atCharacterLimit}");
     }
+
+
+
+    // Handle player spawn request
+    public void HandlePlayerSpawnRequest(NetworkConnectionToClient conn, string characterId)
+    {
+        // Verify user is authenticated
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Debug.LogError($"Connection {conn.connectionId} requested spawn without valid auth");
+            return;
+        }
+        
+        StartCoroutine(FetchCharacterSceneAndSpawn(conn, userId, characterId));
+    }
+
+    // Coroutine to fetch character scene data and initiate spawn
+    private IEnumerator FetchCharacterSceneAndSpawn(NetworkConnectionToClient conn, string userId, string characterId)
+    {
+        // Create a task to fetch character location data
+        var locationTask = dbReference.Child("users").Child(userId)
+            .Child("characters").Child(characterId).Child("location").GetValueAsync();
+        
+        // Wait for the task to complete
+        yield return new WaitUntil(() => locationTask.IsCompleted);
+        
+        if (locationTask.IsFaulted)
+        {
+            Debug.LogError($"Failed to fetch location data: {locationTask.Exception}");
+            // Use default location as fallback
+            SendGameSceneTransitionResponse(conn, true, GameScene.Farm_Scene.ToString(), Vector3.zero);
+            yield break;
+        }
+        
+        // Extract location data from Firebase response
+        var snapshot = locationTask.Result;
+        string sceneName = snapshot.Child("sceneName").Value?.ToString() ?? GameScene.Farm_Scene.ToString();
+        float x = Convert.ToSingle(snapshot.Child("x").Value ?? 0f);
+        float y = Convert.ToSingle(snapshot.Child("y").Value ?? 0f);
+        float z = Convert.ToSingle(snapshot.Child("z").Value ?? 0f);
+        
+        Vector3 spawnPosition = new Vector3(x, y, z);
+        
+        Debug.Log($"Character {characterId} location data: Scene={sceneName}, Position={spawnPosition}");
+        
+        // Send response to client with scene to load
+        SendGameSceneTransitionResponse(conn, true, sceneName, spawnPosition);
+    }
+
+    // Send game scene transition response to client
+    private void SendGameSceneTransitionResponse(NetworkConnectionToClient conn, bool approved, string sceneName, Vector3 position, string message = "")
+    {
+        conn.Send(new GameSceneTransitionResponseMessage
+        {
+            approved = approved,
+            sceneName = sceneName,
+            spawnPosition = position,
+            message = message
+        });
+    }
+
+    // Handle game scene transition request
+    public void HandleGameSceneTransitionRequest(NetworkConnectionToClient conn, string characterId, string targetScene)
+    {
+        // Verify the requested scene is valid
+        if (Enum.TryParse<GameScene>(targetScene, out GameScene targetGameScene))
+        {
+            // You could add more validation here as needed
+            
+            // For now, approve the transition
+            SendGameSceneTransitionResponse(conn, true, targetGameScene.ToString(), Vector3.zero);
+        }
+        else
+        {
+            // Invalid scene name
+            SendGameSceneTransitionResponse(conn, false, targetScene, Vector3.zero, "Invalid scene name");
+        }
+    }
+
 }

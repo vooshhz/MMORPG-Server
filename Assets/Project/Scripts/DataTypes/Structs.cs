@@ -129,3 +129,19 @@ public struct LobbySceneTransitionResponseMessage : NetworkMessage
     public string sceneName;      // Approved scene name
     public string message;        // Optional message (especially for denials)
 }
+
+// Client to server: Request to transition to a game scene
+public struct GameSceneTransitionRequestMessage : NetworkMessage
+{
+    public string targetScene;    // Target game scene name
+    public string characterId;    // Character requesting the scene change
+}
+
+// Server to client: Response to game scene transition request
+public struct GameSceneTransitionResponseMessage : NetworkMessage
+{
+    public bool approved;         // Whether transition is allowed
+    public string sceneName;      // Approved scene name
+    public string message;        // Optional message (especially for denials)
+    public Vector3 spawnPosition; // Where to spawn the player
+}
