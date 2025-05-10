@@ -14,23 +14,23 @@ public class ServerPlayerDataManager : MonoBehaviour
     private DatabaseReference dbReference;
     [SerializeField] private CharacterCreationOptionsData characterCreationOptions;
 
+    //=============================================
+    // INITIALIZATION
+    //=============================================
     
     private void Awake()
     {
-        // If there's already an instance and it's not this one
+        // Implement singleton pattern
         if (Instance != null && Instance != this)
         {
-            // Destroy this duplicate
             Destroy(gameObject);
             return;
         }
         
-        // This is the first and only instance
         Instance = this;
-        
-        // Make sure it persists across scene loads
         DontDestroyOnLoad(gameObject);
 
+        // Initialize Firebase database connection
         try {
             dbReference = FirebaseDatabase.DefaultInstance.RootReference;
             Debug.Log("Database reference initialized successfully");
@@ -39,10 +39,14 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
     
+    //=============================================
+    // CHARACTER DATA RETRIEVAL
+    //=============================================
+    
     // Handle request for all character data for a user
     public void HandleAllCharacterDataRequest(NetworkConnectionToClient conn)
     {
-        // Get Firebase UID from connection's authentication data
+        // Verify user is authenticated before providing data
         string userId = conn.authenticationData as string;
         if (string.IsNullOrEmpty(userId))
         {
@@ -53,9 +57,10 @@ public class ServerPlayerDataManager : MonoBehaviour
         StartCoroutine(FetchAllCharacterData(conn, userId));
     }
     
+    // Fetch basic character data (names, classes, levels) for all characters
     private IEnumerator FetchAllCharacterData(NetworkConnectionToClient conn, string userId)
     {
-        
+        // Query Firebase for user's character data
         var characterListTask = dbReference.Child("users").Child(userId).Child("characters")
             .GetValueAsync();
         
@@ -67,6 +72,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             yield break;
         }
         
+        // Process each character's basic info
         DataSnapshot snapshot = characterListTask.Result;
         var characterInfos = new List<ClientPlayerDataManager.CharacterInfo>();
         
@@ -95,9 +101,10 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
     
-    // Handle request for specific character data
+    // Handle request for specific character's detailed data
     public void HandleCharacterDataRequest(NetworkConnectionToClient conn, string characterId)
     {
+        // Verify user is authenticated
         string userId = conn.authenticationData as string;
         if (string.IsNullOrEmpty(userId))
         {
@@ -105,13 +112,16 @@ public class ServerPlayerDataManager : MonoBehaviour
             return;
         }
         
+        // Fetch the various types of character data
         StartCoroutine(FetchCharacterEquipment(conn, userId, characterId));
         StartCoroutine(FetchCharacterInventory(conn, userId, characterId));
         StartCoroutine(FetchCharacterLocation(conn, userId, characterId));
     }
     
+    // Fetch a character's equipment data
     private IEnumerator FetchCharacterEquipment(NetworkConnectionToClient conn, string userId, string characterId)
     {
+        // Query Firebase for character's equipment
         var equipmentTask = dbReference.Child("users").Child(userId)
             .Child("characters").Child(characterId).Child("equipment").GetValueAsync();
         
@@ -123,6 +133,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             yield break;
         }
         
+        // Extract equipment values
         DataSnapshot snapshot = equipmentTask.Result;
         
         int head = Convert.ToInt32(snapshot.Child("head").Value);
@@ -131,6 +142,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         int torso = Convert.ToInt32(snapshot.Child("torso").Value);
         int legs = Convert.ToInt32(snapshot.Child("legs").Value);
         
+        // Send data to client
         if (conn.identity != null)
         {
             conn.identity.GetComponent<PlayerNetworkController>()
@@ -138,8 +150,10 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
     
+    // Fetch a character's inventory data
     private IEnumerator FetchCharacterInventory(NetworkConnectionToClient conn, string userId, string characterId)
     {
+        // Query Firebase for character's inventory
         var inventoryTask = dbReference.Child("users").Child(userId)
             .Child("characters").Child(characterId).Child("inventory").Child("items").GetValueAsync();
         
@@ -151,6 +165,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             yield break;
         }
         
+        // Process inventory items
         DataSnapshot snapshot = inventoryTask.Result;
         var items = new List<ClientPlayerDataManager.InventoryItem>();
         
@@ -165,6 +180,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             items.Add(item);
         }
         
+        // Send data to client
         if (conn.identity != null)
         {
             conn.identity.GetComponent<PlayerNetworkController>()
@@ -172,8 +188,10 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
     
+    // Fetch a character's location data
     private IEnumerator FetchCharacterLocation(NetworkConnectionToClient conn, string userId, string characterId)
     {
+        // Query Firebase for character's location
         var locationTask = dbReference.Child("users").Child(userId)
             .Child("characters").Child(characterId).Child("location").GetValueAsync();
         
@@ -185,6 +203,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             yield break;
         }
         
+        // Extract location data
         DataSnapshot snapshot = locationTask.Result;
         
         string sceneName = snapshot.Child("sceneName").Value?.ToString();
@@ -192,6 +211,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         float y = Convert.ToSingle(snapshot.Child("y").Value);
         float z = Convert.ToSingle(snapshot.Child("z").Value);
         
+        // Send data to client
         if (conn.identity != null)
         {
             conn.identity.GetComponent<PlayerNetworkController>()
@@ -199,23 +219,14 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
     
-    // Save data methods
-    public void SaveCharacterPosition(string userId, string characterId, Vector3 position, string sceneName)
-    {
-        Dictionary<string, object> updates = new Dictionary<string, object>
-        {
-            ["x"] = position.x,
-            ["y"] = position.y,
-            ["z"] = position.z,
-            ["sceneName"] = sceneName
-        };
-        
-        string path = $"users/{userId}/characters/{characterId}/location";
-        dbReference.Child(path).UpdateChildrenAsync(updates);
-    }
+    //=============================================
+    // CHARACTER PREVIEW DATA
+    //=============================================
     
+    // Handle request for character preview data (for character selection screen)
     public void HandleCharacterPreviewRequest(NetworkConnectionToClient conn, string userId)
     {
+        // Ensure database connection is valid
         if (dbReference == null)
         {
             Debug.LogError("Database reference is null! Attempting to reinitialize...");
@@ -240,11 +251,10 @@ public class ServerPlayerDataManager : MonoBehaviour
         StartCoroutine(FetchCharacterPreviewData(conn, userId));
     }
 
-  private IEnumerator FetchCharacterPreviewData(NetworkConnectionToClient conn, string userId)
+    // Fetch combined preview data for character selection screen
+    private IEnumerator FetchCharacterPreviewData(NetworkConnectionToClient conn, string userId)
     {
-        Debug.Log($"FetchCharacterPreviewData started with userId: {userId}");
-        Debug.Log($"dbReference is null? {dbReference == null}");
-        
+        // Re-initialize database if needed
         if (dbReference == null)
         {
             Debug.LogError("Database reference is null! Firebase Database not initialized");
@@ -267,7 +277,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             }
         }
         
-        // Fetch basic character data
+        // Fetch all character data in one go
         var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync();
         yield return new WaitUntil(() => characterListTask.IsCompleted);
         
@@ -277,17 +287,18 @@ public class ServerPlayerDataManager : MonoBehaviour
             yield break;
         }
         
+        // Prepare data containers
         DataSnapshot snapshot = characterListTask.Result;
         var characterInfos = new List<ClientPlayerDataManager.CharacterInfo>();
         var equipmentPairs = new List<CharacterEquipmentPair>();
-        var locationPairs = new List<CharacterLocationPair>(); // Add this line
+        var locationPairs = new List<CharacterLocationPair>();
         
-        // Process each character
+        // Process each character's data
         foreach (DataSnapshot characterSnapshot in snapshot.Children)
         {
             string charId = characterSnapshot.Key;
             
-            // Get character info
+            // Process character info
             DataSnapshot infoData = characterSnapshot.Child("info");
             var charInfo = new ClientPlayerDataManager.CharacterInfo
             {
@@ -299,7 +310,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             };
             characterInfos.Add(charInfo);
             
-            // Get equipment data
+            // Process equipment data
             DataSnapshot equipData = characterSnapshot.Child("equipment");
             var equipment = new ClientPlayerDataManager.EquipmentData
             {
@@ -316,16 +327,14 @@ public class ServerPlayerDataManager : MonoBehaviour
                 equipment = equipment
             });
             
-            // Get location data (add this section)
+            // Process location data
             DataSnapshot locationData = characterSnapshot.Child("location");
             if (locationData.Exists)
             {
                 string sceneName = locationData.Child("sceneName").Value?.ToString();
-                float x = 0f;
-                float y = 0f;
-                float z = 0f;
+                float x = 0f, y = 0f, z = 0f;
                 
-                // Safely convert values with defaults if missing
+                // Safely extract location values
                 if (locationData.Child("x").Exists)
                     x = Convert.ToSingle(locationData.Child("x").Value);
                 if (locationData.Child("y").Exists)
@@ -351,22 +360,46 @@ public class ServerPlayerDataManager : MonoBehaviour
             }
         }
         
-        // Send response with location data included
+        // Send combined preview data to client
         var response = new CharacterPreviewResponseMessage
         {
             characters = characterInfos.ToArray(),
             equipmentData = equipmentPairs.ToArray(),
-            locationData = locationPairs.ToArray() // Add this line
+            locationData = locationPairs.ToArray()
         };
         
         conn.Send(response);
         Debug.Log($"Sent character preview response with {characterInfos.Count} characters, {equipmentPairs.Count} equipment sets, and {locationPairs.Count} location data sets");
     }
-
-    // Validate a character creation request
+    
+    //=============================================
+    // CHARACTER DATA SAVING
+    //=============================================
+    
+    // Save character position to database
+    public void SaveCharacterPosition(string userId, string characterId, Vector3 position, string sceneName)
+    {
+        // Update location data in Firebase
+        Dictionary<string, object> updates = new Dictionary<string, object>
+        {
+            ["x"] = position.x,
+            ["y"] = position.y,
+            ["z"] = position.z,
+            ["sceneName"] = sceneName
+        };
+        
+        string path = $"users/{userId}/characters/{characterId}/location";
+        dbReference.Child(path).UpdateChildrenAsync(updates);
+    }
+    
+    //=============================================
+    // CHARACTER CREATION
+    //=============================================
+    
+    // Validate character creation parameters
     public bool ValidateCharacterCreation(string className, int bodyItem, int headItem, int hairItem, int torsoItem, int legsItem)
     {
-        // Validate class
+        // Check if class is valid
         bool validClass = false;
         foreach (var classOption in characterCreationOptions.availableClasses)
         {
@@ -380,7 +413,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         if (!validClass)
             return false;
         
-        // Validate equipment options
+        // Check if equipment options are valid
         bool validBody = System.Array.IndexOf(characterCreationOptions.bodyOptions, bodyItem) >= 0;
         bool validHead = System.Array.IndexOf(characterCreationOptions.headOptions, headItem) >= 0;
         bool validHair = System.Array.IndexOf(characterCreationOptions.hairOptions, hairItem) >= 0;
@@ -390,9 +423,10 @@ public class ServerPlayerDataManager : MonoBehaviour
         return validClass && validBody && validHead && validHair && validTorso && validLegs;
     }
 
+    // Send available character creation options to client
     public void SendCharacterCreationOptions(NetworkConnectionToClient conn)
     {
-        // Convert scriptable object data to message
+        // Convert scriptable object data to message format
         var msg = new CharacterCreationOptionsMessage
         {
             availableClasses = characterCreationOptions.availableClasses.Select(c => c.className).ToArray(),
@@ -408,10 +442,10 @@ public class ServerPlayerDataManager : MonoBehaviour
         Debug.Log($"Sent character creation options to client {conn.connectionId}");
     }
 
-// Handle character creation request
+    // Handle character creation request from client
     public void HandleCreateCharacterRequest(NetworkConnectionToClient conn, CreateCharacterRequestMessage msg)
     {
-        // Get user ID from connection's authentication data
+        // Verify user is authenticated
         string userId = conn.authenticationData as string;
         if (string.IsNullOrEmpty(userId))
         {
@@ -426,10 +460,8 @@ public class ServerPlayerDataManager : MonoBehaviour
             SendCreateCharacterResponse(conn, false, "Invalid character name (must be 3-16 characters)");
             return;
         }
-
-
         
-        // Validate class
+        // Validate character class
         bool validClass = characterCreationOptions.availableClasses.Any(c => c.className == msg.characterClass);
         if (!validClass)
         {
@@ -450,15 +482,17 @@ public class ServerPlayerDataManager : MonoBehaviour
             return;
         }
         
+        // Check if name is already taken
         StartCoroutine(CheckNameAvailability(conn, userId, msg));
     }
 
+    // Create character in database after validations pass
     private IEnumerator CreateCharacterInDatabase(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
     {
-        // Generate a unique character ID
+        // Generate unique character ID
         string characterId = System.Guid.NewGuid().ToString();
         
-        // Create the character data structure
+        // Create character data structure
         Dictionary<string, object> characterData = new Dictionary<string, object>
         {
             ["info"] = new Dictionary<string, object>
@@ -481,15 +515,15 @@ public class ServerPlayerDataManager : MonoBehaviour
                 ["items"] = new Dictionary<string, object>()
             },
             ["location"] = new Dictionary<string, object>
-{
-            ["sceneName"] = characterCreationOptions.startingSceneName.ToString(),
-            ["x"] = 0,
-            ["y"] = 0,
-            ["z"] = 0
+            {
+                ["sceneName"] = characterCreationOptions.startingSceneName.ToString(),
+                ["x"] = 0,
+                ["y"] = 0,
+                ["z"] = 0
             }
         };
         
-        // Add to Firebase database
+        // Save to Firebase
         var dbTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).SetValueAsync(characterData);
         
         yield return new WaitUntil(() => dbTask.IsCompleted);
@@ -501,10 +535,11 @@ public class ServerPlayerDataManager : MonoBehaviour
             yield break;
         }
         
-        // Success! Send response to client
+        // Send success response to client
         SendCreateCharacterResponse(conn, true, "Character created successfully", characterId);
     }
 
+    // Send character creation response to client
     private void SendCreateCharacterResponse(NetworkConnectionToClient conn, bool success, string message, string characterId = null)
     {
         var response = new CreateCharacterResponseMessage
@@ -517,62 +552,66 @@ public class ServerPlayerDataManager : MonoBehaviour
         conn.Send(response);
     }
 
+    // Check if character name is already taken
     private IEnumerator CheckNameAvailability(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
     {
-    // First check if this name already exists in the database
-    var nameQuery = dbReference.Child("users").OrderByChild("characters")
-        .GetValueAsync();
-    
-    yield return new WaitUntil(() => nameQuery.IsCompleted);
-    
-    if (nameQuery.IsFaulted)
-    {
-        Debug.LogError($"Failed to check name availability: {nameQuery.Exception}");
-        SendCreateCharacterResponse(conn, false, "Database error while checking name");
-        yield break;
-    }
-    
-    DataSnapshot snapshot = nameQuery.Result;
-    bool nameExists = false;
-    
-    foreach (DataSnapshot userSnapshot in snapshot.Children)
-    {
-        DataSnapshot charactersSnapshot = userSnapshot.Child("characters");
-        foreach (DataSnapshot characterSnapshot in charactersSnapshot.Children)
+        // Query all users to check for name uniqueness
+        var nameQuery = dbReference.Child("users").OrderByChild("characters")
+            .GetValueAsync();
+        
+        yield return new WaitUntil(() => nameQuery.IsCompleted);
+        
+        if (nameQuery.IsFaulted)
         {
-            string existingName = characterSnapshot.Child("info/characterName").Value?.ToString();
-            if (existingName != null && existingName.Equals(msg.characterName, System.StringComparison.OrdinalIgnoreCase))
-            {
-                nameExists = true;
-                break;
-            }
+            Debug.LogError($"Failed to check name availability: {nameQuery.Exception}");
+            SendCreateCharacterResponse(conn, false, "Database error while checking name");
+            yield break;
         }
         
-        if (nameExists) break;
-    }
-    
-    if (nameExists)
-    {
-        SendCreateCharacterResponse(conn, false, "This character name is already taken");
-        yield break;
-    }
-    
-    // Name is available, proceed with character creation
-    StartCoroutine(CreateCharacterInDatabase(conn, userId, msg));
+        // Check each character for name collision
+        DataSnapshot snapshot = nameQuery.Result;
+        bool nameExists = false;
+        
+        foreach (DataSnapshot userSnapshot in snapshot.Children)
+        {
+            DataSnapshot charactersSnapshot = userSnapshot.Child("characters");
+            foreach (DataSnapshot characterSnapshot in charactersSnapshot.Children)
+            {
+                string existingName = characterSnapshot.Child("info/characterName").Value?.ToString();
+                if (existingName != null && existingName.Equals(msg.characterName, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    nameExists = true;
+                    break;
+                }
+            }
+            
+            if (nameExists) break;
+        }
+        
+        if (nameExists)
+        {
+            SendCreateCharacterResponse(conn, false, "This character name is already taken");
+            yield break;
+        }
+        
+        // Name is available, proceed with character creation
+        StartCoroutine(CreateCharacterInDatabase(conn, userId, msg));
     }
 
+    // Check character limit and send creation options
     public void CheckCharacterLimitAndSendOptions(NetworkConnectionToClient conn)
-{
-    string userId = conn.authenticationData as string;
-    if (string.IsNullOrEmpty(userId))
     {
-        Debug.LogError($"Connection {conn.connectionId} requested character limit check without valid auth");
-        return;
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Debug.LogError($"Connection {conn.connectionId} requested character limit check without valid auth");
+            return;
+        }
+        
+        StartCoroutine(CheckCharacterLimitCoroutine(conn, userId));
     }
-    
-    StartCoroutine(CheckCharacterLimitCoroutine(conn, userId));
-}
 
+    // Check if user is at character limit and send options
     private IEnumerator CheckCharacterLimitCoroutine(NetworkConnectionToClient conn, string userId)
     {
         // Get character count from database
@@ -587,16 +626,16 @@ public class ServerPlayerDataManager : MonoBehaviour
             yield break;
         }
         
+        // Count user's characters
         DataSnapshot snapshot = characterListTask.Result;
         int characterCount = 0;
         
-        // Count the characters
         foreach (DataSnapshot characterSnapshot in snapshot.Children)
         {
             characterCount++;
         }
         
-        // Create and send the message with character limit info
+        // Create message with character limit info
         var msg = new CharacterCreationOptionsMessage
         {
             availableClasses = characterCreationOptions.availableClasses.Select(c => c.className).ToArray(),
@@ -605,12 +644,11 @@ public class ServerPlayerDataManager : MonoBehaviour
             hairOptions = characterCreationOptions.hairOptions,
             torsoOptions = characterCreationOptions.torsoOptions,
             legsOptions = characterCreationOptions.legsOptions,
-            atCharacterLimit = (characterCount >= 3)  // Add this new field
+            atCharacterLimit = (characterCount >= 3)  // Max 3 characters per account
         };
         
         // Send to client
         conn.Send(msg);
         Debug.Log($"Sent character creation options to client {conn.connectionId}. At character limit: {msg.atCharacterLimit}");
-        }
-
+    }
 }
