@@ -253,6 +253,7 @@ public class CustomNetworkManager : NetworkManager
             characterId = characterId,
             spawnAfterChange = true
         });
+        Debug.Log($"SERVER: About to spawn player {characterId} in scene {sceneName}");
     }
 
     private IEnumerator SpawnPlayerRoutine(NetworkConnectionToClient conn, string userId, string characterId, string sceneName, Vector3 spawnPos)
@@ -307,6 +308,7 @@ public class CustomNetworkManager : NetworkManager
             Debug.Log($"Got location data: Scene={locationData.sceneName}, Pos={locationData.position}");
             HandlePlayerSpawnWithLocation(conn, characterId, locationData);
         });
+        Debug.Log($"SERVER: Scene change completed. Location data request starting for character {characterId}");
     }
 
     
@@ -373,7 +375,6 @@ public class CustomNetworkManager : NetworkManager
             Debug.LogWarning("⚠️ No characterId found. SceneChangeCompletedMessage not sent.");
         }
     }
-
     private void OnSavePlayerState(NetworkConnectionToClient conn, SavePlayerStateMessage msg)
     {
         string userId = conn.authenticationData as string;
