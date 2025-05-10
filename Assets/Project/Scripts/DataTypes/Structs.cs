@@ -145,3 +145,8 @@ public struct GameSceneTransitionResponseMessage : NetworkMessage
     public string message;        // Optional message (especially for denials)
     public Vector3 spawnPosition; // Where to spawn the player
 }
+
+public struct PlayerSceneReadyMessage : NetworkMessage
+{
+    public string characterId;
+}

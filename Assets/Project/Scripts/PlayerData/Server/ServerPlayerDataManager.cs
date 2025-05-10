@@ -11,6 +11,13 @@ public class ServerPlayerDataManager : MonoBehaviour
 {
     public static ServerPlayerDataManager Instance { get; private set; }
     
+    [Header("Player Prefab")]
+    [SerializeField] private GameObject playerPrefab; // Reference to your networked player prefab
+    
+    // Dictionary to store spawn data by connection
+    private Dictionary<NetworkConnectionToClient, PlayerSpawnData> SpawnDataByConnection = 
+    new Dictionary<NetworkConnectionToClient, PlayerSpawnData>();
+    
     private DatabaseReference dbReference;
     [SerializeField] private CharacterCreationOptionsData characterCreationOptions;
 
@@ -671,6 +678,9 @@ public class ServerPlayerDataManager : MonoBehaviour
     // Coroutine to fetch character scene data and initiate spawn
     private IEnumerator FetchCharacterSceneAndSpawn(NetworkConnectionToClient conn, string userId, string characterId)
     {
+        // Store the characterId for later use with spawning
+        conn.authenticationData = characterId;
+
         // Create a task to fetch character location data
         var locationTask = dbReference.Child("users").Child(userId)
             .Child("characters").Child(characterId).Child("location").GetValueAsync();
@@ -697,10 +707,18 @@ public class ServerPlayerDataManager : MonoBehaviour
         
         Debug.Log($"Character {characterId} location data: Scene={sceneName}, Position={spawnPosition}");
         
+        // Store spawn data in a dictionary associated with the connection
+        SpawnDataByConnection[conn] = new PlayerSpawnData
+        {
+            CharacterId = characterId,
+            Position = spawnPosition,
+            SceneName = sceneName
+        };
+        
         // Send response to client with scene to load
         SendGameSceneTransitionResponse(conn, true, sceneName, spawnPosition);
     }
-
+    
     // Send game scene transition response to client
     private void SendGameSceneTransitionResponse(NetworkConnectionToClient conn, bool approved, string sceneName, Vector3 position, string message = "")
     {
@@ -729,6 +747,39 @@ public class ServerPlayerDataManager : MonoBehaviour
             // Invalid scene name
             SendGameSceneTransitionResponse(conn, false, targetScene, Vector3.zero, "Invalid scene name");
         }
+    }
+
+    // New method to handle player spawning after scene transition
+    public void SpawnPlayerForClient(NetworkConnectionToClient conn, string characterId, Vector3 position)
+    {
+        // Instantiate the player on the server
+        GameObject playerInstance = Instantiate(playerPrefab, position, Quaternion.identity);
+        
+        // Set character ID on the player if needed
+        PlayerNetworkController playerController = playerInstance.GetComponent<PlayerNetworkController>();
+        if (playerController != null)
+        {
+            playerController.SetCharacterId(characterId);
+        }
+        
+        // Spawn it on the network so all clients can see it
+        NetworkServer.Spawn(playerInstance, conn);
+        
+        Debug.Log($"Player spawned for character {characterId} at position {position}");
+    }
+
+        public class PlayerSpawnData
+    {
+        public string CharacterId;
+        public Vector3 Position;
+        public string SceneName;
+    }
+
+
+
+    public bool TryGetSpawnData(NetworkConnectionToClient conn, out PlayerSpawnData spawnData)
+    {
+        return SpawnDataByConnection.TryGetValue(conn, out spawnData);
     }
 
 }

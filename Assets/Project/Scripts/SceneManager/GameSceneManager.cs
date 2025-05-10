@@ -7,9 +7,11 @@ public class GameSceneManager : MonoBehaviour
 {
     public static GameSceneManager Instance { get; private set; }
     public Vector3 PlayerSpawnPosition { get; private set; }
-
     
     [SerializeField] private bool debugMode = false;
+    
+    // Add this field to store the expected scene name
+    private string loadedSceneName;
     
     // Event that fires when scene loading is complete
     public event Action<string> OnSceneLoadComplete;
@@ -64,7 +66,6 @@ public class GameSceneManager : MonoBehaviour
     }
     
     // Handle scene transition response from server
-// Handle scene transition response from server
     public void HandleSceneTransitionResponse(GameSceneTransitionResponseMessage msg)
     {
         if (debugMode)
@@ -72,6 +73,9 @@ public class GameSceneManager : MonoBehaviour
         
         if (msg.approved)
         {
+            // Store the scene name for confirmation check
+            loadedSceneName = msg.sceneName;
+            
             // Try to parse as a GameScene enum
             if (Enum.TryParse<GameScene>(msg.sceneName, out GameScene targetScene))
             {
@@ -80,6 +84,9 @@ public class GameSceneManager : MonoBehaviour
                 
                 // Store the spawn position for later use when spawning the player
                 PlayerSpawnPosition = msg.spawnPosition;
+                
+                // Register for scene loaded event
+                SceneManager.sceneLoaded += OnSceneLoaded;
                 
                 // Load the scene
                 SceneManager.LoadScene(targetScene.ToString());
@@ -94,18 +101,6 @@ public class GameSceneManager : MonoBehaviour
             Debug.LogWarning($"Scene transition denied: {msg.message}");
         }
     }
-    // Load a game scene
-    public void LoadGameScene(GameScene targetScene)
-    {
-        if (debugMode)
-            Debug.Log($"Loading game scene: {targetScene}");
-        
-        // Load the scene
-        SceneManager.LoadScene(targetScene.ToString());
-        
-        // Notify subscribers that scene loading is complete
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
     
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
@@ -114,6 +109,25 @@ public class GameSceneManager : MonoBehaviour
         
         if (debugMode)
             Debug.Log($"Scene loaded: {scene.name}");
+        
+        // Confirm the loaded scene matches what was intended
+        if (scene.name == loadedSceneName)
+        {
+            // Notify server we're ready for player spawning
+            if (NetworkClient.isConnected)
+            {
+                // Send ready message with our character ID
+                string characterId = ClientPlayerDataManager.Instance.SelectedCharacterId;
+                NetworkClient.Send(new PlayerSceneReadyMessage { characterId = characterId });
+                
+                if (debugMode)
+                    Debug.Log($"Sent ready message for character: {characterId}");
+            }
+        }
+        else
+        {
+            Debug.LogError($"Scene mismatch: Loaded {scene.name} but expected {loadedSceneName}");
+        }
         
         // Notify subscribers
         OnSceneLoadComplete?.Invoke(scene.name);

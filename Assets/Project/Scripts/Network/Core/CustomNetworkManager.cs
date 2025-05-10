@@ -31,6 +31,8 @@ public class CustomNetworkManager : NetworkManager
 
         NetworkServer.RegisterHandler<SpawnPlayerRequestMessage>(OnSpawnPlayerRequest);
         NetworkServer.RegisterHandler<GameSceneTransitionRequestMessage>(OnGameSceneTransitionRequest);
+        NetworkServer.RegisterHandler<PlayerSceneReadyMessage>(OnPlayerSceneReady);
+
 
 
     }
@@ -206,4 +208,26 @@ public class CustomNetworkManager : NetworkManager
         }
     }
     
+    private void OnPlayerSceneReady(NetworkConnectionToClient conn, PlayerSceneReadyMessage msg)
+    {
+        string userId = conn.authenticationData as string;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Debug.LogError($"Connection {conn.connectionId} sent ready message without valid auth");
+            return;
+        }
+        
+        // Get spawn data from the dictionary
+        if (ServerPlayerDataManager.Instance.TryGetSpawnData(conn, out var spawnData))
+        {
+            // Spawn the player at the stored position
+            ServerPlayerDataManager.Instance.SpawnPlayerForClient(conn, msg.characterId, spawnData.Position);
+        }
+        else
+        {
+            Debug.LogError($"No spawn data found for connection {conn.connectionId}");
+            // Fallback to a default position
+            ServerPlayerDataManager.Instance.SpawnPlayerForClient(conn, msg.characterId, Vector3.zero);
+        }
+    }
 }
