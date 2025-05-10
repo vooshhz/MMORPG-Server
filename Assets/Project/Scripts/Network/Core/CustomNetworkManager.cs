@@ -8,9 +8,7 @@ using System.Collections.Generic;
 public class CustomNetworkManager : NetworkManager
 {
     public Transform spawnedCharactersParent; // assign in inspector
-    // Track pending spawn requests that are waiting for scene transitions
-    private Dictionary<string, PendingSpawnRequest> pendingSpawnRequests = new Dictionary<string, PendingSpawnRequest>();
-    
+    // Track pending spawn requests that are waiting for scene transitions    
     // Class to track pending spawn requests
     private class PendingSpawnRequest
     {
@@ -40,17 +38,10 @@ public class CustomNetworkManager : NetworkManager
         NetworkServer.RegisterHandler<CharacterPreviewRequestMessage>(OnCharacterPreviewRequest);
         NetworkServer.RegisterHandler<CharacterDetailRequestMessage>(OnCharacterDetailRequest);
         NetworkServer.RegisterHandler<RequestCharacterCreationOptionsMessage>(OnRequestCharacterCreationOptions);
-        NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);     
-        NetworkServer.RegisterHandler<SpawnPlayerRequestMessage>(OnSpawnPlayerRequest);   
-        NetworkServer.RegisterHandler<SceneChangeCompletedMessage>(OnSceneChangeCompleted);
+        NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);       
         NetworkServer.RegisterHandler<SavePlayerStateMessage>(OnSavePlayerState);
         NetworkServer.RegisterHandler<LobbySceneTransitionRequestMessage>(OnLobbySceneTransitionRequest);
         NetworkServer.RegisterHandler<SceneChangeRequestMessage>(OnSceneChangeRequest);
-
-
-        
-        // Start routine to clean up stale pending spawn requests
-        StartCoroutine(CleanupStalePendingRequests());
     }
     
     private void OnSceneChangeRequest(NetworkConnectionToClient conn, SceneChangeRequestMessage msg)
@@ -136,31 +127,6 @@ public class CustomNetworkManager : NetworkManager
             message = message
         });
     }
-    // Clean up pending spawn requests that have been waiting too long (30 seconds)
-    private IEnumerator CleanupStalePendingRequests()
-    {
-        while (true)
-        {
-            List<string> keysToRemove = new List<string>();
-            
-            foreach (var kvp in pendingSpawnRequests)
-            {
-                if (Time.time - kvp.Value.requestTime > 30f)
-                {
-                    keysToRemove.Add(kvp.Key);
-                    Debug.LogWarning($"Removing stale spawn request for character {kvp.Value.characterId} that has been pending for over 30 seconds");
-                }
-            }
-            
-            foreach (var key in keysToRemove)
-            {
-                pendingSpawnRequests.Remove(key);
-            }
-            
-            yield return new WaitForSeconds(10f);
-        }
-    }
-
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
     {
         Debug.Log($"Client disconnected: {conn.connectionId}");
@@ -177,7 +143,6 @@ public class CustomNetworkManager : NetworkManager
     {
         base.OnStartClient();
         NetworkClient.RegisterHandler<CharacterPreviewResponseMessage>(OnCharacterPreviewResponse);
-        NetworkClient.RegisterHandler<SceneChangeApprovedMessage>(OnSceneChangeApproved);
     }
 
     // Server-side handler
@@ -211,121 +176,7 @@ public class CustomNetworkManager : NetworkManager
         // Pass to ServerPlayerDataManager to handle
         ServerPlayerDataManager.Instance.HandleCreateCharacterRequest(conn, msg);
     }
-
-    private void OnSpawnPlayerRequest(NetworkConnectionToClient conn, SpawnPlayerRequestMessage msg)
-    {
-        Debug.Log($"[SERVER] Received SpawnPlayerRequestMessage for character: {msg.characterId}");
-
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId))
-        {
-            Debug.LogError($"Connection {conn.connectionId} tried to spawn player without valid auth");
-            return;
-        }
-        
-        string characterId = msg.characterId;
-        
-        // Get location data
-        ServerPlayerDataManager.Instance.GetCharacterLocation(conn, userId, characterId, 
-            (locationData) => HandlePlayerSpawnWithLocation(conn, characterId, locationData));
-    }
-    
-    private void HandlePlayerSpawnWithLocation(NetworkConnectionToClient conn, string characterId, ClientPlayerDataManager.LocationData locationData)
-    {
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId))
-        {
-            Debug.LogError("Connection has no valid authentication data!");
-            return;
-        }
-
-        string sceneName = locationData.sceneName;
-        Vector3 spawnPos = locationData.position;
-
-        Debug.Log($"Starting spawn routine for character {characterId} in scene {sceneName} at position {spawnPos}");
-        StartCoroutine(SpawnPlayerRoutine(conn, userId, characterId, sceneName, spawnPos));
-        
-        Debug.Log($"[SERVER] Sending SceneChangeApprovedMessage for scene: {sceneName}");
-
-        conn.Send(new SceneChangeApprovedMessage
-        {
-            sceneName = sceneName,
-            characterId = characterId,
-            spawnAfterChange = true
-        });
-        Debug.Log($"SERVER: About to spawn player {characterId} in scene {sceneName}");
-    }
-
-    private IEnumerator SpawnPlayerRoutine(NetworkConnectionToClient conn, string userId, string characterId, string sceneName, Vector3 spawnPos)
-    {
-        // STEP 1: Load scene if needed
-        yield return SceneLoaderUtility.EnsureSceneLoaded(sceneName);
-        Scene targetScene = SceneManager.GetSceneByName(sceneName);
-
-        // STEP 2: If player already exists, destroy it
-        if (SpawnedCharacterTracker.Instance.CharacterExists(characterId))
-        {
-            Debug.Log($"[Server] Character {characterId} already exists — destroying previous instance.");
-            SpawnedCharacterTracker.Instance.RemoveCharacter(characterId);
-        }
-
-        // STEP 3: Instantiate player WITHOUT setting a parent
-        GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-
-        // STEP 4: Move to target scene
-        SceneManager.MoveGameObjectToScene(player, targetScene);
-        player.transform.SetParent(null); // detach
-
-        // STEP 5: Assign authority and spawn
-        NetworkServer.AddPlayerForConnection(conn, player);
-
-        // STEP 6: Track the spawn
-        SpawnedCharacterTracker.Instance.RegisterSpawn(userId, characterId, sceneName, spawnPos, player);
-
-        Debug.Log($"✅ Player {characterId} spawned in scene {sceneName} at {spawnPos}");
-    }
-
-    
-    private void OnSceneChangeCompleted(NetworkConnectionToClient conn, SceneChangeCompletedMessage msg)
-    {
-        Debug.Log($"✅ Client confirmed scene load: {msg.sceneName} for character {msg.characterId}");
-
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId)) 
-        {
-            Debug.LogError("Connection has no valid authentication data!");
-            return;
-        }
-
-        string characterId = msg.characterId;
-
-        // Add more logging here
-        Debug.Log($"Getting location data for userId: {userId}, characterId: {characterId}");
-
-        // Lookup the character's saved location
-        ServerPlayerDataManager.Instance.GetCharacterLocation(conn, userId, characterId, (locationData) =>
-        {
-            Debug.Log($"Got location data: Scene={locationData.sceneName}, Pos={locationData.position}");
-            HandlePlayerSpawnWithLocation(conn, characterId, locationData);
-        });
-        Debug.Log($"SERVER: Scene change completed. Location data request starting for character {characterId}");
-    }
-
-    
-    private void SpawnPlayerInScene(NetworkConnectionToClient conn, string characterId, Vector3 position)
-    {
-        // Spawn the player
-        if (PlayerSpawnController.Instance != null)
-        {
-            PlayerSpawnController.Instance.SpawnPlayerCharacter(conn, characterId, position);
-            Debug.Log($"Player spawned for character {characterId} at position {position}");
-        }
-        else
-        {
-            Debug.LogError("PlayerSpawnController.Instance is null! Cannot spawn player.");
-        }
-    }
-    
+     
     public override void OnClientDisconnect()
     {
         base.OnClientDisconnect();
@@ -343,38 +194,7 @@ public class CustomNetworkManager : NetworkManager
             ClientPlayerDataManager.Instance.ClearAllData();
         }
     }
-    public override void OnClientSceneChanged()
-    {
-        base.OnClientSceneChanged();
 
-        Debug.Log("✅ Client finished loading scene — sending confirmation to server");
-        
-        string characterId = ClientPlayerDataManager.Instance.SelectedCharacterId;
-        
-        // If we don't have a characterId in the Manager, try to get it from the last player object
-        if (string.IsNullOrEmpty(characterId))
-        {
-            var playerNetController = FindObjectOfType<PlayerNetworkController>();
-            if (playerNetController != null)
-            {
-                characterId = playerNetController.characterId;
-                Debug.Log($"Retrieved characterId from player object: {characterId}");
-            }
-        }
-
-        if (!string.IsNullOrEmpty(characterId))
-        {
-            NetworkClient.Send(new SceneChangeCompletedMessage
-            {
-                sceneName = SceneManager.GetActiveScene().name,
-                characterId = characterId
-            });
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ No characterId found. SceneChangeCompletedMessage not sent.");
-        }
-    }
     private void OnSavePlayerState(NetworkConnectionToClient conn, SavePlayerStateMessage msg)
     {
         string userId = conn.authenticationData as string;
@@ -393,19 +213,4 @@ public class CustomNetworkManager : NetworkManager
         );
     }
 
-    [Client]
-    protected void OnSceneChangeApproved(SceneChangeApprovedMessage msg)
-    {
-        Debug.Log($"[Client] Scene change approved: {msg.sceneName}, characterId={msg.characterId}");
-        Debug.Log($"[CLIENT] RECEIVED SceneChangeApprovedMessage - sceneName={msg.sceneName}, characterId={msg.characterId}");
-
-        // Store the character ID
-        ClientPlayerDataManager.Instance.SetSelectedCharacterId(msg.characterId);
-        Debug.Log($"[CLIENT] About to load scene: {msg.sceneName}");
-
-        // Load the scene
-        SceneManager.LoadScene(msg.sceneName);
-
-        Debug.Log($"[Client] SceneManager.LoadScene({msg.sceneName}) - LOADING NOW");
-    }
 }

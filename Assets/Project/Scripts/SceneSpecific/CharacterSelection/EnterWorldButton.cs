@@ -15,8 +15,6 @@ public class EnterWorldButton : MonoBehaviour
         
         if (enterWorldButton == null)
             enterWorldButton = GetComponent<Button>();
-            
-        enterWorldButton.onClick.AddListener(OnEnterWorldClicked);
         
         // Initially disable button until character is selected
         enterWorldButton.interactable = !string.IsNullOrEmpty(dataManager.SelectedCharacterId);
@@ -42,29 +40,5 @@ public class EnterWorldButton : MonoBehaviour
             dataManager.OnCharacterSelected -= OnCharacterSelected;
     }
     
-    private void OnEnterWorldClicked()
-    {
-        if (string.IsNullOrEmpty(dataManager.SelectedCharacterId))
-        {
-            Debug.LogWarning("No character selected!");
-            return;
-        }
-        
-        Debug.Log($"Entering world with character: {dataManager.SelectedCharacterId}");
-        
-        // Disable button to prevent multiple clicks
-        enterWorldButton.interactable = false;
-        
-        // Show loading indicator if available
-        if (loadingIndicator != null)
-            loadingIndicator.SetActive(true);
-        
-        // Send spawn request to server
-        NetworkClient.Send(new SpawnPlayerRequestMessage
-        {
-            characterId = dataManager.SelectedCharacterId
-        });
-        
-        // The server will handle scene change and player spawning
-    }
+
 }
