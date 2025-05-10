@@ -750,6 +750,7 @@ public class ServerPlayerDataManager : MonoBehaviour
     }
 
     // New method to handle player spawning after scene transition
+
     public void SpawnPlayerForClient(NetworkConnectionToClient conn, string characterId, Vector3 position)
     {
         // Instantiate the player on the server
@@ -765,10 +766,13 @@ public class ServerPlayerDataManager : MonoBehaviour
         // Spawn it on the network so all clients can see it
         NetworkServer.Spawn(playerInstance, conn);
         
+        // Register this as the player for this connection
+        (NetworkManager.singleton as CustomNetworkManager)?.RegisterPlayerForConnection(conn, playerInstance);
+        
         Debug.Log($"Player spawned for character {characterId} at position {position}");
     }
 
-        public class PlayerSpawnData
+    public class PlayerSpawnData
     {
         public string CharacterId;
         public Vector3 Position;

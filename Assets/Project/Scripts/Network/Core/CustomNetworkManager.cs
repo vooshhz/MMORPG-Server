@@ -230,4 +230,12 @@ public class CustomNetworkManager : NetworkManager
             ServerPlayerDataManager.Instance.SpawnPlayerForClient(conn, msg.characterId, Vector3.zero);
         }
     }
+
+
+    public void RegisterPlayerForConnection(NetworkConnectionToClient conn, GameObject player)
+    {
+        // Use AddPlayerForConnection instead of ReplacePlayerForConnection
+        NetworkServer.AddPlayerForConnection(conn, player);
+        Debug.Log($"Player registered for connection: {conn.connectionId}");
+    }
 }
