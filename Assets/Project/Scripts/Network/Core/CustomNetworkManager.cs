@@ -7,18 +7,6 @@ using System.Collections.Generic;
 
 public class CustomNetworkManager : NetworkManager
 {
-    public Transform spawnedCharactersParent; // assign in inspector
-    // Track pending spawn requests that are waiting for scene transitions    
-    // Class to track pending spawn requests
-    private class PendingSpawnRequest
-    {
-        public NetworkConnectionToClient connection;
-        public string characterId;
-        public string targetScene;
-        public Vector3 spawnPosition;
-        public float requestTime;
-    }
-
     public override void OnServerAddPlayer(NetworkConnectionToClient conn)
     {
         Debug.Log($"Connection received. Waiting for login and character selection. ConnID: {conn.connectionId}");
