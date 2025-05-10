@@ -27,30 +27,9 @@ public class CustomNetworkManager : NetworkManager
         NetworkServer.RegisterHandler<CharacterDetailRequestMessage>(OnCharacterDetailRequest);
         NetworkServer.RegisterHandler<RequestCharacterCreationOptionsMessage>(OnRequestCharacterCreationOptions);
         NetworkServer.RegisterHandler<CreateCharacterRequestMessage>(OnCreateCharacterRequest);       
-        NetworkServer.RegisterHandler<SavePlayerStateMessage>(OnSavePlayerState);
         NetworkServer.RegisterHandler<LobbySceneTransitionRequestMessage>(OnLobbySceneTransitionRequest);
-        NetworkServer.RegisterHandler<SceneChangeRequestMessage>(OnSceneChangeRequest);
     }
     
-    private void OnSceneChangeRequest(NetworkConnectionToClient conn, SceneChangeRequestMessage msg)
-    {
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId))
-        {
-            Debug.LogError($"Connection {conn.connectionId} tried to change scene without valid auth");
-            return;
-        }
-        
-        string characterId = msg.characterId;
-        
-        // Send approval to client
-        conn.Send(new SceneChangeApprovedMessage
-        {
-            sceneName = msg.sceneName,
-            characterId = characterId,
-            spawnAfterChange = true
-        });
-    }
     private void OnLobbySceneTransitionRequest(NetworkConnectionToClient conn, LobbySceneTransitionRequestMessage msg)
     {
         // Get the authenticated user ID from the connection
@@ -181,24 +160,6 @@ public class CustomNetworkManager : NetworkManager
         {
             ClientPlayerDataManager.Instance.ClearAllData();
         }
-    }
-
-    private void OnSavePlayerState(NetworkConnectionToClient conn, SavePlayerStateMessage msg)
-    {
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId))
-        {
-            Debug.LogError("Connection tried to save player state without valid auth");
-            return;
-        }
-        
-        // Save player state to database
-        ServerPlayerDataManager.Instance.SaveCharacterPosition(
-            userId, 
-            msg.characterId, 
-            msg.position, 
-            msg.sceneName
-        );
     }
 
 }
