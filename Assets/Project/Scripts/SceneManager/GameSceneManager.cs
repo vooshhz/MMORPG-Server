@@ -31,11 +31,6 @@ public class GameSceneManager : MonoBehaviour
             Debug.Log("GameSceneManager initialized");
     }
     
-    private void OnEnable()
-    {
-        // Register to receive scene transition responses from server
-        NetworkClient.RegisterHandler<GameSceneTransitionResponseMessage>(HandleSceneTransitionResponse);
-    }
     
     private void OnDisable()
     {

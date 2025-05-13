@@ -185,6 +185,7 @@ GameObject:
   - component: {fileID: 8222267777184202872}
   - component: {fileID: 8164310313225003936}
   - component: {fileID: 9075096160725758610}
+  - component: {fileID: 6477932950776237099}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -389,6 +390,41 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
+--- !u!114 &6477932950776237099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286690282312744990}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b0cb4bbaccdc314691e1f9f19e6ae66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lastSyncedTimeString: Not synced yet
+  characterId: 
+  characterName: 
+  characterClass: 
+  level: 0
+  experience: 0
+  headItemNumber: 0
+  bodyItemNumber: 0
+  hairItemNumber: 0
+  torsoItemNumber: 0
+  legsItemNumber: 0
+  inventoryItems: []
+  health: 0
+  maxHealth: 0
+  mana: 0
+  maxMana: 0
+  strength: 0
+  intelligence: 0
+  dexterity: 0
+  currentSceneName: 
+  position: {x: 0, y: 0, z: 0}
+  isFullyLoaded: 0
+  characterAnimator: {fileID: 0}
 --- !u!1 &2277288764084278183
 GameObject:
   m_ObjectHideFlags: 0

@@ -220,8 +220,9 @@ public class CustomNetworkManager : NetworkManager
         // Get spawn data from the dictionary
         if (ServerPlayerDataManager.Instance.TryGetSpawnData(conn, out var spawnData))
         {
-            // Spawn the player at the stored position
-            ServerPlayerDataManager.Instance.SpawnPlayerForClient(conn, msg.characterId, spawnData.Position);
+            bool isSceneTransition = conn.identity != null;
+            ServerPlayerDataManager.Instance.SpawnPlayerForClient(
+            conn, msg.characterId, spawnData.Position, isSceneTransition);
         }
         else
         {
@@ -231,11 +232,16 @@ public class CustomNetworkManager : NetworkManager
         }
     }
 
-
-    public void RegisterPlayerForConnection(NetworkConnectionToClient conn, GameObject player)
+    public void AddPlayerForConnection(NetworkConnectionToClient conn, GameObject player)
     {
-        // Use AddPlayerForConnection instead of ReplacePlayerForConnection
         NetworkServer.AddPlayerForConnection(conn, player);
-        Debug.Log($"Player registered for connection: {conn.connectionId}");
+        Debug.Log($"Initial player added for connection: {conn.connectionId}");
     }
+    public void ReplacePlayerForConnection(NetworkConnectionToClient conn, GameObject player)
+    {
+        NetworkServer.ReplacePlayerForConnection(conn, player);
+        Debug.Log($"Player replaced for connection: {conn.connectionId}");
+    }
+
+    
 }

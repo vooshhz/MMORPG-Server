@@ -751,23 +751,30 @@ public class ServerPlayerDataManager : MonoBehaviour
 
     // New method to handle player spawning after scene transition
 
-    public void SpawnPlayerForClient(NetworkConnectionToClient conn, string characterId, Vector3 position)
+    public void SpawnPlayerForClient(NetworkConnectionToClient conn, string characterId, Vector3 position, bool isSceneTransition = false)
     {
-        // Instantiate the player on the server
+        // Create player instance
         GameObject playerInstance = Instantiate(playerPrefab, position, Quaternion.identity);
         
-        // Set character ID on the player if needed
+        // Set character ID
         PlayerNetworkController playerController = playerInstance.GetComponent<PlayerNetworkController>();
         if (playerController != null)
         {
             playerController.SetCharacterId(characterId);
         }
         
-        // Spawn it on the network so all clients can see it
+        // Spawn on network
         NetworkServer.Spawn(playerInstance, conn);
         
-        // Register this as the player for this connection
-        (NetworkManager.singleton as CustomNetworkManager)?.RegisterPlayerForConnection(conn, playerInstance);
+        // Use appropriate registration method
+        var networkManager = NetworkManager.singleton as CustomNetworkManager;
+        if (networkManager != null)
+        {
+            if (isSceneTransition)
+                networkManager.ReplacePlayerForConnection(conn, playerInstance);
+            else
+                networkManager.AddPlayerForConnection(conn, playerInstance);
+        }
         
         Debug.Log($"Player spawned for character {characterId} at position {position}");
     }
@@ -784,6 +791,19 @@ public class ServerPlayerDataManager : MonoBehaviour
     public bool TryGetSpawnData(NetworkConnectionToClient conn, out PlayerSpawnData spawnData)
     {
         return SpawnDataByConnection.TryGetValue(conn, out spawnData);
+    }
+
+    public void StoreSpawnData(NetworkConnectionToClient conn, string characterId, Vector3 position, string sceneName)
+    {
+        // Store the spawn data for this connection
+        SpawnDataByConnection[conn] = new PlayerSpawnData
+        {
+            CharacterId = characterId,
+            Position = position,
+            SceneName = sceneName
+        };
+        
+        Debug.Log($"Stored spawn data for character {characterId}: Scene={sceneName}, Position={position}");
     }
 
 }
