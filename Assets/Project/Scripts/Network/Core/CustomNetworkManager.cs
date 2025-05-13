@@ -228,7 +228,7 @@ public class CustomNetworkManager : NetworkManager
         {
             Debug.LogError($"No spawn data found for connection {conn.connectionId}");
             // Fallback to a default position
-            ServerPlayerDataManager.Instance.SpawnPlayerForClient(conn, msg.characterId, Vector3.zero);
+            ServerPlayerDataManager.Instance.SpawnPlayerForClient(conn, msg.characterId, Vector3.zero, false);
         }
     }
 
@@ -239,7 +239,8 @@ public class CustomNetworkManager : NetworkManager
     }
     public void ReplacePlayerForConnection(NetworkConnectionToClient conn, GameObject player)
     {
-        NetworkServer.ReplacePlayerForConnection(conn, player);
+        var options = new ReplacePlayerOptions();
+        NetworkServer.ReplacePlayerForConnection(conn, player, options);
         Debug.Log($"Player replaced for connection: {conn.connectionId}");
     }
 
