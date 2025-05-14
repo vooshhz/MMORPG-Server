@@ -50,31 +50,38 @@ public class PlayerCharacterDataManager : NetworkBehaviour
         }
     }
 
-    private IEnumerator RequestCharacterData()
+private IEnumerator RequestCharacterData()
+{
+    // Wait one frame to ensure everything is initialized
+    yield return null;
+    
+    if (dataManager != null && !string.IsNullOrEmpty(characterData.characterId))
     {
-        // Wait one frame to ensure everything is initialized
-        yield return null;
+        Debug.Log($"Requesting data for character: {characterData.characterId}");
+        networkController.CmdRequestCharacterData(characterData.characterId);
         
-        if (dataManager != null && !string.IsNullOrEmpty(characterData.characterId))
+        // Wait for all data to be received (timeout after 5 seconds)
+        float timeoutTimer = 0f;
+        while (!dataInitialized && timeoutTimer < 5f)
         {
-            // Request character data from server
-            networkController.CmdRequestCharacterData(characterData.characterId);
-            
-            // Wait for all data to be received (timeout after 5 seconds)
-            float timeoutTimer = 0f;
-            while (!dataInitialized && timeoutTimer < 5f)
-            {
-                timeoutTimer += Time.deltaTime;
-                yield return null;
-            }
-            
-            if (!dataInitialized)
-            {
-                Debug.LogWarning("Timed out waiting for character data");
-            }
+            timeoutTimer += Time.deltaTime;
+            yield return null;
+        }
+        
+        if (!dataInitialized)
+        {
+            Debug.LogWarning($"Timed out waiting for character data. Current state - Info: {characterData.characterName}, Equipment: {characterData.bodyItemNumber}");
+        }
+        else
+        {
+            Debug.Log($"Character data successfully initialized: {characterData.characterName}, Level {characterData.level}");
         }
     }
-
+    else
+    {
+        Debug.LogError($"Cannot request data - DataManager: {dataManager != null}, CharacterID: {characterData.characterId}");
+    }
+}
     // Call this method whenever character equipment changes in-game
     public void RefreshEquipmentData()
     {

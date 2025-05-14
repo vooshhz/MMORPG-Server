@@ -1,5 +1,5 @@
 Scene: CharacterCreationScene (Assets/Project/Scenes/LobbyScenes/CharacterCreationScene.unity)
-Extraction Time: 2025-04-20 10:20:10 PM
+Extraction Time: 2025-05-14 7:24:28 AM
 ------------------------------------------------------
 
 + Main Camera [Active]
