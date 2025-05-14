@@ -10,6 +10,10 @@ using System.Linq;
 public class ServerPlayerDataManager : MonoBehaviour
 {
     public static ServerPlayerDataManager Instance { get; private set; }
+
+    // Create a dictionary to store character IDs by connection
+    private Dictionary<NetworkConnectionToClient, string> connectionCharacterIds = 
+    new Dictionary<NetworkConnectionToClient, string>();
     
     [Header("Player Prefab")]
     [SerializeField] private GameObject playerPrefab; // Reference to your networked player prefab
@@ -679,7 +683,7 @@ public class ServerPlayerDataManager : MonoBehaviour
     private IEnumerator FetchCharacterSceneAndSpawn(NetworkConnectionToClient conn, string userId, string characterId)
     {
         // Store the characterId for later use with spawning
-        conn.authenticationData = characterId;
+        connectionCharacterIds[conn] = characterId;
 
         // Create a task to fetch character location data
         var locationTask = dbReference.Child("users").Child(userId)
@@ -804,6 +808,13 @@ public class ServerPlayerDataManager : MonoBehaviour
         };
         
         Debug.Log($"Stored spawn data for character {characterId}: Scene={sceneName}, Position={position}");
+    }
+
+    string GetCharacterId(NetworkConnectionToClient conn)
+    {
+        if (connectionCharacterIds.TryGetValue(conn, out string characterId))
+            return characterId;
+        return null;
     }
 
 }
