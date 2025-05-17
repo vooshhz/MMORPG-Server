@@ -59,7 +59,3 @@ public enum GameScene
     Farm_Scene,
     Farm_Yard_Scene,
 }
-public enum EventType
-{
-
-}

@@ -9,876 +9,745 @@ using System.Linq;
 
 public class ServerPlayerDataManager : MonoBehaviour
 {
-    public static ServerPlayerDataManager Instance { get; private set; }
-
-    // Create a dictionary to store character IDs by connection
-    private Dictionary<NetworkConnectionToClient, string> connectionCharacterIds = 
-    new Dictionary<NetworkConnectionToClient, string>();
+    /// Singleton and References
+    public static ServerPlayerDataManager Instance { get; private set; } // Singleton instance
+    private Dictionary<NetworkConnectionToClient, string> connectionCharacterIds = new Dictionary<NetworkConnectionToClient, string>(); // Maps connections to character IDs
     
     [Header("Player Prefab")]
-    [SerializeField] private GameObject playerPrefab; // Reference to your networked player prefab
+    [SerializeField] private GameObject playerPrefab; // Reference to player prefab for instantiation
     
-    // Dictionary to store spawn data by connection
-    private Dictionary<NetworkConnectionToClient, PlayerSpawnData> SpawnDataByConnection = 
-    new Dictionary<NetworkConnectionToClient, PlayerSpawnData>();
+    private Dictionary<NetworkConnectionToClient, PlayerSpawnData> SpawnDataByConnection = new Dictionary<NetworkConnectionToClient, PlayerSpawnData>(); // Stores spawn data by connection
     
-    private DatabaseReference dbReference;
-    [SerializeField] private CharacterCreationOptionsData characterCreationOptions;
+    private DatabaseReference dbReference; // Firebase database reference
+    [SerializeField] private CharacterCreationOptionsData characterCreationOptions; // Character creation configuration
 
-    //=============================================
-    // INITIALIZATION
-    //=============================================
-    
+    /// Initialization
     private void Awake()
     {
-        // Implement singleton pattern
-        if (Instance != null && Instance != this)
+        if (Instance != null && Instance != this) // Check if singleton exists
         {
-            Destroy(gameObject);
-            return;
+            Destroy(gameObject); // Destroy duplicate
+            return; // Exit early
         }
         
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
+        Instance = this; // Set singleton instance
+        DontDestroyOnLoad(gameObject); // Keep across scene changes
 
-        // Initialize Firebase database connection
         try {
-            dbReference = FirebaseDatabase.DefaultInstance.RootReference;
-            Debug.Log("Database reference initialized successfully");
+            dbReference = FirebaseDatabase.DefaultInstance.RootReference; // Get database reference
+            Debug.Log("Database reference initialized successfully"); // Log success
         } catch (Exception ex) {
-            Debug.LogError($"Failed to initialize Firebase Database: {ex.Message}");
+            Debug.LogError($"Failed to initialize Firebase Database: {ex.Message}"); // Log error
         }
     }
     
-    //=============================================
-    // CHARACTER DATA RETRIEVAL
-    //=============================================
-    
-    // Handle request for all character data for a user
+    /// Character Data Retrieval
     public void HandleAllCharacterDataRequest(NetworkConnectionToClient conn)
     {
-        // Verify user is authenticated before providing data
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId))
+        string userId = conn.authenticationData as string; // Get user ID from auth data
+        if (string.IsNullOrEmpty(userId)) // Verify authentication
         {
-            Debug.LogError($"Connection {conn.connectionId} requested character data without valid auth");
-            return;
+            Debug.LogError($"Connection {conn.connectionId} requested character data without valid auth"); // Log error
+            return; // Exit if not authenticated
         }
         
-        StartCoroutine(FetchAllCharacterData(conn, userId));
+        StartCoroutine(FetchAllCharacterData(conn, userId)); // Start data fetch coroutine
     }
     
-    // Fetch basic character data (names, classes, levels) for all characters
     private IEnumerator FetchAllCharacterData(NetworkConnectionToClient conn, string userId)
     {
-        // Query Firebase for user's character data
-        var characterListTask = dbReference.Child("users").Child(userId).Child("characters")
-            .GetValueAsync();
+        var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync(); // Query character data
         
-        yield return new WaitUntil(() => characterListTask.IsCompleted);
+        yield return new WaitUntil(() => characterListTask.IsCompleted); // Wait for query to complete
         
-        if (characterListTask.IsFaulted)
+        if (characterListTask.IsFaulted) // Check for query error
         {
-            Debug.LogError($"Failed to fetch character data: {characterListTask.Exception}");
-            yield break;
+            Debug.LogError($"Failed to fetch character data: {characterListTask.Exception}"); // Log error
+            yield break; // Exit coroutine
         }
         
-        // Process each character's basic info
-        DataSnapshot snapshot = characterListTask.Result;
-        var characterInfos = new List<ClientPlayerDataManager.CharacterInfo>();
+        DataSnapshot snapshot = characterListTask.Result; // Get query result
+        var characterInfos = new List<ClientPlayerDataManager.CharacterInfo>(); // Create list for character info
         
-        foreach (DataSnapshot characterSnapshot in snapshot.Children)
+        foreach (DataSnapshot characterSnapshot in snapshot.Children) // Process each character
         {
-            string charId = characterSnapshot.Key;
-            DataSnapshot infoData = characterSnapshot.Child("info");
+            string charId = characterSnapshot.Key; // Get character ID
+            DataSnapshot infoData = characterSnapshot.Child("info"); // Get character info node
             
-            var charInfo = new ClientPlayerDataManager.CharacterInfo
+            var charInfo = new ClientPlayerDataManager.CharacterInfo // Create character info object
             {
-                id = charId,
-                characterName = infoData.Child("characterName").Value?.ToString(),
-                characterClass = infoData.Child("characterClass").Value?.ToString(),
-                level = Convert.ToInt32(infoData.Child("level").Value),
-                experience = Convert.ToInt32(infoData.Child("experience").Value)
+                id = charId, // Set ID
+                characterName = infoData.Child("characterName").Value?.ToString(), // Set name
+                characterClass = infoData.Child("characterClass").Value?.ToString(), // Set class
+                level = Convert.ToInt32(infoData.Child("level").Value), // Set level
+                experience = Convert.ToInt32(infoData.Child("experience").Value) // Set experience
             };
             
-            characterInfos.Add(charInfo);
+            characterInfos.Add(charInfo); // Add to list
         }
         
-        // Send data back to client
-        if (conn.identity != null)
+        if (conn.identity != null) // Check if connection has identity
         {
-            conn.identity.GetComponent<PlayerNetworkController>()
-                .RpcReceiveCharacterInfos(characterInfos.ToArray());
+            conn.identity.GetComponent<PlayerNetworkController>().RpcReceiveCharacterInfos(characterInfos.ToArray()); // Send to client
         }
     }
     
-    // Handle request for specific character's detailed data
     public void HandleCharacterDataRequest(NetworkConnectionToClient conn, string characterId)
     {
-        // Verify user is authenticated
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId))
+        string userId = conn.authenticationData as string; // Get user ID from auth data
+        if (string.IsNullOrEmpty(userId)) // Verify authentication
         {
-            Debug.LogError($"Connection {conn.connectionId} requested character data without valid auth");
-            return;
+            Debug.LogError($"Connection {conn.connectionId} requested character data without valid auth"); // Log error
+            return; // Exit if not authenticated
         }
         
-        // Fetch the various types of character data
-        StartCoroutine(FetchCharacterEquipment(conn, userId, characterId));
-        StartCoroutine(FetchCharacterInventory(conn, userId, characterId));
-        StartCoroutine(FetchCharacterLocation(conn, userId, characterId));
+        StartCoroutine(FetchCharacterEquipment(conn, userId, characterId)); // Fetch equipment
+        StartCoroutine(FetchCharacterInventory(conn, userId, characterId)); // Fetch inventory
+        StartCoroutine(FetchCharacterLocation(conn, userId, characterId)); // Fetch location
     }
     
-    // Fetch a character's equipment data
     private IEnumerator FetchCharacterEquipment(NetworkConnectionToClient conn, string userId, string characterId)
     {
-        // Query Firebase for character's equipment
-        var equipmentTask = dbReference.Child("users").Child(userId)
-            .Child("characters").Child(characterId).Child("equipment").GetValueAsync();
+        var equipmentTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("equipment").GetValueAsync(); // Query equipment
         
-        yield return new WaitUntil(() => equipmentTask.IsCompleted);
+        yield return new WaitUntil(() => equipmentTask.IsCompleted); // Wait for query to complete
         
-        if (equipmentTask.IsFaulted)
+        if (equipmentTask.IsFaulted) // Check for query error
         {
-            Debug.LogError($"Failed to fetch equipment data: {equipmentTask.Exception}");
-            yield break;
+            Debug.LogError($"Failed to fetch equipment data: {equipmentTask.Exception}"); // Log error
+            yield break; // Exit coroutine
         }
         
-        // Extract equipment values
-        DataSnapshot snapshot = equipmentTask.Result;
+        DataSnapshot snapshot = equipmentTask.Result; // Get query result
         
-        int head = Convert.ToInt32(snapshot.Child("head").Value);
-        int body = Convert.ToInt32(snapshot.Child("body").Value);
-        int hair = Convert.ToInt32(snapshot.Child("hair").Value);
-        int torso = Convert.ToInt32(snapshot.Child("torso").Value);
-        int legs = Convert.ToInt32(snapshot.Child("legs").Value);
+        int head = Convert.ToInt32(snapshot.Child("head").Value); // Get head item
+        int body = Convert.ToInt32(snapshot.Child("body").Value); // Get body item
+        int hair = Convert.ToInt32(snapshot.Child("hair").Value); // Get hair item
+        int torso = Convert.ToInt32(snapshot.Child("torso").Value); // Get torso item
+        int legs = Convert.ToInt32(snapshot.Child("legs").Value); // Get legs item
         
-        // Send data to client
-        if (conn.identity != null)
+        if (conn.identity != null) // Check if connection has identity
         {
-            conn.identity.GetComponent<PlayerNetworkController>()
-                .TargetReceiveEquipmentData(conn, characterId, head, body, hair, torso, legs);
+            conn.identity.GetComponent<PlayerNetworkController>().TargetReceiveEquipmentData(conn, characterId, head, body, hair, torso, legs); // Send to client
         }
     }
     
-    // Fetch a character's inventory data
     private IEnumerator FetchCharacterInventory(NetworkConnectionToClient conn, string userId, string characterId)
     {
-        // Query Firebase for character's inventory
-        var inventoryTask = dbReference.Child("users").Child(userId)
-            .Child("characters").Child(characterId).Child("inventory").Child("items").GetValueAsync();
+        var inventoryTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("inventory").Child("items").GetValueAsync(); // Query inventory
         
-        yield return new WaitUntil(() => inventoryTask.IsCompleted);
+        yield return new WaitUntil(() => inventoryTask.IsCompleted); // Wait for query to complete
         
-        if (inventoryTask.IsFaulted)
+        if (inventoryTask.IsFaulted) // Check for query error
         {
-            Debug.LogError($"Failed to fetch inventory data: {inventoryTask.Exception}");
-            yield break;
+            Debug.LogError($"Failed to fetch inventory data: {inventoryTask.Exception}"); // Log error
+            yield break; // Exit coroutine
         }
         
-        // Process inventory items
-        DataSnapshot snapshot = inventoryTask.Result;
-        var items = new List<ClientPlayerDataManager.InventoryItem>();
+        DataSnapshot snapshot = inventoryTask.Result; // Get query result
+        var items = new List<ClientPlayerDataManager.InventoryItem>(); // Create list for items
         
-        foreach (DataSnapshot itemData in snapshot.Children)
+        foreach (DataSnapshot itemData in snapshot.Children) // Process each item
         {
-            var item = new ClientPlayerDataManager.InventoryItem
+            var item = new ClientPlayerDataManager.InventoryItem // Create item object
             {
-                itemCode = Convert.ToInt32(itemData.Child("itemCode").Value),
-                quantity = Convert.ToInt32(itemData.Child("itemQuantity").Value)
+                itemCode = Convert.ToInt32(itemData.Child("itemCode").Value), // Set item code
+                quantity = Convert.ToInt32(itemData.Child("itemQuantity").Value) // Set quantity
             };
             
-            items.Add(item);
+            items.Add(item); // Add to list
         }
         
-        // Send data to client
-        if (conn.identity != null)
+        if (conn.identity != null) // Check if connection has identity
         {
-            conn.identity.GetComponent<PlayerNetworkController>()
-                .TargetReceiveInventoryData(conn, characterId, items.ToArray());
+            conn.identity.GetComponent<PlayerNetworkController>().TargetReceiveInventoryData(conn, characterId, items.ToArray()); // Send to client
         }
     }
     
-    // Fetch a character's location data
     private IEnumerator FetchCharacterLocation(NetworkConnectionToClient conn, string userId, string characterId)
     {
-        // Query Firebase for character's location
-        var locationTask = dbReference.Child("users").Child(userId)
-            .Child("characters").Child(characterId).Child("location").GetValueAsync();
+        var locationTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("location").GetValueAsync(); // Query location
         
-        yield return new WaitUntil(() => locationTask.IsCompleted);
+        yield return new WaitUntil(() => locationTask.IsCompleted); // Wait for query to complete
         
-        if (locationTask.IsFaulted)
+        if (locationTask.IsFaulted) // Check for query error
         {
-            Debug.LogError($"Failed to fetch location data: {locationTask.Exception}");
-            yield break;
+            Debug.LogError($"Failed to fetch location data: {locationTask.Exception}"); // Log error
+            yield break; // Exit coroutine
         }
         
-        // Extract location data
-        DataSnapshot snapshot = locationTask.Result;
+        DataSnapshot snapshot = locationTask.Result; // Get query result
         
-        string sceneName = snapshot.Child("sceneName").Value?.ToString();
-        float x = Convert.ToSingle(snapshot.Child("x").Value);
-        float y = Convert.ToSingle(snapshot.Child("y").Value);
-        float z = Convert.ToSingle(snapshot.Child("z").Value);
+        string sceneName = snapshot.Child("sceneName").Value?.ToString(); // Get scene name
+        float x = Convert.ToSingle(snapshot.Child("x").Value); // Get X position
+        float y = Convert.ToSingle(snapshot.Child("y").Value); // Get Y position
+        float z = Convert.ToSingle(snapshot.Child("z").Value); // Get Z position
         
-        // Send data to client
-        if (conn.identity != null)
+        if (conn.identity != null) // Check if connection has identity
         {
-            conn.identity.GetComponent<PlayerNetworkController>()
-                .TargetReceiveLocationData(conn, characterId, sceneName, new Vector3(x, y, z));
+            conn.identity.GetComponent<PlayerNetworkController>().TargetReceiveLocationData(conn, characterId, sceneName, new Vector3(x, y, z)); // Send to client
         }
     }
     
-    //=============================================
-    // CHARACTER PREVIEW DATA
-    //=============================================
-    
-    // Handle request for character preview data (for character selection screen)
+    /// Character Preview Data
     public void HandleCharacterPreviewRequest(NetworkConnectionToClient conn, string userId)
     {
-        // Ensure database connection is valid
-        if (dbReference == null)
+        if (dbReference == null) // Check if database reference is null
         {
-            Debug.LogError("Database reference is null! Attempting to reinitialize...");
+            Debug.LogError("Database reference is null! Attempting to reinitialize..."); // Log error
             try 
             {
-                dbReference = FirebaseDatabase.DefaultInstance.RootReference;
-                if (dbReference == null)
+                dbReference = FirebaseDatabase.DefaultInstance.RootReference; // Try to reinitialize
+                if (dbReference == null) // Check if still null
                 {
-                    Debug.LogError("Still couldn't initialize database reference. Disconnecting client.");
-                    conn.Disconnect();
-                    return;
+                    Debug.LogError("Still couldn't initialize database reference. Disconnecting client."); // Log error
+                    conn.Disconnect(); // Disconnect client
+                    return; // Exit
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) // Handle exceptions
             {
-                Debug.LogError($"Exception reinitializing database: {ex.Message}");
-                conn.Disconnect();
-                return;
+                Debug.LogError($"Exception reinitializing database: {ex.Message}"); // Log error
+                conn.Disconnect(); // Disconnect client
+                return; // Exit
             }
         }
         
-        StartCoroutine(FetchCharacterPreviewData(conn, userId));
+        StartCoroutine(FetchCharacterPreviewData(conn, userId)); // Start data fetch coroutine
     }
 
-    // Fetch combined preview data for character selection screen
     private IEnumerator FetchCharacterPreviewData(NetworkConnectionToClient conn, string userId)
     {
-        // Re-initialize database if needed
-        if (dbReference == null)
+        if (dbReference == null) // Check if database reference is null
         {
-            Debug.LogError("Database reference is null! Firebase Database not initialized");
+            Debug.LogError("Database reference is null! Firebase Database not initialized"); // Log error
             
             try {
-                Debug.Log("Attempting to initialize Firebase Database again...");
-                FirebaseApp app = FirebaseApp.DefaultInstance;
-                if (app == null)
+                Debug.Log("Attempting to initialize Firebase Database again..."); // Log attempt
+                FirebaseApp app = FirebaseApp.DefaultInstance; // Get Firebase app
+                if (app == null) // Check if app is null
                 {
-                    Debug.LogError("FirebaseApp.DefaultInstance is null!");
-                    yield break;
+                    Debug.LogError("FirebaseApp.DefaultInstance is null!"); // Log error
+                    yield break; // Exit coroutine
                 }
                 
-                app.Options.DatabaseUrl = new Uri("https://willowfable3-default-rtdb.firebaseio.com/");
-                dbReference = FirebaseDatabase.DefaultInstance.RootReference;
-                Debug.Log("Successfully re-initialized Firebase Database");
+                app.Options.DatabaseUrl = new Uri("https://willowfable3-default-rtdb.firebaseio.com/"); // Set database URL
+                dbReference = FirebaseDatabase.DefaultInstance.RootReference; // Get reference
+                Debug.Log("Successfully re-initialized Firebase Database"); // Log success
             } catch (Exception ex) {
-                Debug.LogError($"Failed to initialize Firebase Database: {ex.Message}");
-                yield break;
+                Debug.LogError($"Failed to initialize Firebase Database: {ex.Message}"); // Log error
+                yield break; // Exit coroutine
             }
         }
         
-        // Fetch all character data in one go
-        var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync();
-        yield return new WaitUntil(() => characterListTask.IsCompleted);
+        var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync(); // Query characters
+        yield return new WaitUntil(() => characterListTask.IsCompleted); // Wait for query to complete
         
-        if (characterListTask.IsFaulted)
+        if (characterListTask.IsFaulted) // Check for query error
         {
-            Debug.LogError($"Failed to fetch character data: {characterListTask.Exception}");
-            yield break;
+            Debug.LogError($"Failed to fetch character data: {characterListTask.Exception}"); // Log error
+            yield break; // Exit coroutine
         }
         
-        // Prepare data containers
-        DataSnapshot snapshot = characterListTask.Result;
-        var characterInfos = new List<ClientPlayerDataManager.CharacterInfo>();
-        var equipmentPairs = new List<CharacterEquipmentPair>();
-        var locationPairs = new List<CharacterLocationPair>();
+        DataSnapshot snapshot = characterListTask.Result; // Get query result
+        var characterInfos = new List<ClientPlayerDataManager.CharacterInfo>(); // Create list for character info
+        var equipmentPairs = new List<CharacterEquipmentPair>(); // Create list for equipment pairs
+        var locationPairs = new List<CharacterLocationPair>(); // Create list for location pairs
         
-        // Process each character's data
-        foreach (DataSnapshot characterSnapshot in snapshot.Children)
+        foreach (DataSnapshot characterSnapshot in snapshot.Children) // Process each character
         {
-            string charId = characterSnapshot.Key;
+            string charId = characterSnapshot.Key; // Get character ID
             
-            // Process character info
-            DataSnapshot infoData = characterSnapshot.Child("info");
-            var charInfo = new ClientPlayerDataManager.CharacterInfo
+            DataSnapshot infoData = characterSnapshot.Child("info"); // Get info node
+            var charInfo = new ClientPlayerDataManager.CharacterInfo // Create character info object
             {
-                id = charId,
-                characterName = infoData.Child("characterName").Value?.ToString(),
-                characterClass = infoData.Child("characterClass").Value?.ToString(),
-                level = Convert.ToInt32(infoData.Child("level").Value),
-                experience = Convert.ToInt32(infoData.Child("experience").Value)
+                id = charId, // Set ID
+                characterName = infoData.Child("characterName").Value?.ToString(), // Set name
+                characterClass = infoData.Child("characterClass").Value?.ToString(), // Set class
+                level = Convert.ToInt32(infoData.Child("level").Value), // Set level
+                experience = Convert.ToInt32(infoData.Child("experience").Value) // Set experience
             };
-            characterInfos.Add(charInfo);
+            characterInfos.Add(charInfo); // Add to list
             
-            // Process equipment data
-            DataSnapshot equipData = characterSnapshot.Child("equipment");
-            var equipment = new ClientPlayerDataManager.EquipmentData
+            DataSnapshot equipData = characterSnapshot.Child("equipment"); // Get equipment node
+            var equipment = new ClientPlayerDataManager.EquipmentData // Create equipment data object
             {
-                head = Convert.ToInt32(equipData.Child("head").Value),
-                body = Convert.ToInt32(equipData.Child("body").Value),
-                hair = Convert.ToInt32(equipData.Child("hair").Value),
-                torso = Convert.ToInt32(equipData.Child("torso").Value),
-                legs = Convert.ToInt32(equipData.Child("legs").Value)
+                head = Convert.ToInt32(equipData.Child("head").Value), // Set head item
+                body = Convert.ToInt32(equipData.Child("body").Value), // Set body item
+                hair = Convert.ToInt32(equipData.Child("hair").Value), // Set hair item
+                torso = Convert.ToInt32(equipData.Child("torso").Value), // Set torso item
+                legs = Convert.ToInt32(equipData.Child("legs").Value) // Set legs item
             };
             
-            equipmentPairs.Add(new CharacterEquipmentPair
+            equipmentPairs.Add(new CharacterEquipmentPair // Create equipment pair
             {
-                characterId = charId,
-                equipment = equipment
+                characterId = charId, // Set character ID
+                equipment = equipment // Set equipment data
             });
             
-            // Process location data
-            DataSnapshot locationData = characterSnapshot.Child("location");
-            if (locationData.Exists)
+            DataSnapshot locationData = characterSnapshot.Child("location"); // Get location node
+            if (locationData.Exists) // Check if location exists
             {
-                string sceneName = locationData.Child("sceneName").Value?.ToString();
-                float x = 0f, y = 0f, z = 0f;
+                string sceneName = locationData.Child("sceneName").Value?.ToString(); // Get scene name
+                float x = 0f, y = 0f, z = 0f; // Initialize position values
                 
-                // Safely extract location values
-                if (locationData.Child("x").Exists)
-                    x = Convert.ToSingle(locationData.Child("x").Value);
-                if (locationData.Child("y").Exists)
-                    y = Convert.ToSingle(locationData.Child("y").Value);
-                if (locationData.Child("z").Exists)
-                    z = Convert.ToSingle(locationData.Child("z").Value);
+                if (locationData.Child("x").Exists) // Check if X exists
+                    x = Convert.ToSingle(locationData.Child("x").Value); // Get X position
+                if (locationData.Child("y").Exists) // Check if Y exists
+                    y = Convert.ToSingle(locationData.Child("y").Value); // Get Y position
+                if (locationData.Child("z").Exists) // Check if Z exists
+                    z = Convert.ToSingle(locationData.Child("z").Value); // Get Z position
                 
-                locationPairs.Add(new CharacterLocationPair
+                locationPairs.Add(new CharacterLocationPair // Create location pair
                 {
-                    characterId = charId,
-                    location = new ClientPlayerDataManager.LocationData
+                    characterId = charId, // Set character ID
+                    location = new ClientPlayerDataManager.LocationData // Create location data
                     {
-                        sceneName = sceneName,
-                        position = new Vector3(x, y, z)
+                        sceneName = sceneName, // Set scene name
+                        position = new Vector3(x, y, z) // Set position
                     }
                 });
                 
-                Debug.Log($"Loaded location data for character {charId}: Scene={sceneName}, Pos=({x},{y},{z})");
+                Debug.Log($"Loaded location data for character {charId}: Scene={sceneName}, Pos=({x},{y},{z})"); // Log success
             }
             else
             {
-                Debug.LogWarning($"No location data found for character {charId}");
+                Debug.LogWarning($"No location data found for character {charId}"); // Log warning
             }
         }
         
-        // Send combined preview data to client
-        var response = new CharacterPreviewResponseMessage
+        var response = new CharacterPreviewResponseMessage // Create response message
         {
-            characters = characterInfos.ToArray(),
-            equipmentData = equipmentPairs.ToArray(),
-            locationData = locationPairs.ToArray()
+            characters = characterInfos.ToArray(), // Set character info
+            equipmentData = equipmentPairs.ToArray(), // Set equipment data
+            locationData = locationPairs.ToArray() // Set location data
         };
         
-        conn.Send(response);
-        Debug.Log($"Sent character preview response with {characterInfos.Count} characters, {equipmentPairs.Count} equipment sets, and {locationPairs.Count} location data sets");
+        conn.Send(response); // Send response to client
+        Debug.Log($"Sent character preview response with {characterInfos.Count} characters, {equipmentPairs.Count} equipment sets, and {locationPairs.Count} location data sets"); // Log success
     }
     
-    //=============================================
-    // CHARACTER DATA SAVING
-    //=============================================
-    
-    // Save character position to database
+    /// Character Data Saving
     public void SaveCharacterPosition(string userId, string characterId, Vector3 position, string sceneName)
     {
-        // Update location data in Firebase
-        Dictionary<string, object> updates = new Dictionary<string, object>
+        Dictionary<string, object> updates = new Dictionary<string, object> // Create updates dictionary
         {
-            ["x"] = position.x,
-            ["y"] = position.y,
-            ["z"] = position.z,
-            ["sceneName"] = sceneName
+            ["x"] = position.x, // Set X position
+            ["y"] = position.y, // Set Y position
+            ["z"] = position.z, // Set Z position
+            ["sceneName"] = sceneName // Set scene name
         };
         
-        string path = $"users/{userId}/characters/{characterId}/location";
-        dbReference.Child(path).UpdateChildrenAsync(updates);
+        string path = $"users/{userId}/characters/{characterId}/location"; // Create database path
+        dbReference.Child(path).UpdateChildrenAsync(updates); // Update database
     }
     
-    //=============================================
-    // CHARACTER CREATION
-    //=============================================
-    
-    // Validate character creation parameters
+    /// Character Creation
     public bool ValidateCharacterCreation(string className, int bodyItem, int headItem, int hairItem, int torsoItem, int legsItem)
     {
-        // Check if class is valid
-        bool validClass = false;
-        foreach (var classOption in characterCreationOptions.availableClasses)
+        bool validClass = false; // Initialize class validation flag
+        foreach (var classOption in characterCreationOptions.availableClasses) // Check each class
         {
-            if (classOption.className == className)
+            if (classOption.className == className) // If class matches
             {
-                validClass = true;
-                break;
+                validClass = true; // Set flag
+                break; // Exit loop
             }
         }
         
-        if (!validClass)
-            return false;
+        if (!validClass) // If class is invalid
+            return false; // Return false
         
         // Check if equipment options are valid
-        bool validBody = System.Array.IndexOf(characterCreationOptions.bodyOptions, bodyItem) >= 0;
-        bool validHead = System.Array.IndexOf(characterCreationOptions.headOptions, headItem) >= 0;
-        bool validHair = System.Array.IndexOf(characterCreationOptions.hairOptions, hairItem) >= 0;
-        bool validTorso = System.Array.IndexOf(characterCreationOptions.torsoOptions, torsoItem) >= 0;
-        bool validLegs = System.Array.IndexOf(characterCreationOptions.legsOptions, legsItem) >= 0;
+        bool validBody = System.Array.IndexOf(characterCreationOptions.bodyOptions, bodyItem) >= 0; // Check body
+        bool validHead = System.Array.IndexOf(characterCreationOptions.headOptions, headItem) >= 0; // Check head
+        bool validHair = System.Array.IndexOf(characterCreationOptions.hairOptions, hairItem) >= 0; // Check hair
+        bool validTorso = System.Array.IndexOf(characterCreationOptions.torsoOptions, torsoItem) >= 0; // Check torso
+        bool validLegs = System.Array.IndexOf(characterCreationOptions.legsOptions, legsItem) >= 0; // Check legs
         
-        return validClass && validBody && validHead && validHair && validTorso && validLegs;
+        return validClass && validBody && validHead && validHair && validTorso && validLegs; // Return combined validation result
     }
 
-    // Send available character creation options to client
     public void SendCharacterCreationOptions(NetworkConnectionToClient conn)
     {
-        // Convert scriptable object data to message format
-        var msg = new CharacterCreationOptionsMessage
+        var msg = new CharacterCreationOptionsMessage // Create message
         {
-            availableClasses = characterCreationOptions.availableClasses.Select(c => c.className).ToArray(),
-            bodyOptions = characterCreationOptions.bodyOptions,
-            headOptions = characterCreationOptions.headOptions,
-            hairOptions = characterCreationOptions.hairOptions,
-            torsoOptions = characterCreationOptions.torsoOptions,
-            legsOptions = characterCreationOptions.legsOptions
+            availableClasses = characterCreationOptions.availableClasses.Select(c => c.className).ToArray(), // Set classes
+            bodyOptions = characterCreationOptions.bodyOptions, // Set body options
+            headOptions = characterCreationOptions.headOptions, // Set head options
+            hairOptions = characterCreationOptions.hairOptions, // Set hair options
+            torsoOptions = characterCreationOptions.torsoOptions, // Set torso options
+            legsOptions = characterCreationOptions.legsOptions // Set legs options
         };
         
-        // Send to client
-        conn.Send(msg);
-        Debug.Log($"Sent character creation options to client {conn.connectionId}");
+        conn.Send(msg); // Send to client
+        Debug.Log($"Sent character creation options to client {conn.connectionId}"); // Log success
     }
 
-    // Handle character creation request from client
     public void HandleCreateCharacterRequest(NetworkConnectionToClient conn, CreateCharacterRequestMessage msg)
     {
-        // Verify user is authenticated
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId))
+        string userId = conn.authenticationData as string; // Get user ID from auth data
+        if (string.IsNullOrEmpty(userId)) // Verify authentication
         {
-            Debug.LogError($"Connection {conn.connectionId} tried to create character without valid auth");
-            SendCreateCharacterResponse(conn, false, "Authentication error");
-            return;
+            Debug.LogError($"Connection {conn.connectionId} tried to create character without valid auth"); // Log error
+            SendCreateCharacterResponse(conn, false, "Authentication error"); // Send error response
+            return; // Exit
         }
         
-        // Validate character name
-        if (string.IsNullOrEmpty(msg.characterName) || msg.characterName.Length < 3 || msg.characterName.Length > 16)
+        if (string.IsNullOrEmpty(msg.characterName) || msg.characterName.Length < 3 || msg.characterName.Length > 16) // Validate name
         {
-            SendCreateCharacterResponse(conn, false, "Invalid character name (must be 3-16 characters)");
-            return;
+            SendCreateCharacterResponse(conn, false, "Invalid character name (must be 3-16 characters)"); // Send error response
+            return; // Exit
         }
         
-        // Validate character class
-        bool validClass = characterCreationOptions.availableClasses.Any(c => c.className == msg.characterClass);
-        if (!validClass)
+        bool validClass = characterCreationOptions.availableClasses.Any(c => c.className == msg.characterClass); // Validate class
+        if (!validClass) // If class is invalid
         {
-            SendCreateCharacterResponse(conn, false, "Invalid character class");
-            return;
+            SendCreateCharacterResponse(conn, false, "Invalid character class"); // Send error response
+            return; // Exit
         }
         
         // Validate equipment options
-        bool validBody = characterCreationOptions.bodyOptions.Contains(msg.bodyItem);
-        bool validHead = characterCreationOptions.headOptions.Contains(msg.headItem);
-        bool validHair = characterCreationOptions.hairOptions.Contains(msg.hairItem);
-        bool validTorso = characterCreationOptions.torsoOptions.Contains(msg.torsoItem);
-        bool validLegs = characterCreationOptions.legsOptions.Contains(msg.legsItem);
+        bool validBody = characterCreationOptions.bodyOptions.Contains(msg.bodyItem); // Check body
+        bool validHead = characterCreationOptions.headOptions.Contains(msg.headItem); // Check head
+        bool validHair = characterCreationOptions.hairOptions.Contains(msg.hairItem); // Check hair
+        bool validTorso = characterCreationOptions.torsoOptions.Contains(msg.torsoItem); // Check torso
+        bool validLegs = characterCreationOptions.legsOptions.Contains(msg.legsItem); // Check legs
         
-        if (!validBody || !validHead || !validHair || !validTorso || !validLegs)
+        if (!validBody || !validHead || !validHair || !validTorso || !validLegs) // If any equipment is invalid
         {
-            SendCreateCharacterResponse(conn, false, "Invalid customization options");
-            return;
+            SendCreateCharacterResponse(conn, false, "Invalid customization options"); // Send error response
+            return; // Exit
         }
         
-        // Check if name is already taken
-        StartCoroutine(CheckNameAvailability(conn, userId, msg));
+        StartCoroutine(CheckNameAvailability(conn, userId, msg)); // Start name check coroutine
     }
 
-    // Create character in database after validations pass
     private IEnumerator CreateCharacterInDatabase(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
     {
-        // Generate unique character ID
-        string characterId = System.Guid.NewGuid().ToString();
+        string characterId = System.Guid.NewGuid().ToString(); // Generate unique ID
         
-        // Create character data structure
-        Dictionary<string, object> characterData = new Dictionary<string, object>
+        Dictionary<string, object> characterData = new Dictionary<string, object> // Create character data
         {
-            ["info"] = new Dictionary<string, object>
+            ["info"] = new Dictionary<string, object> // Create info object
             {
-                ["characterName"] = msg.characterName,
-                ["characterClass"] = msg.characterClass,
-                ["level"] = 1,
-                ["experience"] = 0
+                ["characterName"] = msg.characterName, // Set name
+                ["characterClass"] = msg.characterClass, // Set class
+                ["level"] = 1, // Set level
+                ["experience"] = 0 // Set experience
             },
-            ["equipment"] = new Dictionary<string, object>
+            ["equipment"] = new Dictionary<string, object> // Create equipment object
             {
-                ["head"] = msg.headItem,
-                ["body"] = msg.bodyItem,
-                ["hair"] = msg.hairItem,
-                ["torso"] = msg.torsoItem,
-                ["legs"] = msg.legsItem
+                ["head"] = msg.headItem, // Set head item
+                ["body"] = msg.bodyItem, // Set body item
+                ["hair"] = msg.hairItem, // Set hair item
+                ["torso"] = msg.torsoItem, // Set torso item
+                ["legs"] = msg.legsItem // Set legs item
             },
-            ["inventory"] = new Dictionary<string, object>
+            ["inventory"] = new Dictionary<string, object> // Create inventory object
             {
-                ["items"] = new Dictionary<string, object>()
+                ["items"] = new Dictionary<string, object>() // Initialize empty items
             },
-            ["location"] = new Dictionary<string, object>
+            ["location"] = new Dictionary<string, object> // Create location object
             {
-                ["sceneName"] = characterCreationOptions.startingSceneName.ToString(),
-                ["x"] = 0,
-                ["y"] = 0,
-                ["z"] = 0
+                ["sceneName"] = characterCreationOptions.startingSceneName.ToString(), // Set starting scene
+                ["x"] = 0, // Set X position
+                ["y"] = 0, // Set Y position
+                ["z"] = 0 // Set Z position
             }
         };
         
-        // Save to Firebase
-        var dbTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).SetValueAsync(characterData);
+        var dbTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).SetValueAsync(characterData); // Save to database
         
-        yield return new WaitUntil(() => dbTask.IsCompleted);
+        yield return new WaitUntil(() => dbTask.IsCompleted); // Wait for database operation to complete
         
-        if (dbTask.IsFaulted)
+        if (dbTask.IsFaulted) // Check for database error
         {
-            Debug.LogError($"Failed to create character: {dbTask.Exception}");
-            SendCreateCharacterResponse(conn, false, "Database error");
-            yield break;
+            Debug.LogError($"Failed to create character: {dbTask.Exception}"); // Log error
+            SendCreateCharacterResponse(conn, false, "Database error"); // Send error response
+            yield break; // Exit coroutine
         }
         
-        // Send success response to client
-        SendCreateCharacterResponse(conn, true, "Character created successfully", characterId);
+        SendCreateCharacterResponse(conn, true, "Character created successfully", characterId); // Send success response
     }
 
-    // Send character creation response to client
     private void SendCreateCharacterResponse(NetworkConnectionToClient conn, bool success, string message, string characterId = null)
     {
-        var response = new CreateCharacterResponseMessage
+        var response = new CreateCharacterResponseMessage // Create response message
         {
-            success = success,
-            message = message,
-            characterId = characterId
+            success = success, // Set success flag
+            message = message, // Set message
+            characterId = characterId // Set character ID
         };
         
-        conn.Send(response);
+        conn.Send(response); // Send to client
     }
 
-    // Check if character name is already taken
     private IEnumerator CheckNameAvailability(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
     {
-        // Query all users to check for name uniqueness
-        var nameQuery = dbReference.Child("users").OrderByChild("characters")
-            .GetValueAsync();
+        var nameQuery = dbReference.Child("users").OrderByChild("characters").GetValueAsync(); // Query users
         
-        yield return new WaitUntil(() => nameQuery.IsCompleted);
+        yield return new WaitUntil(() => nameQuery.IsCompleted); // Wait for query to complete
         
-        if (nameQuery.IsFaulted)
+        if (nameQuery.IsFaulted) // Check for query error
         {
-            Debug.LogError($"Failed to check name availability: {nameQuery.Exception}");
-            SendCreateCharacterResponse(conn, false, "Database error while checking name");
-            yield break;
+            Debug.LogError($"Failed to check name availability: {nameQuery.Exception}"); // Log error
+            SendCreateCharacterResponse(conn, false, "Database error while checking name"); // Send error response
+            yield break; // Exit coroutine
         }
         
-        // Check each character for name collision
-        DataSnapshot snapshot = nameQuery.Result;
-        bool nameExists = false;
+        DataSnapshot snapshot = nameQuery.Result; // Get query result
+        bool nameExists = false; // Initialize name exists flag
         
-        foreach (DataSnapshot userSnapshot in snapshot.Children)
+        foreach (DataSnapshot userSnapshot in snapshot.Children) // Process each user
         {
-            DataSnapshot charactersSnapshot = userSnapshot.Child("characters");
-            foreach (DataSnapshot characterSnapshot in charactersSnapshot.Children)
+            DataSnapshot charactersSnapshot = userSnapshot.Child("characters"); // Get characters node
+            foreach (DataSnapshot characterSnapshot in charactersSnapshot.Children) // Process each character
             {
-                string existingName = characterSnapshot.Child("info/characterName").Value?.ToString();
-                if (existingName != null && existingName.Equals(msg.characterName, System.StringComparison.OrdinalIgnoreCase))
+                string existingName = characterSnapshot.Child("info/characterName").Value?.ToString(); // Get character name
+                if (existingName != null && existingName.Equals(msg.characterName, System.StringComparison.OrdinalIgnoreCase)) // If name matches
                 {
-                    nameExists = true;
-                    break;
+                    nameExists = true; // Set flag
+                    break; // Exit loop
                 }
             }
             
-            if (nameExists) break;
+            if (nameExists) break; // Exit loop if name exists
         }
         
-        if (nameExists)
+        if (nameExists) // If name exists
         {
-            SendCreateCharacterResponse(conn, false, "This character name is already taken");
-            yield break;
+            SendCreateCharacterResponse(conn, false, "This character name is already taken"); // Send error response
+            yield break; // Exit coroutine
         }
         
-        // Name is available, proceed with character creation
-        StartCoroutine(CreateCharacterInDatabase(conn, userId, msg));
+        StartCoroutine(CreateCharacterInDatabase(conn, userId, msg)); // Start character creation coroutine
     }
 
-    // Check character limit and send creation options
     public void CheckCharacterLimitAndSendOptions(NetworkConnectionToClient conn)
     {
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId))
+        string userId = conn.authenticationData as string; // Get user ID from auth data
+        if (string.IsNullOrEmpty(userId)) // Verify authentication
         {
-            Debug.LogError($"Connection {conn.connectionId} requested character limit check without valid auth");
-            return;
+            Debug.LogError($"Connection {conn.connectionId} requested character limit check without valid auth"); // Log error
+            return; // Exit
         }
         
-        StartCoroutine(CheckCharacterLimitCoroutine(conn, userId));
+        StartCoroutine(CheckCharacterLimitCoroutine(conn, userId)); // Start character limit check coroutine
     }
 
-    // Check if user is at character limit and send options
     private IEnumerator CheckCharacterLimitCoroutine(NetworkConnectionToClient conn, string userId)
     {
-        // Get character count from database
-        var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync();
-        yield return new WaitUntil(() => characterListTask.IsCompleted);
+        var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync(); // Query characters
+        yield return new WaitUntil(() => characterListTask.IsCompleted); // Wait for query to complete
         
-        if (characterListTask.IsFaulted)
+        if (characterListTask.IsFaulted) // Check for query error
         {
-            Debug.LogError($"Failed to fetch character count: {characterListTask.Exception}");
-            // Send options anyway, but don't restrict creation
-            SendCharacterCreationOptions(conn);
-            yield break;
+            Debug.LogError($"Failed to fetch character count: {characterListTask.Exception}"); // Log error
+            SendCharacterCreationOptions(conn); // Send options anyway
+            yield break; // Exit coroutine
         }
         
-        // Count user's characters
-        DataSnapshot snapshot = characterListTask.Result;
-        int characterCount = 0;
+        DataSnapshot snapshot = characterListTask.Result; // Get query result
+        int characterCount = 0; // Initialize character count
         
-        foreach (DataSnapshot characterSnapshot in snapshot.Children)
+        foreach (DataSnapshot characterSnapshot in snapshot.Children) // Count characters
         {
-            characterCount++;
+            characterCount++; // Increment count
         }
         
-        // Create message with character limit info
-        var msg = new CharacterCreationOptionsMessage
+        var msg = new CharacterCreationOptionsMessage // Create message
         {
-            availableClasses = characterCreationOptions.availableClasses.Select(c => c.className).ToArray(),
-            bodyOptions = characterCreationOptions.bodyOptions,
-            headOptions = characterCreationOptions.headOptions,
-            hairOptions = characterCreationOptions.hairOptions,
-            torsoOptions = characterCreationOptions.torsoOptions,
-            legsOptions = characterCreationOptions.legsOptions,
-            atCharacterLimit = (characterCount >= 3)  // Max 3 characters per account
+            availableClasses = characterCreationOptions.availableClasses.Select(c => c.className).ToArray(), // Set classes
+            bodyOptions = characterCreationOptions.bodyOptions, // Set body options
+            headOptions = characterCreationOptions.headOptions, // Set head options
+            hairOptions = characterCreationOptions.hairOptions, // Set hair options
+            torsoOptions = characterCreationOptions.torsoOptions, // Set torso options
+            legsOptions = characterCreationOptions.legsOptions, // Set legs options
+            atCharacterLimit = (characterCount >= 3) // Set character limit flag
         };
         
-        // Send to client
-        conn.Send(msg);
-        Debug.Log($"Sent character creation options to client {conn.connectionId}. At character limit: {msg.atCharacterLimit}");
+        conn.Send(msg); // Send to client
+        Debug.Log($"Sent character creation options to client {conn.connectionId}. At character limit: {msg.atCharacterLimit}"); // Log success
     }
 
-
-
-    // Handle player spawn request
+    /// Player Spawning
     public void HandlePlayerSpawnRequest(NetworkConnectionToClient conn, string characterId)
     {
-        // Verify user is authenticated
-        string userId = conn.authenticationData as string;
-        if (string.IsNullOrEmpty(userId))
+        string userId = conn.authenticationData as string; // Get user ID from auth data
+        if (string.IsNullOrEmpty(userId)) // Verify authentication
         {
-            Debug.LogError($"Connection {conn.connectionId} requested spawn without valid auth");
-            return;
+            Debug.LogError($"Connection {conn.connectionId} requested spawn without valid auth"); // Log error
+            return; // Exit
         }
         
-        StartCoroutine(FetchCharacterSceneAndSpawn(conn, userId, characterId));
+        StartCoroutine(FetchCharacterSceneAndSpawn(conn, userId, characterId)); // Start spawn coroutine
     }
 
-    // Coroutine to fetch character scene data and initiate spawn
     private IEnumerator FetchCharacterSceneAndSpawn(NetworkConnectionToClient conn, string userId, string characterId)
     {
-        // Store the characterId for later use with spawning
-        connectionCharacterIds[conn] = characterId;
+        connectionCharacterIds[conn] = characterId; // Store character ID for connection
 
-        // Create a task to fetch character location data
-        var locationTask = dbReference.Child("users").Child(userId)
-            .Child("characters").Child(characterId).Child("location").GetValueAsync();
+        var locationTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("location").GetValueAsync(); // Query location
         
-        // Wait for the task to complete
-        yield return new WaitUntil(() => locationTask.IsCompleted);
+        yield return new WaitUntil(() => locationTask.IsCompleted); // Wait for query to complete
         
-        if (locationTask.IsFaulted)
+        if (locationTask.IsFaulted) // Check for query error
         {
-            Debug.LogError($"Failed to fetch location data: {locationTask.Exception}");
-            // Use default location as fallback
-            SendGameSceneTransitionResponse(conn, true, GameScene.Farm_Scene.ToString(), Vector3.zero);
-            yield break;
+            Debug.LogError($"Failed to fetch location data: {locationTask.Exception}"); // Log error
+            SendGameSceneTransitionResponse(conn, true, GameScene.Farm_Scene.ToString(), Vector3.zero); // Use default location
+            yield break; // Exit coroutine
         }
         
-        // Extract location data from Firebase response
-        var snapshot = locationTask.Result;
-        string sceneName = snapshot.Child("sceneName").Value?.ToString() ?? GameScene.Farm_Scene.ToString();
-        float x = Convert.ToSingle(snapshot.Child("x").Value ?? 0f);
-        float y = Convert.ToSingle(snapshot.Child("y").Value ?? 0f);
-        float z = Convert.ToSingle(snapshot.Child("z").Value ?? 0f);
+        var snapshot = locationTask.Result; // Get query result
+        string sceneName = snapshot.Child("sceneName").Value?.ToString() ?? GameScene.Farm_Scene.ToString(); // Get scene name
+        float x = Convert.ToSingle(snapshot.Child("x").Value ?? 0f); // Get X position
+        float y = Convert.ToSingle(snapshot.Child("y").Value ?? 0f); // Get Y position
+        float z = Convert.ToSingle(snapshot.Child("z").Value ?? 0f); // Get Z position
         
-        Vector3 spawnPosition = new Vector3(x, y, z);
+        Vector3 spawnPosition = new Vector3(x, y, z); // Create position vector
         
-        Debug.Log($"Character {characterId} location data: Scene={sceneName}, Position={spawnPosition}");
+        Debug.Log($"Character {characterId} location data: Scene={sceneName}, Position={spawnPosition}"); // Log info
         
-        // Store spawn data in a dictionary associated with the connection
-        SpawnDataByConnection[conn] = new PlayerSpawnData
+        SpawnDataByConnection[conn] = new PlayerSpawnData // Store spawn data
         {
-            CharacterId = characterId,
-            Position = spawnPosition,
-            SceneName = sceneName
+            CharacterId = characterId, // Set character ID
+            Position = spawnPosition, // Set position
+            SceneName = sceneName // Set scene name
         };
         
-        // Send response to client with scene to load
-        SendGameSceneTransitionResponse(conn, true, sceneName, spawnPosition);
+        SendGameSceneTransitionResponse(conn, true, sceneName, spawnPosition); // Send transition response
     }
     
-    // Send game scene transition response to client
     private void SendGameSceneTransitionResponse(NetworkConnectionToClient conn, bool approved, string sceneName, Vector3 position, string message = "")
     {
-        conn.Send(new GameSceneTransitionResponseMessage
+        conn.Send(new GameSceneTransitionResponseMessage // Create and send message
         {
-            approved = approved,
-            sceneName = sceneName,
-            spawnPosition = position,
-            message = message
+            approved = approved, // Set approved flag
+            sceneName = sceneName, // Set scene name
+            spawnPosition = position, // Set position
+            message = message // Set message
         });
     }
 
-    // Handle game scene transition request
     public void HandleGameSceneTransitionRequest(NetworkConnectionToClient conn, string characterId, string targetScene)
     {
-        // Verify the requested scene is valid
-        if (Enum.TryParse<GameScene>(targetScene, out GameScene targetGameScene))
+        if (Enum.TryParse<GameScene>(targetScene, out GameScene targetGameScene)) // Parse scene name
         {
-            // You could add more validation here as needed
+            // Additional validation could be added here
             
-            // For now, approve the transition
-            SendGameSceneTransitionResponse(conn, true, targetGameScene.ToString(), Vector3.zero);
+            SendGameSceneTransitionResponse(conn, true, targetGameScene.ToString(), Vector3.zero); // Send success response
         }
         else
         {
-            // Invalid scene name
-            SendGameSceneTransitionResponse(conn, false, targetScene, Vector3.zero, "Invalid scene name");
+            SendGameSceneTransitionResponse(conn, false, targetScene, Vector3.zero, "Invalid scene name"); // Send error response
         }
     }
-
-    // New method to handle player spawning after scene transition
 
     public void SpawnPlayerForClient(NetworkConnectionToClient conn, string characterId, Vector3 position, bool isSceneTransition = false)
     {
-        // Create player instance
-        GameObject playerInstance = Instantiate(playerPrefab, position, Quaternion.identity);
+        GameObject playerInstance = Instantiate(playerPrefab, position, Quaternion.identity); // Create player instance
         
-        // Set character ID on the PlayerNetworkController
-        PlayerNetworkController playerController = playerInstance.GetComponent<PlayerNetworkController>();
-        if (playerController != null)
+        PlayerNetworkController playerController = playerInstance.GetComponent<PlayerNetworkController>(); // Get network controller
+        if (playerController != null) // If controller exists
         {
-            playerController.SetCharacterId(characterId);
+            playerController.SetCharacterId(characterId); // Set character ID
         }
         
-        // Get character data and initialize PlayerCharacterData component
-        PlayerCharacterData characterData = playerInstance.GetComponent<PlayerCharacterData>();
-        if (characterData != null)
+        PlayerCharacterData characterData = playerInstance.GetComponent<PlayerCharacterData>(); // Get character data component
+        if (characterData != null) // If component exists
         {
-            // Extract user ID from connection authentication data
-            string userId = conn.authenticationData as string;
-            if (!string.IsNullOrEmpty(userId))
+            string userId = conn.authenticationData as string; // Get user ID
+            if (!string.IsNullOrEmpty(userId)) // If user ID exists
             {
-                // Initialize character data directly
-                InitializeCharacterData(userId, characterId, characterData);
+                InitializeCharacterData(userId, characterId, characterData); // Initialize data
             }
         }
         
-        // Spawn on network
-        NetworkServer.Spawn(playerInstance, conn);
+        NetworkServer.Spawn(playerInstance, conn); // Spawn on network
         
-        // Use appropriate registration method
-        var networkManager = NetworkManager.singleton as CustomNetworkManager;
-        if (networkManager != null)
+        var networkManager = NetworkManager.singleton as CustomNetworkManager; // Get network manager
+        if (networkManager != null) // If manager exists
         {
-            if (isSceneTransition)
-                networkManager.ReplacePlayerForConnection(conn, playerInstance);
+            if (isSceneTransition) // If scene transition
+                networkManager.ReplacePlayerForConnection(conn, playerInstance); // Replace player
             else
-                networkManager.AddPlayerForConnection(conn, playerInstance);
+                networkManager.AddPlayerForConnection(conn, playerInstance); // Add player
         }
         
-        Debug.Log($"Player spawned for character {characterId} at position {position}");
+        Debug.Log($"Player spawned for character {characterId} at position {position}"); // Log success
     }
 
-    // Add this helper method to initialize character data
     private void InitializeCharacterData(string userId, string characterId, PlayerCharacterData characterData)
     {
-        // Set the character ID
-        characterData.characterId = characterId;
+        characterData.characterId = characterId; // Set character ID
         
-        // Start a coroutine to fetch and set the data (can't directly return from a coroutine)
-        StartCoroutine(FetchAndSetCharacterData(userId, characterId, characterData));
+        StartCoroutine(FetchAndSetCharacterData(userId, characterId, characterData)); // Start data fetch coroutine
     }
 
     private IEnumerator FetchAndSetCharacterData(string userId, string characterId, PlayerCharacterData characterData)
     {
-        // Fetch character info
-        var infoTask = dbReference.Child("users").Child(userId)
-            .Child("characters").Child(characterId).Child("info").GetValueAsync();
-        yield return new WaitUntil(() => infoTask.IsCompleted);
+        var infoTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("info").GetValueAsync(); // Query info
+        yield return new WaitUntil(() => infoTask.IsCompleted); // Wait for query to complete
         
-        if (!infoTask.IsFaulted && infoTask.Result.Exists)
+        if (!infoTask.IsFaulted && infoTask.Result.Exists) // If query successful
         {
-            var infoData = infoTask.Result;
-            characterData.characterName = infoData.Child("characterName").Value?.ToString();
-            characterData.characterClass = infoData.Child("characterClass").Value?.ToString();
-            characterData.level = Convert.ToInt32(infoData.Child("level").Value);
-            characterData.experience = Convert.ToInt32(infoData.Child("experience").Value);
+            var infoData = infoTask.Result; // Get result
+            characterData.characterName = infoData.Child("characterName").Value?.ToString(); // Set name
+            characterData.characterClass = infoData.Child("characterClass").Value?.ToString(); // Set class
+            characterData.level = Convert.ToInt32(infoData.Child("level").Value); // Set level
+            characterData.experience = Convert.ToInt32(infoData.Child("experience").Value); // Set experience
         }
         
-        // Fetch equipment data
-        var equipTask = dbReference.Child("users").Child(userId)
-            .Child("characters").Child(characterId).Child("equipment").GetValueAsync();
-        yield return new WaitUntil(() => equipTask.IsCompleted);
+        var equipTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("equipment").GetValueAsync(); // Query equipment
+        yield return new WaitUntil(() => equipTask.IsCompleted); // Wait for query to complete
         
-        if (!equipTask.IsFaulted && equipTask.Result.Exists)
+        if (!equipTask.IsFaulted && equipTask.Result.Exists) // If query successful
         {
-            var equipData = equipTask.Result;
-            characterData.headItemNumber = Convert.ToInt32(equipData.Child("head").Value);
-            characterData.bodyItemNumber = Convert.ToInt32(equipData.Child("body").Value);
-            characterData.hairItemNumber = Convert.ToInt32(equipData.Child("hair").Value);
-            characterData.torsoItemNumber = Convert.ToInt32(equipData.Child("torso").Value);
-            characterData.legsItemNumber = Convert.ToInt32(equipData.Child("legs").Value);
+            var equipData = equipTask.Result; // Get result
+            characterData.headItemNumber = Convert.ToInt32(equipData.Child("head").Value); // Set head item
+            characterData.bodyItemNumber = Convert.ToInt32(equipData.Child("body").Value); // Set body item
+            characterData.hairItemNumber = Convert.ToInt32(equipData.Child("hair").Value); // Set hair item
+            characterData.torsoItemNumber = Convert.ToInt32(equipData.Child("torso").Value); // Set torso item
+            characterData.legsItemNumber = Convert.ToInt32(equipData.Child("legs").Value); // Set legs item
         }
         
-        // Location data is already set by the spawn position, but we can also store the scene name
-        Vector3 currentPosition = characterData.transform.position;
-        characterData.sceneName = characterData.transform.position.ToString();
-        characterData.x = currentPosition.x;
-        characterData.y = currentPosition.y;
-        characterData.z = currentPosition.z;
-        
-        // Now the character data is fully initialized on the server
-        // This will be synchronized to clients through NetworkBehaviour variables
+        Vector3 currentPosition = characterData.transform.position; // Get current position
+        characterData.sceneName = characterData.transform.position.ToString(); // Set scene name
+        characterData.x = currentPosition.x; // Set X position
+        characterData.y = currentPosition.y; // Set Y position
+        characterData.z = currentPosition.z; // Set Z position
     }
+    
+    /// Helper Classes and Methods
     public class PlayerSpawnData
     {
-        public string CharacterId;
-        public Vector3 Position;
-        public string SceneName;
+        public string CharacterId; // Character identifier
+        public Vector3 Position; // Spawn position
+        public string SceneName; // Scene name
     }
-
-
 
     public bool TryGetSpawnData(NetworkConnectionToClient conn, out PlayerSpawnData spawnData)
     {
-        return SpawnDataByConnection.TryGetValue(conn, out spawnData);
+        return SpawnDataByConnection.TryGetValue(conn, out spawnData); // Get spawn data if exists
     }
 
     public void StoreSpawnData(NetworkConnectionToClient conn, string characterId, Vector3 position, string sceneName)
     {
-        // Store the spawn data for this connection
-        SpawnDataByConnection[conn] = new PlayerSpawnData
+        SpawnDataByConnection[conn] = new PlayerSpawnData // Store spawn data
         {
-            CharacterId = characterId,
-            Position = position,
-            SceneName = sceneName
+            CharacterId = characterId, // Set character ID
+            Position = position, // Set position
+            SceneName = sceneName // Set scene name
         };
         
-        Debug.Log($"Stored spawn data for character {characterId}: Scene={sceneName}, Position={position}");
+        Debug.Log($"Stored spawn data for character {characterId}: Scene={sceneName}, Position={position}"); // Log success
     }
 
     string GetCharacterId(NetworkConnectionToClient conn)
     {
-        if (connectionCharacterIds.TryGetValue(conn, out string characterId))
-            return characterId;
-        return null;
+        if (connectionCharacterIds.TryGetValue(conn, out string characterId)) // Try get character ID
+            return characterId; // Return ID if exists
+        return null; // Return null if not found
     }
-
 }

@@ -2,9 +2,7 @@ using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 
-/// <summary>
-/// Handles network communication for player data between client and server
-/// </summary>
+/// /// Handles network communication for player data between client and server
 public class PlayerNetworkController : NetworkBehaviour
 {
     // Reference to the client data manager singleton
