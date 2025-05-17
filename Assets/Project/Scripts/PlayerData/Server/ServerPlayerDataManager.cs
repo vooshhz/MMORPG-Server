@@ -760,11 +760,24 @@ public class ServerPlayerDataManager : MonoBehaviour
         // Create player instance
         GameObject playerInstance = Instantiate(playerPrefab, position, Quaternion.identity);
         
-        // Set character ID
+        // Set character ID on the PlayerNetworkController
         PlayerNetworkController playerController = playerInstance.GetComponent<PlayerNetworkController>();
         if (playerController != null)
         {
             playerController.SetCharacterId(characterId);
+        }
+        
+        // Get character data and initialize PlayerCharacterData component
+        PlayerCharacterData characterData = playerInstance.GetComponent<PlayerCharacterData>();
+        if (characterData != null)
+        {
+            // Extract user ID from connection authentication data
+            string userId = conn.authenticationData as string;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                // Initialize character data directly
+                InitializeCharacterData(userId, characterId, characterData);
+            }
         }
         
         // Spawn on network
@@ -783,6 +796,57 @@ public class ServerPlayerDataManager : MonoBehaviour
         Debug.Log($"Player spawned for character {characterId} at position {position}");
     }
 
+    // Add this helper method to initialize character data
+    private void InitializeCharacterData(string userId, string characterId, PlayerCharacterData characterData)
+    {
+        // Set the character ID
+        characterData.characterId = characterId;
+        
+        // Start a coroutine to fetch and set the data (can't directly return from a coroutine)
+        StartCoroutine(FetchAndSetCharacterData(userId, characterId, characterData));
+    }
+
+    private IEnumerator FetchAndSetCharacterData(string userId, string characterId, PlayerCharacterData characterData)
+    {
+        // Fetch character info
+        var infoTask = dbReference.Child("users").Child(userId)
+            .Child("characters").Child(characterId).Child("info").GetValueAsync();
+        yield return new WaitUntil(() => infoTask.IsCompleted);
+        
+        if (!infoTask.IsFaulted && infoTask.Result.Exists)
+        {
+            var infoData = infoTask.Result;
+            characterData.characterName = infoData.Child("characterName").Value?.ToString();
+            characterData.characterClass = infoData.Child("characterClass").Value?.ToString();
+            characterData.level = Convert.ToInt32(infoData.Child("level").Value);
+            characterData.experience = Convert.ToInt32(infoData.Child("experience").Value);
+        }
+        
+        // Fetch equipment data
+        var equipTask = dbReference.Child("users").Child(userId)
+            .Child("characters").Child(characterId).Child("equipment").GetValueAsync();
+        yield return new WaitUntil(() => equipTask.IsCompleted);
+        
+        if (!equipTask.IsFaulted && equipTask.Result.Exists)
+        {
+            var equipData = equipTask.Result;
+            characterData.headItemNumber = Convert.ToInt32(equipData.Child("head").Value);
+            characterData.bodyItemNumber = Convert.ToInt32(equipData.Child("body").Value);
+            characterData.hairItemNumber = Convert.ToInt32(equipData.Child("hair").Value);
+            characterData.torsoItemNumber = Convert.ToInt32(equipData.Child("torso").Value);
+            characterData.legsItemNumber = Convert.ToInt32(equipData.Child("legs").Value);
+        }
+        
+        // Location data is already set by the spawn position, but we can also store the scene name
+        Vector3 currentPosition = characterData.transform.position;
+        characterData.sceneName = characterData.transform.position.ToString();
+        characterData.x = currentPosition.x;
+        characterData.y = currentPosition.y;
+        characterData.z = currentPosition.z;
+        
+        // Now the character data is fully initialized on the server
+        // This will be synchronized to clients through NetworkBehaviour variables
+    }
     public class PlayerSpawnData
     {
         public string CharacterId;
