@@ -1,5 +1,5 @@
 Scene: Farm_Yard_Scene (Assets/Project/Scenes/GameScenes/Farm_Yard_Scene.unity)
-Extraction Time: 2025-05-14 7:24:28 AM
+Extraction Time: 2025-05-19 6:02:26 PM
 ------------------------------------------------------
 
 + Grid [Active]
@@ -61,3 +61,6 @@ Extraction Time: 2025-05-14 7:24:28 AM
     - SpriteRenderer
     - ScenePortal
     - CircleCollider2D
++ BoundsConfiner [Active]
+  Components:
+    - PolygonCollider2D

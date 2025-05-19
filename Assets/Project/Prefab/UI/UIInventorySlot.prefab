@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 1908999584492651471}
   - component: {fileID: 1078113609509932152}
   - component: {fileID: 5280408008432956935}
-  - component: {fileID: -6520361426890728759}
   m_Layer: 0
   m_Name: UIInventorySlot
   m_TagString: Untagged
@@ -91,39 +90,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &-6520361426890728759
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 773305457093025319}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: be716ac101f2ebc47b48f188241be2a1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  inventorySlotHighlight: {fileID: 82896693678259063}
-  inventorySlotImage: {fileID: 1078113609509932152}
-  textMeshProUGUI: {fileID: 716344684041395845}
-  inventoryBar: {fileID: 0}
-  itemDetails:
-    itemCode: 0
-    itemType: 0
-    itemDescription: 
-    itemSprite: {fileID: 0}
-    itemLongDescription: 
-    itemUseGridRadius: 0
-    itemUseRadius: 0
-    isStartingItem: 0
-    canBePickedUp: 0
-    canBeDropped: 0
-    canBeEaten: 0
-    canBeCarried: 0
-  itemPrefab: {fileID: 8138136430807121651, guid: e18bcdacdc9ad2544aa1bb6c1c07b811, type: 3}
-  itemQuantity: 0
-  inventoryTextBoxPrefab: {fileID: 0}
-  slotNumber: 0
 --- !u!1 &7231599235166413967
 GameObject:
   m_ObjectHideFlags: 0

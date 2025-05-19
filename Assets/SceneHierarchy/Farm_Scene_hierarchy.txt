@@ -1,5 +1,5 @@
 Scene: Farm_Scene (Assets/Project/Scenes/GameScenes/Farm_Scene.unity)
-Extraction Time: 2025-05-14 7:24:27 AM
+Extraction Time: 2025-05-19 6:02:25 PM
 ------------------------------------------------------
 
 + Grid [Active]
@@ -46,6 +46,7 @@ Extraction Time: 2025-05-14 7:24:27 AM
     + VirtualCamera [Active]
       Components:
         - CinemachineVirtualCamera
+        - CinemachineConfiner2D
         + cm [Active]
           Components:
             - CinemachinePipeline
@@ -61,3 +62,280 @@ Extraction Time: 2025-05-14 7:24:27 AM
     - SpriteRenderer
     - ScenePortal
     - CircleCollider2D
++ BoundsConfiner [Active]
+  Components:
+    - PolygonCollider2D
++ Items [Active]
+  Components:
+    + Corn [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Pumpkin [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Parsnip [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Pumpkin (1) [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Parsnip (1) [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Corn (1) [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Pumpkin (2) [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Parsnip (2) [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Pumpkin (3) [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Pumpkin (4) [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Corn (2) [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
+    + Corn (3) [Active]
+      Components:
+        - BoxCollider2D
+        - Item
+        + ItemSprite [Active]
+          Components:
+            - SpriteRenderer
++ UI [Active]
+  Components:
+    + MainGameUICanvas [Active]
+      Components:
+        - Canvas
+        - CanvasScaler
+        - GraphicRaycaster
+        + UICanvasGroup [Active]
+          Components:
+            - CanvasGroup
+            - AspectRatioFitter
+            + UIInventoryBar [Active]
+              Components:
+                - CanvasRenderer
+                - Image
+                - UIInventoryBar
+                + UIInventorySlot0 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot1 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot2 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot3 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot4 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot5 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot6 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot7 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot8 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot9 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot10 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
+                + UIInventorySlot11 [Active]
+                  Components:
+                    - CanvasRenderer
+                    - Image
+                    - CanvasGroup
+                    - UIInventorySlot
+                    + InventoryHighlight [Active]
+                      Components:
+                        - CanvasRenderer
+                        - Image
+                    + Text [Active]
+                      Components:
+                        - CanvasRenderer
+                        - TextMeshProUGUI
++ EventSystem [Active]
+  Components:
+    - EventSystem
+    - StandaloneInputModule
