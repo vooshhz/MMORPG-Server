@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Firebase.Database;
-using Firebase.Auth;
-using Firebase.Extensions;
+
 
 public class InventoryManager : MonoBehaviour // Need to check this part and figure out singleton without inherting
 {
@@ -10,9 +8,8 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
     // public UIInventoryBar inventoryBar;
     public static InventoryManager Instance { get; private set; }
     private Dictionary<int, ItemDetails> itemDetailsDictionary;
-    private DatabaseReference dbReference;
     public List<InventoryItem>[] inventoryLists;
-    [HideInInspector] public int[] inventoryListCapacityIntArray; // the index of the array is the inventory lits (from the InventoryLocation enum), 
+    [HideInInspector] public int[] inventoryListCapacityIntArray; // the index of the array is the inventory list (from the InventoryLocation enum), 
     // and the value is the capacity of that inventory list
 
     [SerializeField] private SO_ItemList itemList = null;
@@ -76,7 +73,6 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
 
         // inventoryBar.InventoryUpdated(inventoryLocation, inventoryList);
     }
-
     public void RemoveItem(InventoryLocation inventoryLocation, int itemCode)
     {
         List<InventoryItem> inventoryList = inventoryLists[(int)inventoryLocation];

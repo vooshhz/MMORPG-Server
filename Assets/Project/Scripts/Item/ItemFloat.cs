@@ -33,9 +33,9 @@ public class ItemFloat : MonoBehaviour
     }
 
     // Add this to the ItemFloat script
-public void ResetStartPosition(Vector3 newPosition)
-{
-    startPosition = newPosition;
-    floatTimer = 0f; // Optional: reset the timer
-}
-}
+    public void ResetStartPosition(Vector3 newPosition)
+    {
+        startPosition = newPosition;
+        floatTimer = 0f; // Optional: reset the timer
+    }
+    }
