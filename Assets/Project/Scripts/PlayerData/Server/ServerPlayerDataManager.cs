@@ -6,6 +6,7 @@ using Firebase.Database;
 using System;
 using Firebase;
 using System.Linq;
+using UnityEngine.SceneManagement;
 
 public class ServerPlayerDataManager : MonoBehaviour
 {
@@ -646,42 +647,94 @@ public class ServerPlayerDataManager : MonoBehaviour
 
     public void SpawnPlayerForClient(NetworkConnectionToClient conn, string characterId, Vector3 position, bool isSceneTransition = false)
     {
-        GameObject playerInstance = Instantiate(playerPrefab, position, Quaternion.identity); // Create player instance
-        
-        PlayerNetworkController playerController = playerInstance.GetComponent<PlayerNetworkController>(); // Get network controller
-        if (playerController != null) // If controller exists
+        // Get the SpawnData to find the correct scene name
+        if (!SpawnDataByConnection.TryGetValue(conn, out PlayerSpawnData spawnData))
         {
-            playerController.SetCharacterId(characterId); // Set character ID
+            Debug.LogError($"No spawn data found for connection {conn.connectionId}");
+            return;
         }
         
-        PlayerCharacterData characterData = playerInstance.GetComponent<PlayerCharacterData>(); // Get character data component
-        if (characterData != null) // If component exists
+        string sceneName = spawnData.SceneName;
+        Scene targetScene = SceneManager.GetSceneByName(sceneName);
+        
+        if (!targetScene.isLoaded)
         {
-            string userId = conn.authenticationData as string; // Get user ID
-            if (!string.IsNullOrEmpty(userId)) // If user ID exists
+            Debug.LogError($"Target scene {sceneName} is not loaded on server!");
+            return;
+        }
+        
+        // Create player instance in current active scene
+        GameObject playerInstance = Instantiate(playerPrefab, position, Quaternion.identity);
+        
+        // Move the player to the correct scene
+        SceneManager.MoveGameObjectToScene(playerInstance, targetScene);
+
+        // Set the layer to match the scene name
+        int layerIndex = LayerMask.NameToLayer(sceneName);
+        if (layerIndex != -1) {
+            // Set layer for the player and all children
+            SetLayerRecursively(playerInstance, layerIndex);
+            Debug.Log($"Player layer set to '{sceneName}' (layer index: {layerIndex})");
+        } else {
+            Debug.LogWarning($"Layer named '{sceneName}' not found. Using default layer instead.");
+            // Leave on default layer (no change needed)
+        }
+        
+        // Set up player identity
+        PlayerNetworkController playerController = playerInstance.GetComponent<PlayerNetworkController>();
+        if (playerController != null)
+        {
+            playerController.SetCharacterId(characterId);
+        }
+        
+        // Set up character data
+        PlayerCharacterData characterData = playerInstance.GetComponent<PlayerCharacterData>();
+        if (characterData != null)
+        {
+            string userId = conn.authenticationData as string;
+            if (!string.IsNullOrEmpty(userId))
             {
-                InitializeCharacterData(userId, characterId, characterData); // Initialize data
+                InitializeCharacterData(userId, characterId, characterData);
             }
         }
         
-        NetworkServer.Spawn(playerInstance, conn); // Spawn on network
+        // Register with network
+        NetworkServer.Spawn(playerInstance, conn);
         
-        var networkManager = NetworkManager.singleton as CustomNetworkManager; // Get network manager
-        if (networkManager != null) // If manager exists
+        // Associate with connection
+        var networkManager = NetworkManager.singleton as CustomNetworkManager;
+        if (networkManager != null)
         {
-            if (isSceneTransition) // If scene transition
-                networkManager.ReplacePlayerForConnection(conn, playerInstance); // Replace player
+            if (isSceneTransition)
+                networkManager.ReplacePlayerForConnection(conn, playerInstance);
             else
-                networkManager.AddPlayerForConnection(conn, playerInstance); // Add player
+                networkManager.AddPlayerForConnection(conn, playerInstance);
         }
-        
-        Debug.Log($"Player spawned for character {characterId} at position {position}"); // Log success
+
+        Scene playerServerScene = playerInstance.scene;
+        string clientTargetScene = sceneName;
+
+        Debug.Log($"Player spawned for character {characterId}:" +
+            $"\nSERVER: In scene '{playerServerScene.name}' at position {position}" +
+            $"\nCLIENT: Loading into scene '{clientTargetScene}'");
     }
 
+    private void SetLayerRecursively(GameObject obj, int layerIndex)
+    {
+        // Set layer for this object
+        obj.layer = layerIndex;
+        
+        // Set layer for all children
+        foreach (Transform child in obj.transform)
+        {
+            SetLayerRecursively(child.gameObject, layerIndex);
+        }
+    }
+    
     private void InitializeCharacterData(string userId, string characterId, PlayerCharacterData characterData)
     {
         characterData.characterId = characterId; // Set character ID
-        
+
         StartCoroutine(FetchAndSetCharacterData(userId, characterId, characterData)); // Start data fetch coroutine
     }
 
