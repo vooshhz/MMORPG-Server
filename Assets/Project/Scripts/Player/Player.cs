@@ -7,20 +7,6 @@ public class Player : MonoBehaviour
     public static Player Instance { get; private set; }
     private Camera mainCamera;
 
-    private void Awake() 
-    {
-        if (Instance == null)
-            {
-                Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
-            else
-            {
-                Destroy(gameObject);
-                return;
-            }
-    }
-
    public Vector3 GetPlayerViewportPosition()
    {
     if (mainCamera == null)
