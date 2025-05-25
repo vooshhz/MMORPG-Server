@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class InventoryManager : MonoBehaviour // Need to check this part and figure out singleton without inherting
 {
-    public static bool IsInventorManagerReady {get; private set;} 
-    // public UIInventoryBar inventoryBar;
+    public static bool IsInventorManagerReady { get; private set; }
+    public UIInventoryBar inventoryBar;
     public static InventoryManager Instance { get; private set; }
     private Dictionary<int, ItemDetails> itemDetailsDictionary;
     public List<InventoryItem>[] inventoryLists;
@@ -19,7 +19,7 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
-            return;            
+            return;
         }
 
         Instance = this;
@@ -35,7 +35,7 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
     {
         inventoryLists = new List<InventoryItem>[(int)InventoryLocation.count];
 
-        for(int i = 0; i < (int)InventoryLocation.count; i++)
+        for (int i = 0; i < (int)InventoryLocation.count; i++)
         {
             inventoryLists[i] = new List<InventoryItem>();
         }
@@ -52,9 +52,9 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
 
         Destroy(gameObjectToDelete);
     }
-    
+
     public void AddItem(InventoryLocation inventoryLocation, Item item)
-    { 
+    {
         int itemCode = item.ItemCode;
 
         List<InventoryItem> inventoryList = inventoryLists[(int)inventoryLocation];
@@ -64,14 +64,14 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
 
         if (itemPosition != -1)
         {
-            AddItemAtPosition(inventoryList, itemCode, itemPosition);            
+            AddItemAtPosition(inventoryList, itemCode, itemPosition);
         }
         else
         {
             AddItemAtPosition(inventoryList, itemCode);
         }
 
-        // inventoryBar.InventoryUpdated(inventoryLocation, inventoryList);
+        inventoryBar.InventoryUpdated(inventoryLocation, inventoryList);
     }
     public void RemoveItem(InventoryLocation inventoryLocation, int itemCode)
     {
@@ -80,7 +80,7 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
         // Check if inventory already contains the item
         int itemPosition = FindItemInInventory(inventoryLocation, itemCode);
 
-        if(itemPosition != -1)
+        if (itemPosition != -1)
         {
             RemoveItemAtPosition(inventoryList, itemCode, itemPosition);
         }
@@ -89,13 +89,13 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
     {
         InventoryItem inventoryItem = new InventoryItem();
 
-        int quantity = inventoryList[position].itemQuantity -1;
+        int quantity = inventoryList[position].itemQuantity - 1;
 
-        if(quantity > 0)
+        if (quantity > 0)
         {
             inventoryItem.itemQuantity = quantity;
             inventoryItem.itemCode = itemCode;
-            inventoryList[position] = inventoryItem;        
+            inventoryList[position] = inventoryItem;
         }
         else
         {
@@ -108,7 +108,7 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
 
         for (int i = 0; i < inventoryList.Count; i++)
         {
-            if(inventoryList[i].itemCode == itemCode)
+            if (inventoryList[i].itemCode == itemCode)
             {
                 return i;
             }
@@ -166,7 +166,7 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
             }
 
             // Update UI
-            // inventoryBar.InventoryUpdated(inventoryLocation, inventoryList);
+            inventoryBar.InventoryUpdated(inventoryLocation, inventoryList);
 
             // Persist changes to Firebase
             // SaveInventoryToFirebase();
@@ -201,166 +201,57 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
     public string GetItemTypeDescription(ItemType itemType)
     {
         string itemTypeDescription;
-        switch(itemType)
+        switch (itemType)
         {
             case ItemType.Breaking_tool:
-            itemTypeDescription = Settings.BreakingTool;
-            break;
+                itemTypeDescription = Settings.BreakingTool;
+                break;
 
             case ItemType.Chopping_tool:
-            itemTypeDescription = Settings.ChoppingTool;
-            break;
+                itemTypeDescription = Settings.ChoppingTool;
+                break;
 
             case ItemType.Hoeing_tool:
-            itemTypeDescription = Settings.HoeingTool;
-            break;
+                itemTypeDescription = Settings.HoeingTool;
+                break;
 
             case ItemType.Reaping_tool:
-            itemTypeDescription = Settings.ReapingTool;
-            break;
+                itemTypeDescription = Settings.ReapingTool;
+                break;
 
             case ItemType.Watering_tool:
-            itemTypeDescription = Settings.WateringTool;
-            break;
+                itemTypeDescription = Settings.WateringTool;
+                break;
 
             case ItemType.Collecting_tool:
-            itemTypeDescription = Settings.CollectingTool;
-            break;
+                itemTypeDescription = Settings.CollectingTool;
+                break;
 
             default:
-            itemTypeDescription = itemType.ToString();
-            break;           
+                itemTypeDescription = itemType.ToString();
+                break;
         }
 
         return itemTypeDescription;
     }
 
-    // public void InitializeInventoryBar()
-    // {
-    //     // Find the InitializeUI script in the scene
-    //     InitializeUI initializeUI = FindObjectOfType<InitializeUI>();
+    public void InitializeInventoryBar()
+    {
 
-    //     if (initializeUI == null)
-    //     {
-    //         Debug.LogError("InitializeUI not found in the scene.");
-    //         return;
-    //     }
+        if (inventoryBar == null)
+        {
+            Debug.LogError("UIInventoryBar not found in the scene!");
+        }
+        else
+        {
+            Debug.Log("Inventory bar initialized successfully.");
+        }
+    }
 
-    //     // Get inventoryBar from InitializeUI
-    //     GameObject inventoryBarObject = initializeUI.inventoryBar;
-
-    //     if (inventoryBarObject != null)
-    //     {
-    //         inventoryBar = inventoryBarObject.GetComponent<UIInventoryBar>();
-
-    //         if (inventoryBar != null)
-    //         {
-    //             Debug.Log("Inventory bar initialized successfully.");
-    //         }
-    //         else
-    //         {
-    //             Debug.LogError("UIInventoryBar component not found on the GameObject.");
-    //         }
-    //     }
-    //     else
-    //     {
-    //         Debug.LogError("Inventory bar GameObject not assigned in InitializeUI.");
-    //     }
-    // }  
-
-    // public void SaveInventoryToFirebase()
-    // {
-    //     string userId = FirebaseAuth.DefaultInstance.CurrentUser?.UserId;
-    //     string characterId = PlayerPrefs.GetString("SelectedCharacterId", null);
-        
-    //     if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(characterId))
-    //     {
-    //         Debug.LogError("Cannot save inventory: User ID or Character ID is missing");
-    //         return;
-    //     }
-        
-    //     InventoryData inventoryData = new InventoryData
-    //     {
-    //         items = inventoryLists[(int)InventoryLocation.player]
-    //     };
-        
-    //     string inventoryJson = JsonUtility.ToJson(inventoryData);
-        
-    //     // Save to Firebase under the character path
-    //     dbReference.Child("users").Child(userId).Child("characters").Child(characterId)
-    //         .Child("inventory").SetRawJsonValueAsync(inventoryJson)
-    //         .ContinueWithOnMainThread(task => {
-    //             if (task.IsCompleted)
-    //             {
-    //                 Debug.Log("Inventory saved successfully!");
-    //             }
-    //             else
-    //             {
-    //                 Debug.LogError($"Failed to save inventory: {task.Exception}");
-    //             }
-    //         });
-    // }
-    // public void LoadInventoryFromFirebase()
-    // {
-    //     string userId = FirebaseAuth.DefaultInstance.CurrentUser?.UserId;
-    //     string characterId = PlayerPrefs.GetString("SelectedCharacterId", null);
-        
-    //     if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(characterId))
-    //     {
-    //         Debug.LogError("Cannot load inventory: User ID or Character ID is missing");
-    //         return;
-    //     }
-        
-    //     dbReference.Child("users").Child(userId).Child("characters").Child(characterId)
-    //         .Child("inventory").GetValueAsync().ContinueWithOnMainThread(task => {
-    //             if (task.IsFaulted)
-    //             {
-    //                 Debug.LogError($"Failed to load inventory: {task.Exception}");
-    //                 return;
-    //             }
-                
-    //             if (task.IsCompleted)
-    //             {
-    //                 DataSnapshot snapshot = task.Result;
-                    
-    //                 if (snapshot.Exists)
-    //                 {
-    //                     try
-    //                     {
-    //                         string json = snapshot.GetRawJsonValue();
-    //                         InventoryData inventoryData = JsonUtility.FromJson<InventoryData>(json);
-                            
-    //                         // Replace the current inventory with the loaded one
-    //                         inventoryLists[(int)InventoryLocation.player] = inventoryData.items;                            
-
-    //                         // Update UI
-    //                         if (inventoryBar != null)
-    //                         {
-    //                             inventoryBar.InventoryUpdated(InventoryLocation.player, inventoryLists[(int)InventoryLocation.player]);
-    //                         }
-    //                         else
-    //                         {
-    //                             Debug.LogWarning("Inventory bar is not initialized yet.");
-    //                         }
-    //                                                 // ✅ Inventory was successfully loaded and UI updated
-    //                         IsInventorManagerReady = true;
-    //                         // Trigger event so other systems know we're good to go
-    //                         EventManager.Instance.TriggerEvent(EventType.InventoryInitialized);
-    //                         Debug.Log("Inventory loaded successfully!");
-    //                     }
-    //                     catch (System.Exception e)
-    //                     {
-    //                         Debug.LogError($"Error parsing inventory data: {e.Message}");
-    //                     }
-    //                 }
-    //                 else
-    //                 {
-    //                     Debug.Log("No inventory data found. Starting with empty inventory.");
-    //                 }
-    //             }
-    //             // Clean up subscription so it doesn't fire again
-    //             EventManager.Instance.Unsubscribe(EventType.FirebaseCharacterSynced, LoadInventoryFromFirebase);
-    //         });
-    // }
+    public void SetInventoryBar(UIInventoryBar bar)
+    {
+        inventoryBar = bar;
+        Debug.Log("Inventory bar manually set.");
+    }
 
 }  
