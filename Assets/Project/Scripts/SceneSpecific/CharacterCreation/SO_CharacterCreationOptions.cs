@@ -19,6 +19,9 @@ public class CharacterCreationOptionsData : ScriptableObject
 
     [Header("Starting Scene")]
     public LobbyScene startingSceneName = LobbyScene.CharacterSelectionScene;
+
+    [Header("Starting Inventory")]
+    public int defaultBagId = 1001; // Basic Backpack
     
     [Header("Available Classes")]
     public ClassOption[] availableClasses = new ClassOption[]
