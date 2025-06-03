@@ -779,6 +779,41 @@ public class ServerPlayerDataManager : MonoBehaviour
             characterData.legsItemNumber = Convert.ToInt32(equipData.Child("legs").Value); // Set legs item
         }
 
+        var inventoryTask = dbReference.Child("users").Child(userId).Child("characters")
+    .   Child(characterId).Child("inventory").GetValueAsync();
+        yield return new WaitUntil(() => inventoryTask.IsCompleted);
+
+        if (!inventoryTask.IsFaulted && inventoryTask.Result.Exists)
+        {
+            var inventoryData = inventoryTask.Result;
+
+            // Get bagId
+            int bagId = Convert.ToInt32(inventoryData.Child("bagId").Value);
+            characterData.bagId = bagId;
+            
+            // Add this debug log
+            Debug.Log($"Setting character bagId to: {bagId}");
+            
+            // Look up bag details from SO_BagData
+            SO_BagData.BagData bagData = bagList.GetBagById(bagId);
+            if (bagData != null)
+            {
+                characterData.bagMaxSlots = bagData.maxSlots;
+                characterData.bagName = bagData.bagName;
+                
+                // Add this debug log
+                Debug.Log($"Setting bag data: maxSlots={bagData.maxSlots}, name={bagData.bagName}");
+            }
+            else
+            {
+                Debug.LogError($"Bag data not found for bagId: {bagId}");
+            }
+        }
+        else
+        {
+            Debug.LogError("Failed to load inventory data from Firebase");
+        }
+
         Vector3 currentPosition = characterData.transform.position; // Get current position
         characterData.sceneName = characterData.transform.position.ToString(); // Set scene name
         characterData.x = currentPosition.x; // Set X position

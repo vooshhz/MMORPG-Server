@@ -38,7 +38,13 @@ public class PlayerCharacterData : NetworkBehaviour
     
     // Reference to the character animator
     private CharacterAnimator characterAnimator; // Handles sprite animation and visual appearance
-    
+
+    [Header("Inventory Bag")]
+    [SyncVar]
+    public int bagId;
+    public int bagMaxSlots;
+    public string bagName;
+
     // Called when the component initializes
     private void Awake()
     {

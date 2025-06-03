@@ -18,10 +18,10 @@ public class CharacterCreationOptionsData : ScriptableObject
     }
 
     [Header("Starting Scene")]
-    public LobbyScene startingSceneName = LobbyScene.CharacterSelectionScene;
+    public GameScene startingSceneName = GameScene.Farm_Scene;
 
     [Header("Starting Inventory")]
-    public int defaultBagId = 1001; // Basic Backpack
+    public int defaultBagId = 11001; // Basic Backpack
     
     [Header("Available Classes")]
     public ClassOption[] availableClasses = new ClassOption[]
