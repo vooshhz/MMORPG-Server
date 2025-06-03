@@ -355,6 +355,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 286690282312744990, guid: 7d7c319d413e40f4caab7d2f287db2bf, type: 3}
   characterCreationOptions: {fileID: 11400000, guid: 160acc500b6874843a974e7cb46ebdb6, type: 2}
+  bagList: {fileID: 11400000, guid: 36b724fc89fbe154ab64795dd41adf87, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

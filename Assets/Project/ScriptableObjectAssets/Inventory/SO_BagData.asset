@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2727e712b787084bb99440da96503c0, type: 3}
   m_Name: SO_BagData
   m_EditorClassIdentifier: 
-  bagName: 
-  maxSlots: 0
-  bagId: 0
+  bags:
+  - bagId: 11001
+    bagName: Backpack
+    maxSlots: 16
+  - bagId: 11002
+    bagName: Adventurer's Backpack
+    maxSlots: 20
