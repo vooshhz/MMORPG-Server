@@ -42,7 +42,9 @@ public class PlayerCharacterData : NetworkBehaviour
     [Header("Inventory Bag")]
     [SyncVar]
     public int bagId;
+    [SyncVar]
     public int bagMaxSlots;
+    [SyncVar]
     public string bagName;
 
     // Called when the component initializes
