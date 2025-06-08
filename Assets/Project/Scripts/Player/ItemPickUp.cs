@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
 
-public class ItemPickUp : MonoBehaviour
+public class ItemPickUp : NetworkBehaviour
 {
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -20,7 +20,7 @@ public class ItemPickUp : MonoBehaviour
             if(itemDetails != null && itemDetails.canBePickedUp == true)
             {             
                 // Get the player who picked up the item
-                NetworkIdentity playerIdentity = GetComponentInParent<NetworkIdentity>();
+                NetworkIdentity playerIdentity = GetComponent<NetworkIdentity>();
                 
                 if (playerIdentity != null)
                 {

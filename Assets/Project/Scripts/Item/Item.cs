@@ -1,7 +1,8 @@
+using Mirror;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 
-public class Item : MonoBehaviour
+public class Item : NetworkBehaviour
 {
     [ItemCodeDescription]
     [SerializeField] private int _itemCode;
