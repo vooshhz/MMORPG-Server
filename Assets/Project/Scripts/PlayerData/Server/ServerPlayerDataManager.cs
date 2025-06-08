@@ -470,11 +470,8 @@ public class ServerPlayerDataManager : MonoBehaviour
             ["torso"] = msg.torsoItem, // Set torso item
             ["legs"] = msg.legsItem // Set legs item
         },
-        ["inventory"] = new Dictionary<string, object>
-            {
-                ["bagId"] = characterCreationOptions.defaultBagId,
-                ["slots"] = new Dictionary<string, object>()
-            }
+        ["inventory"] = CreateInventoryStructure(msg.characterClass),
+
         ["location"] = new Dictionary<string, object> // Create location object
         {
             ["sceneName"] = characterCreationOptions.startingSceneName.ToString(), // Set starting scene
@@ -498,6 +495,32 @@ public class ServerPlayerDataManager : MonoBehaviour
     SendCreateCharacterResponse(conn, true, "Character created successfully", characterId); // Send success response
 }
 
+    private Dictionary<string, object> CreateInventoryStructure(string characterClass)
+    {
+        int defaultBagId = characterCreationOptions.defaultBagId;
+        var bagInfo = System.Array.Find(characterCreationOptions.bagData.bags, b => b.bagId == defaultBagId);
+        int maxSlots = bagInfo?.maxSlots ?? 16;
+        
+        // Create items dictionary
+        var items = new Dictionary<string, object>();
+        for (int i = 0; i < maxSlots; i++)
+        {
+            items[i.ToString()] = new Dictionary<string, object>
+            {
+                ["itemCode"] = 0,
+                ["itemQuantity"] = 0
+            };
+        }
+        
+        var inventory = new Dictionary<string, object>
+        {
+            ["bagID"] = defaultBagId.ToString(),
+            ["slots"] = maxSlots.ToString(),
+            ["items"] = items
+        };
+        
+        return inventory;
+    }
     private void SendCreateCharacterResponse(NetworkConnectionToClient conn, bool success, string message, string characterId = null)
     {
         var response = new CreateCharacterResponseMessage // Create response message
