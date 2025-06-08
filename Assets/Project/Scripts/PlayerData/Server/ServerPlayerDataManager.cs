@@ -514,7 +514,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         
         var inventory = new Dictionary<string, object>
         {
-            ["bagID"] = defaultBagId.ToString(),
+            ["bagId"] = defaultBagId.ToString(),
             ["slots"] = maxSlots.ToString(),
             ["items"] = items
         };
@@ -785,94 +785,139 @@ public class ServerPlayerDataManager : MonoBehaviour
 
     private void InitializeCharacterData(string userId, string characterId, PlayerCharacterData characterData)
     {
-        characterData.characterId = characterId; // Set character ID
+        characterData.characterId = characterId;
 
-        StartCoroutine(FetchAndSetCharacterData(userId, characterId, characterData)); // Start data fetch coroutine
+        // Get PlayerInventory component
+        PlayerInventory playerInventory = characterData.GetComponent<PlayerInventory>();
+        if (playerInventory != null)
+        {
+            // Start both coroutines
+            StartCoroutine(FetchAndSetCharacterData(userId, characterId, characterData));
+            StartCoroutine(FetchAndSetInventoryData(userId, characterId, playerInventory));
+        }
+        else
+        {
+            Debug.LogError($"PlayerInventory component not found on character {characterId}");
+            // Still initialize character data even if inventory fails
+            StartCoroutine(FetchAndSetCharacterData(userId, characterId, characterData));
+        }
     }
 
     private IEnumerator FetchAndSetCharacterData(string userId, string characterId, PlayerCharacterData characterData)
     {
-    var infoTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("info").GetValueAsync();
-    yield return new WaitUntil(() => infoTask.IsCompleted);
+        var infoTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("info").GetValueAsync();
+        yield return new WaitUntil(() => infoTask.IsCompleted);
 
-    if (!infoTask.IsFaulted && infoTask.Result.Exists)
-    {
-        var infoData = infoTask.Result;
-        characterData.characterName = infoData.Child("characterName").Value?.ToString();
-        characterData.characterClass = infoData.Child("characterClass").Value?.ToString();
-        characterData.level = Convert.ToInt32(infoData.Child("level").Value);
-        characterData.experience = Convert.ToInt32(infoData.Child("experience").Value);
-    }
-
-    var equipTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("equipment").GetValueAsync();
-    yield return new WaitUntil(() => equipTask.IsCompleted);
-
-    if (!equipTask.IsFaulted && equipTask.Result.Exists)
-    {
-        var equipData = equipTask.Result;
-        characterData.headItemNumber = Convert.ToInt32(equipData.Child("head").Value);
-        characterData.bodyItemNumber = Convert.ToInt32(equipData.Child("body").Value);
-        characterData.hairItemNumber = Convert.ToInt32(equipData.Child("hair").Value);
-        characterData.torsoItemNumber = Convert.ToInt32(equipData.Child("torso").Value);
-        characterData.legsItemNumber = Convert.ToInt32(equipData.Child("legs").Value);
-    }
-
-    var inventoryTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("inventory").GetValueAsync();
-    yield return new WaitUntil(() => inventoryTask.IsCompleted);
-
-    if (!inventoryTask.IsFaulted && inventoryTask.Result.Exists)
-    {
-        var inventoryData = inventoryTask.Result;
-        
-        // Get bag ID from Firebase
-        int bagId = Convert.ToInt32(inventoryData.Child("bagId").Value);
-        characterData.bagId = bagId;
-        
-        // Find matching bag in SO_BagList
-        foreach (var bag in bagList.bags)
+        if (!infoTask.IsFaulted && infoTask.Result.Exists)
         {
-            if (bag.bagId == bagId)
+            var infoData = infoTask.Result;
+            characterData.characterName = infoData.Child("characterName").Value?.ToString();
+            characterData.characterClass = infoData.Child("characterClass").Value?.ToString();
+            characterData.level = Convert.ToInt32(infoData.Child("level").Value);
+            characterData.experience = Convert.ToInt32(infoData.Child("experience").Value);
+        }
+
+        var equipTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("equipment").GetValueAsync();
+        yield return new WaitUntil(() => equipTask.IsCompleted);
+
+        if (!equipTask.IsFaulted && equipTask.Result.Exists)
+        {
+            var equipData = equipTask.Result;
+            characterData.headItemNumber = Convert.ToInt32(equipData.Child("head").Value);
+            characterData.bodyItemNumber = Convert.ToInt32(equipData.Child("body").Value);
+            characterData.hairItemNumber = Convert.ToInt32(equipData.Child("hair").Value);
+            characterData.torsoItemNumber = Convert.ToInt32(equipData.Child("torso").Value);
+            characterData.legsItemNumber = Convert.ToInt32(equipData.Child("legs").Value);
+        }
+
+        Vector3 currentPosition = characterData.transform.position;
+        characterData.sceneName = characterData.transform.position.ToString();
+        characterData.x = currentPosition.x;
+        characterData.y = currentPosition.y;
+        characterData.z = currentPosition.z;
+    }
+
+    private IEnumerator FetchAndSetInventoryData(string userId, string characterId, PlayerInventory playerInventory)
+    {
+        Debug.Log($"[INVENTORY] Starting inventory fetch for character {characterId}");
+        
+        var inventoryTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("inventory").GetValueAsync();
+        yield return new WaitUntil(() => inventoryTask.IsCompleted);
+
+        Debug.Log($"[INVENTORY] Firebase task completed. Faulted: {inventoryTask.IsFaulted}, Exists: {inventoryTask.Result?.Exists}");
+
+        if (!inventoryTask.IsFaulted && inventoryTask.Result.Exists)
+        {
+            var inventoryData = inventoryTask.Result;
+            
+            // Get bag ID from Firebase
+            int bagId = Convert.ToInt32(inventoryData.Child("bagId").Value);
+            Debug.Log($"[INVENTORY] Found bagId in Firebase: {bagId}");
+            
+            playerInventory.bagId = bagId.ToString();
+            
+            Debug.Log($"[INVENTORY] bagList is null: {bagList == null}");
+            if (bagList != null)
             {
-                // Initialize inventory slots array
-                characterData.inventorySlots.Clear();                
-                // Initialize empty slots
-                for (int i = 0; i < bag.maxSlots; i++)
+                Debug.Log($"[INVENTORY] bagList.bags count: {bagList.bags?.Length ?? 0}");
+            }
+            
+            // Find matching bag in SO_BagList to get maxSlots
+            foreach (var bag in bagList.bags)
+            {
+                Debug.Log($"[INVENTORY] Checking bag {bag.bagId} against {bagId}");
+                if (bag.bagId == bagId)
                 {
-                    characterData.inventorySlots.Add(new InventoryItem
+                    Debug.Log($"[INVENTORY] Found matching bag! maxSlots: {bag.maxSlots}");
+                    
+                    // Set maxSlots from bag data
+                    playerInventory.maxSlots = bag.maxSlots;
+                    
+                    // Initialize inventory array with correct size
+                    playerInventory.InventoryItems = new InventoryItem[bag.maxSlots];
+                    
+                    // Initialize all slots as empty
+                    for (int i = 0; i < bag.maxSlots; i++)
                     {
-                        itemCode = 0,
-                        itemQuantity = 0
-                    });
-                }
-                
-                // Load actual items if they exist
-                var itemsData = inventoryData.Child("items");
-                if (itemsData.Exists)
-                {
-                    foreach (var itemSnapshot in itemsData.Children)
-                    {
-                        int slotIndex = int.Parse(itemSnapshot.Key);
-                        if (slotIndex < bag.maxSlots)
+                        playerInventory.InventoryItems[i] = new InventoryItem
                         {
-                            characterData.inventorySlots[slotIndex] = new InventoryItem
+                            itemCode = 0,
+                            itemQuantity = 0
+                        };
+                    }
+                    
+                    Debug.Log($"[INVENTORY] Initialized {bag.maxSlots} inventory slots");
+                    
+                    // Load actual items if they exist
+                    var itemsData = inventoryData.Child("items");
+                    if (itemsData.Exists)
+                    {
+                        Debug.Log($"[INVENTORY] Loading items from Firebase");
+                        foreach (var itemSnapshot in itemsData.Children)
+                        {
+                            int slotIndex = int.Parse(itemSnapshot.Key);
+                            if (slotIndex < bag.maxSlots)
                             {
-                                itemCode = Convert.ToInt32(itemSnapshot.Child("itemCode").Value),
-                                itemQuantity = Convert.ToInt32(itemSnapshot.Child("itemQuantity").Value)
-                            };
+                                playerInventory.InventoryItems[slotIndex] = new InventoryItem
+                                {
+                                    itemCode = Convert.ToInt32(itemSnapshot.Child("itemCode").Value),
+                                    itemQuantity = Convert.ToInt32(itemSnapshot.Child("itemQuantity").Value)
+                                };
+                                Debug.Log($"[INVENTORY] Loaded item {itemSnapshot.Child("itemCode").Value} in slot {slotIndex}");
+                            }
                         }
                     }
+                    break;
                 }
-                break;
             }
+        }
+        else
+        {
+            Debug.LogError($"[INVENTORY] Failed to fetch inventory data. Faulted: {inventoryTask.IsFaulted}");
         }
     }
 
-    Vector3 currentPosition = characterData.transform.position;
-    characterData.sceneName = characterData.transform.position.ToString();
-    characterData.x = currentPosition.x;
-    characterData.y = currentPosition.y;
-    characterData.z = currentPosition.z;
-    }
+
 
     /// Helper Classes and Methods
     public class PlayerSpawnData

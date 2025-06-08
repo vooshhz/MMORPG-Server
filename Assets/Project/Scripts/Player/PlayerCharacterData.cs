@@ -39,11 +39,6 @@ public class PlayerCharacterData : NetworkBehaviour
     // Reference to the character animator
     private CharacterAnimator characterAnimator; // Handles sprite animation and visual appearance
 
-    [Header("Inventory")]
-    [SyncVar]
-    public int bagId;
-    public readonly SyncList<InventoryItem> inventorySlots = new SyncList<InventoryItem>();
-
     // Called when the component initializes
     private void Awake()
     {
