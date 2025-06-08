@@ -28,7 +28,7 @@ public class ItemPickUp : NetworkBehaviour
                     ServerInventoryManager.Instance.AddItemToPlayerInventory(playerIdentity, item.ItemCode);
                     
                     // Destroy the item
-                    NetworkServer.Destroy(collision.gameObject);
+                   // Destroy(collision.gameObject);
                 }
                 else
                 {
