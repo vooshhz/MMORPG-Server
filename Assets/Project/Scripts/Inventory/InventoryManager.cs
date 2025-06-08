@@ -5,7 +5,7 @@ using UnityEngine;
 public class InventoryManager : MonoBehaviour // Need to check this part and figure out singleton without inherting
 {
     public static bool IsInventorManagerReady { get; private set; }
-    public UIInventoryBar inventoryBar;
+    //public UIInventoryBar inventoryBar;
     public static InventoryManager Instance { get; private set; }
     private Dictionary<int, ItemDetails> itemDetailsDictionary;
     public List<InventoryItem>[] inventoryLists;
@@ -71,7 +71,7 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
             AddItemAtPosition(inventoryList, itemCode);
         }
 
-        inventoryBar.InventoryUpdated(inventoryLocation, inventoryList);
+        //inventoryBar.InventoryUpdated(inventoryLocation, inventoryList);
     }
     public void RemoveItem(InventoryLocation inventoryLocation, int itemCode)
     {
@@ -166,7 +166,7 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
             }
 
             // Update UI
-            inventoryBar.InventoryUpdated(inventoryLocation, inventoryList);
+            //inventoryBar.InventoryUpdated(inventoryLocation, inventoryList);
 
             // Persist changes to Firebase
             // SaveInventoryToFirebase();
@@ -235,23 +235,23 @@ public class InventoryManager : MonoBehaviour // Need to check this part and fig
         return itemTypeDescription;
     }
 
-    public void InitializeInventoryBar()
-    {
+    // public void InitializeInventoryBar()
+    // {
 
-        if (inventoryBar == null)
-        {
-            Debug.LogError("UIInventoryBar not found in the scene!");
-        }
-        else
-        {
-            Debug.Log("Inventory bar initialized successfully.");
-        }
-    }
+    //     if (inventoryBar == null)
+    //     {
+    //         Debug.LogError("UIInventoryBar not found in the scene!");
+    //     }
+    //     else
+    //     {
+    //         Debug.Log("Inventory bar initialized successfully.");
+    //     }
+    // }
 
-    public void SetInventoryBar(UIInventoryBar bar)
-    {
-        inventoryBar = bar;
-        Debug.Log("Inventory bar manually set.");
-    }
+    // public void SetInventoryBar(UIInventoryBar bar)
+    // {
+    //     inventoryBar = bar;
+    //     Debug.Log("Inventory bar manually set.");
+    // }
 
 }  

@@ -7,6 +7,7 @@ using System;
 using Firebase;
 using System.Linq;
 using UnityEngine.SceneManagement;
+using Newtonsoft.Json;
 
 
 public class ServerPlayerDataManager : MonoBehaviour
@@ -25,6 +26,7 @@ public class ServerPlayerDataManager : MonoBehaviour
 
     [Header("Bag System")]
     [SerializeField] private SO_BagData bagList;
+    
 
     /// Initialization
     private void Awake()
@@ -60,6 +62,11 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
 
         StartCoroutine(FetchAllCharacterData(conn, userId)); // Start data fetch coroutine
+    }
+
+    public string GetCharacterIdForConnection(NetworkConnectionToClient conn)
+    {
+        return connectionCharacterIds.TryGetValue(conn, out string characterId) ? characterId : null;
     }
 
     private IEnumerator FetchAllCharacterData(NetworkConnectionToClient conn, string userId)
@@ -435,72 +442,72 @@ public class ServerPlayerDataManager : MonoBehaviour
     }
 
     private IEnumerator CreateCharacterInDatabase(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
-    {   
-    string characterId = System.Guid.NewGuid().ToString(); // Generate unique ID
-    
-    // Get bag data to determine slot count
-    var bagData = characterCreationOptions.bagData.bags.FirstOrDefault(b => b.bagId == characterCreationOptions.defaultBagId);
-    int maxSlots = bagData?.maxSlots ?? 16; // Get max slots from bag
-    
-    // Initialize inventory slots
-    Dictionary<string, object> slotsData = new Dictionary<string, object>();
-    for (int i = 0; i < maxSlots; i++)
     {
-        slotsData[i.ToString()] = new Dictionary<string, object>
-        {
-            ["itemCode"] = 0,
-            ["itemQuantity"] = 0
-        };
-    }
-    
-    Dictionary<string, object> characterData = new Dictionary<string, object> // Create character data
-    {
-        ["info"] = new Dictionary<string, object> // Create info object
-        {
-            ["characterName"] = msg.characterName, // Set name
-            ["characterClass"] = msg.characterClass, // Set class
-            ["level"] = 1, // Set level
-            ["experience"] = 0 // Set experience
-        },
-        ["equipment"] = new Dictionary<string, object> // Create equipment object
-        {
-            ["head"] = msg.headItem, // Set head item
-            ["body"] = msg.bodyItem, // Set body item
-            ["hair"] = msg.hairItem, // Set hair item
-            ["torso"] = msg.torsoItem, // Set torso item
-            ["legs"] = msg.legsItem // Set legs item
-        },
-        ["inventory"] = CreateInventoryStructure(msg.characterClass),
+        string characterId = System.Guid.NewGuid().ToString(); // Generate unique ID
 
-        ["location"] = new Dictionary<string, object> // Create location object
+        // Get bag data to determine slot count
+        var bagData = characterCreationOptions.bagData.bags.FirstOrDefault(b => b.bagId == characterCreationOptions.defaultBagId);
+        int maxSlots = bagData?.maxSlots ?? 16; // Get max slots from bag
+
+        // Initialize inventory slots
+        Dictionary<string, object> slotsData = new Dictionary<string, object>();
+        for (int i = 0; i < maxSlots; i++)
         {
-            ["sceneName"] = characterCreationOptions.startingSceneName.ToString(), // Set starting scene
-            ["x"] = 0, // Set X position
-            ["y"] = 0, // Set Y position
-            ["z"] = 0 // Set Z position
+            slotsData[i.ToString()] = new Dictionary<string, object>
+            {
+                ["itemCode"] = 0,
+                ["itemQuantity"] = 0
+            };
         }
-    };
-    
-    var dbTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).SetValueAsync(characterData); // Save to database
-    
-    yield return new WaitUntil(() => dbTask.IsCompleted); // Wait for database operation to complete
-    
-    if (dbTask.IsFaulted) // Check for database error
-    {
-        Debug.LogError($"Failed to create character: {dbTask.Exception}"); // Log error
-        SendCreateCharacterResponse(conn, false, "Database error"); // Send error response
-        yield break; // Exit coroutine
+
+        Dictionary<string, object> characterData = new Dictionary<string, object> // Create character data
+        {
+            ["info"] = new Dictionary<string, object> // Create info object
+            {
+                ["characterName"] = msg.characterName, // Set name
+                ["characterClass"] = msg.characterClass, // Set class
+                ["level"] = 1, // Set level
+                ["experience"] = 0 // Set experience
+            },
+            ["equipment"] = new Dictionary<string, object> // Create equipment object
+            {
+                ["head"] = msg.headItem, // Set head item
+                ["body"] = msg.bodyItem, // Set body item
+                ["hair"] = msg.hairItem, // Set hair item
+                ["torso"] = msg.torsoItem, // Set torso item
+                ["legs"] = msg.legsItem // Set legs item
+            },
+            ["inventory"] = CreateInventoryStructure(msg.characterClass),
+
+            ["location"] = new Dictionary<string, object> // Create location object
+            {
+                ["sceneName"] = characterCreationOptions.startingSceneName.ToString(), // Set starting scene
+                ["x"] = 0, // Set X position
+                ["y"] = 0, // Set Y position
+                ["z"] = 0 // Set Z position
+            }
+        };
+
+        var dbTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).SetValueAsync(characterData); // Save to database
+
+        yield return new WaitUntil(() => dbTask.IsCompleted); // Wait for database operation to complete
+
+        if (dbTask.IsFaulted) // Check for database error
+        {
+            Debug.LogError($"Failed to create character: {dbTask.Exception}"); // Log error
+            SendCreateCharacterResponse(conn, false, "Database error"); // Send error response
+            yield break; // Exit coroutine
+        }
+
+        SendCreateCharacterResponse(conn, true, "Character created successfully", characterId); // Send success response
     }
-    
-    SendCreateCharacterResponse(conn, true, "Character created successfully", characterId); // Send success response
-}
 
     private Dictionary<string, object> CreateInventoryStructure(string characterClass)
     {
         int defaultBagId = characterCreationOptions.defaultBagId;
         var bagInfo = System.Array.Find(characterCreationOptions.bagData.bags, b => b.bagId == defaultBagId);
         int maxSlots = bagInfo?.maxSlots ?? 16;
-        
+
         // Create items dictionary
         var items = new Dictionary<string, object>();
         for (int i = 0; i < maxSlots; i++)
@@ -511,14 +518,14 @@ public class ServerPlayerDataManager : MonoBehaviour
                 ["itemQuantity"] = 0
             };
         }
-        
+
         var inventory = new Dictionary<string, object>
         {
             ["bagId"] = defaultBagId.ToString(),
             ["slots"] = maxSlots.ToString(),
             ["items"] = items
         };
-        
+
         return inventory;
     }
     private void SendCreateCharacterResponse(NetworkConnectionToClient conn, bool success, string message, string characterId = null)
@@ -840,7 +847,7 @@ public class ServerPlayerDataManager : MonoBehaviour
     private IEnumerator FetchAndSetInventoryData(string userId, string characterId, PlayerInventory playerInventory)
     {
         Debug.Log($"[INVENTORY] Starting inventory fetch for character {characterId}");
-        
+
         var inventoryTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("inventory").GetValueAsync();
         yield return new WaitUntil(() => inventoryTask.IsCompleted);
 
@@ -849,19 +856,19 @@ public class ServerPlayerDataManager : MonoBehaviour
         if (!inventoryTask.IsFaulted && inventoryTask.Result.Exists)
         {
             var inventoryData = inventoryTask.Result;
-            
+
             // Get bag ID from Firebase
             int bagId = Convert.ToInt32(inventoryData.Child("bagId").Value);
             Debug.Log($"[INVENTORY] Found bagId in Firebase: {bagId}");
-            
+
             playerInventory.bagId = bagId.ToString();
-            
+
             Debug.Log($"[INVENTORY] bagList is null: {bagList == null}");
             if (bagList != null)
             {
                 Debug.Log($"[INVENTORY] bagList.bags count: {bagList.bags?.Length ?? 0}");
             }
-            
+
             // Find matching bag in SO_BagList to get maxSlots
             foreach (var bag in bagList.bags)
             {
@@ -869,13 +876,13 @@ public class ServerPlayerDataManager : MonoBehaviour
                 if (bag.bagId == bagId)
                 {
                     Debug.Log($"[INVENTORY] Found matching bag! maxSlots: {bag.maxSlots}");
-                    
+
                     // Set maxSlots from bag data
                     playerInventory.maxSlots = bag.maxSlots;
-                    
+
                     // Initialize inventory array with correct size
                     playerInventory.InventoryItems = new InventoryItem[bag.maxSlots];
-                    
+
                     // Initialize all slots as empty
                     for (int i = 0; i < bag.maxSlots; i++)
                     {
@@ -885,9 +892,9 @@ public class ServerPlayerDataManager : MonoBehaviour
                             itemQuantity = 0
                         };
                     }
-                    
+
                     Debug.Log($"[INVENTORY] Initialized {bag.maxSlots} inventory slots");
-                    
+
                     // Load actual items if they exist
                     var itemsData = inventoryData.Child("items");
                     if (itemsData.Exists)
@@ -958,7 +965,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             Debug.LogError("Bag list not assigned in ServerPlayerDataManager!");
             return null;
         }
-        
+
         return bagList.GetBagById(bagId);
     }
 
@@ -969,4 +976,6 @@ public class ServerPlayerDataManager : MonoBehaviour
 
         return currentItemCount >= bagData.maxSlots;
     }
+    
+    
 }
