@@ -471,12 +471,10 @@ public class ServerPlayerDataManager : MonoBehaviour
             ["legs"] = msg.legsItem // Set legs item
         },
         ["inventory"] = new Dictionary<string, object>
-{
-        [characterCreationOptions.defaultBagId.ToString()] = new Dictionary<string, object>
-        {
-            ["slots"] = slotsData
-        }
-        },
+            {
+                ["bagId"] = characterCreationOptions.defaultBagId,
+                ["slots"] = new Dictionary<string, object>()
+            }
         ["location"] = new Dictionary<string, object> // Create location object
         {
             ["sceneName"] = characterCreationOptions.startingSceneName.ToString(), // Set starting scene
@@ -771,71 +769,86 @@ public class ServerPlayerDataManager : MonoBehaviour
 
     private IEnumerator FetchAndSetCharacterData(string userId, string characterId, PlayerCharacterData characterData)
     {
-        var infoTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("info").GetValueAsync(); // Query info
-        yield return new WaitUntil(() => infoTask.IsCompleted); // Wait for query to complete
+    var infoTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("info").GetValueAsync();
+    yield return new WaitUntil(() => infoTask.IsCompleted);
 
-        if (!infoTask.IsFaulted && infoTask.Result.Exists) // If query successful
+    if (!infoTask.IsFaulted && infoTask.Result.Exists)
+    {
+        var infoData = infoTask.Result;
+        characterData.characterName = infoData.Child("characterName").Value?.ToString();
+        characterData.characterClass = infoData.Child("characterClass").Value?.ToString();
+        characterData.level = Convert.ToInt32(infoData.Child("level").Value);
+        characterData.experience = Convert.ToInt32(infoData.Child("experience").Value);
+    }
+
+    var equipTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("equipment").GetValueAsync();
+    yield return new WaitUntil(() => equipTask.IsCompleted);
+
+    if (!equipTask.IsFaulted && equipTask.Result.Exists)
+    {
+        var equipData = equipTask.Result;
+        characterData.headItemNumber = Convert.ToInt32(equipData.Child("head").Value);
+        characterData.bodyItemNumber = Convert.ToInt32(equipData.Child("body").Value);
+        characterData.hairItemNumber = Convert.ToInt32(equipData.Child("hair").Value);
+        characterData.torsoItemNumber = Convert.ToInt32(equipData.Child("torso").Value);
+        characterData.legsItemNumber = Convert.ToInt32(equipData.Child("legs").Value);
+    }
+
+    var inventoryTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("inventory").GetValueAsync();
+    yield return new WaitUntil(() => inventoryTask.IsCompleted);
+
+    if (!inventoryTask.IsFaulted && inventoryTask.Result.Exists)
+    {
+        var inventoryData = inventoryTask.Result;
+        
+        // Get bag ID from Firebase
+        int bagId = Convert.ToInt32(inventoryData.Child("bagId").Value);
+        characterData.bagId = bagId;
+        
+        // Find matching bag in SO_BagList
+        foreach (var bag in bagList.bags)
         {
-            var infoData = infoTask.Result; // Get result
-            characterData.characterName = infoData.Child("characterName").Value?.ToString(); // Set name
-            characterData.characterClass = infoData.Child("characterClass").Value?.ToString(); // Set class
-            characterData.level = Convert.ToInt32(infoData.Child("level").Value); // Set level
-            characterData.experience = Convert.ToInt32(infoData.Child("experience").Value); // Set experience
-        }
-
-        var equipTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("equipment").GetValueAsync(); // Query equipment
-        yield return new WaitUntil(() => equipTask.IsCompleted); // Wait for query to complete
-
-        if (!equipTask.IsFaulted && equipTask.Result.Exists) // If query successful
-        {
-            var equipData = equipTask.Result; // Get result
-            characterData.headItemNumber = Convert.ToInt32(equipData.Child("head").Value); // Set head item
-            characterData.bodyItemNumber = Convert.ToInt32(equipData.Child("body").Value); // Set body item
-            characterData.hairItemNumber = Convert.ToInt32(equipData.Child("hair").Value); // Set hair item
-            characterData.torsoItemNumber = Convert.ToInt32(equipData.Child("torso").Value); // Set torso item
-            characterData.legsItemNumber = Convert.ToInt32(equipData.Child("legs").Value); // Set legs item
-        }
-
-        var inventoryTask = dbReference.Child("users").Child(userId).Child("characters")
-    .   Child(characterId).Child("inventory").GetValueAsync();
-        yield return new WaitUntil(() => inventoryTask.IsCompleted);
-
-        if (!inventoryTask.IsFaulted && inventoryTask.Result.Exists)
-        {
-            var inventoryData = inventoryTask.Result;
-
-            // Get bagId
-            int bagId = Convert.ToInt32(inventoryData.Child("bagId").Value);
-            characterData.bagId = bagId;
-            
-            // Add this debug log
-            Debug.Log($"Setting character bagId to: {bagId}");
-            
-            // Look up bag details from SO_BagData
-            SO_BagData.BagData bagData = bagList.GetBagById(bagId);
-            if (bagData != null)
+            if (bag.bagId == bagId)
             {
-                characterData.bagMaxSlots = bagData.maxSlots;
-                characterData.bagName = bagData.bagName;
+                // Initialize inventory slots array
+                characterData.inventorySlots.Clear();                
+                // Initialize empty slots
+                for (int i = 0; i < bag.maxSlots; i++)
+                {
+                    characterData.inventorySlots.Add(new InventoryItem
+                    {
+                        itemCode = 0,
+                        itemQuantity = 0
+                    });
+                }
                 
-                // Add this debug log
-                Debug.Log($"Setting bag data: maxSlots={bagData.maxSlots}, name={bagData.bagName}");
-            }
-            else
-            {
-                Debug.LogError($"Bag data not found for bagId: {bagId}");
+                // Load actual items if they exist
+                var itemsData = inventoryData.Child("items");
+                if (itemsData.Exists)
+                {
+                    foreach (var itemSnapshot in itemsData.Children)
+                    {
+                        int slotIndex = int.Parse(itemSnapshot.Key);
+                        if (slotIndex < bag.maxSlots)
+                        {
+                            characterData.inventorySlots[slotIndex] = new InventoryItem
+                            {
+                                itemCode = Convert.ToInt32(itemSnapshot.Child("itemCode").Value),
+                                itemQuantity = Convert.ToInt32(itemSnapshot.Child("itemQuantity").Value)
+                            };
+                        }
+                    }
+                }
+                break;
             }
         }
-        else
-        {
-            Debug.LogError("Failed to load inventory data from Firebase");
-        }
+    }
 
-        Vector3 currentPosition = characterData.transform.position; // Get current position
-        characterData.sceneName = characterData.transform.position.ToString(); // Set scene name
-        characterData.x = currentPosition.x; // Set X position
-        characterData.y = currentPosition.y; // Set Y position
-        characterData.z = currentPosition.z; // Set Z position
+    Vector3 currentPosition = characterData.transform.position;
+    characterData.sceneName = characterData.transform.position.ToString();
+    characterData.x = currentPosition.x;
+    characterData.y = currentPosition.y;
+    characterData.z = currentPosition.z;
     }
 
     /// Helper Classes and Methods
