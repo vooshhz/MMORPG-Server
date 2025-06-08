@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dadcbfc17a743c7468a8c7be19faa184, type: 3}
-  m_Name: CharacterCreationOptions
+  m_Name: CharacterCreationOptionsData
   m_EditorClassIdentifier: 
   startingSceneName: 0
   defaultBagId: 11001
+  bagData: {fileID: 11400000, guid: 36b724fc89fbe154ab64795dd41adf87, type: 2}
   availableClasses:
   - className: Warrior
     description: Strong melee fighter with high physical damage and defense.

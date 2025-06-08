@@ -435,53 +435,70 @@ public class ServerPlayerDataManager : MonoBehaviour
     }
 
     private IEnumerator CreateCharacterInDatabase(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
+    {   
+    string characterId = System.Guid.NewGuid().ToString(); // Generate unique ID
+    
+    // Get bag data to determine slot count
+    var bagData = characterCreationOptions.bagData.bags.FirstOrDefault(b => b.bagId == characterCreationOptions.defaultBagId);
+    int maxSlots = bagData?.maxSlots ?? 16; // Get max slots from bag
+    
+    // Initialize inventory slots
+    Dictionary<string, object> slotsData = new Dictionary<string, object>();
+    for (int i = 0; i < maxSlots; i++)
     {
-        string characterId = System.Guid.NewGuid().ToString(); // Generate unique ID
-
-        Dictionary<string, object> characterData = new Dictionary<string, object> // Create character data
+        slotsData[i.ToString()] = new Dictionary<string, object>
         {
-            ["info"] = new Dictionary<string, object> // Create info object
-            {
-                ["characterName"] = msg.characterName, // Set name
-                ["characterClass"] = msg.characterClass, // Set class
-                ["level"] = 1, // Set level
-                ["experience"] = 0 // Set experience
-            },
-            ["equipment"] = new Dictionary<string, object> // Create equipment object
-            {
-                ["head"] = msg.headItem, // Set head item
-                ["body"] = msg.bodyItem, // Set body item
-                ["hair"] = msg.hairItem, // Set hair item
-                ["torso"] = msg.torsoItem, // Set torso item
-                ["legs"] = msg.legsItem // Set legs item
-            },
-            ["inventory"] = new Dictionary<string, object> // Create inventory object
-            {
-                ["bagId"] = characterCreationOptions.defaultBagId, // Set starting bag
-                ["items"] = new Dictionary<string, object>() // Initialize empty items
-            },
-            ["location"] = new Dictionary<string, object> // Create location object
-            {
-                ["sceneName"] = characterCreationOptions.startingSceneName.ToString(), // Set starting scene
-                ["x"] = 0, // Set X position
-                ["y"] = 0, // Set Y position
-                ["z"] = 0 // Set Z position
-            }
+            ["itemCode"] = 0,
+            ["itemQuantity"] = 0
         };
-
-        var dbTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).SetValueAsync(characterData); // Save to database
-
-        yield return new WaitUntil(() => dbTask.IsCompleted); // Wait for database operation to complete
-
-        if (dbTask.IsFaulted) // Check for database error
-        {
-            Debug.LogError($"Failed to create character: {dbTask.Exception}"); // Log error
-            SendCreateCharacterResponse(conn, false, "Database error"); // Send error response
-            yield break; // Exit coroutine
-        }
-
-        SendCreateCharacterResponse(conn, true, "Character created successfully", characterId); // Send success response
     }
+    
+    Dictionary<string, object> characterData = new Dictionary<string, object> // Create character data
+    {
+        ["info"] = new Dictionary<string, object> // Create info object
+        {
+            ["characterName"] = msg.characterName, // Set name
+            ["characterClass"] = msg.characterClass, // Set class
+            ["level"] = 1, // Set level
+            ["experience"] = 0 // Set experience
+        },
+        ["equipment"] = new Dictionary<string, object> // Create equipment object
+        {
+            ["head"] = msg.headItem, // Set head item
+            ["body"] = msg.bodyItem, // Set body item
+            ["hair"] = msg.hairItem, // Set hair item
+            ["torso"] = msg.torsoItem, // Set torso item
+            ["legs"] = msg.legsItem // Set legs item
+        },
+        ["inventory"] = new Dictionary<string, object>
+{
+        [characterCreationOptions.defaultBagId.ToString()] = new Dictionary<string, object>
+        {
+            ["slots"] = slotsData
+        }
+        },
+        ["location"] = new Dictionary<string, object> // Create location object
+        {
+            ["sceneName"] = characterCreationOptions.startingSceneName.ToString(), // Set starting scene
+            ["x"] = 0, // Set X position
+            ["y"] = 0, // Set Y position
+            ["z"] = 0 // Set Z position
+        }
+    };
+    
+    var dbTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).SetValueAsync(characterData); // Save to database
+    
+    yield return new WaitUntil(() => dbTask.IsCompleted); // Wait for database operation to complete
+    
+    if (dbTask.IsFaulted) // Check for database error
+    {
+        Debug.LogError($"Failed to create character: {dbTask.Exception}"); // Log error
+        SendCreateCharacterResponse(conn, false, "Database error"); // Send error response
+        yield break; // Exit coroutine
+    }
+    
+    SendCreateCharacterResponse(conn, true, "Character created successfully", characterId); // Send success response
+}
 
     private void SendCreateCharacterResponse(NetworkConnectionToClient conn, bool success, string message, string characterId = null)
     {

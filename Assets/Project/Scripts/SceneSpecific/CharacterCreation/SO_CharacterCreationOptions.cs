@@ -22,6 +22,7 @@ public class CharacterCreationOptionsData : ScriptableObject
 
     [Header("Starting Inventory")]
     public int defaultBagId = 11001; // Basic Backpack
+    public SO_BagData bagData; 
     
     [Header("Available Classes")]
     public ClassOption[] availableClasses = new ClassOption[]

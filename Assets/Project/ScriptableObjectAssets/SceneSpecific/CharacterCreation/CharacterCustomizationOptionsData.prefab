@@ -266,7 +266,7 @@ GameObject:
   - component: {fileID: 6178198805500020549}
   - component: {fileID: 737509390724205212}
   m_Layer: 5
-  m_Name: CharacterCustomizationOptions
+  m_Name: CharacterCustomizationOptionsData
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
