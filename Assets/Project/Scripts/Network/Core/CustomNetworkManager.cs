@@ -50,6 +50,10 @@ public class CustomNetworkManager : NetworkManager
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
     {
+        if (ServerPlayerDataManager.Instance != null)
+        {
+            ServerPlayerDataManager.Instance.HandlePlayerDisconnection(conn);
+        }
         Debug.Log($"Client disconnected: {conn.connectionId}");           // Log disconnect
         base.OnServerDisconnect(conn);                                    // Call base implementation
     }

@@ -20,6 +20,8 @@ public class ServerPlayerDataManager : MonoBehaviour
 
     private Dictionary<NetworkConnectionToClient, PlayerSpawnData> SpawnDataByConnection = new Dictionary<NetworkConnectionToClient, PlayerSpawnData>(); // Stores spawn data by connection
 
+    private Dictionary<NetworkConnectionToClient, ActivePlayerInfo> activePlayers = new Dictionary<NetworkConnectionToClient, ActivePlayerInfo>();
+
     private DatabaseReference dbReference; // Firebase database reference
     [SerializeField] private CharacterCreationOptionsData characterCreationOptions; // Character creation configuration
 
@@ -739,11 +741,13 @@ public class ServerPlayerDataManager : MonoBehaviour
             playerController.SetCharacterId(characterId);
         }
 
+        // Get userId once at the beginning
+        string userId = conn.authenticationData as string;
+
         // Set up character data
         PlayerCharacterData characterData = playerInstance.GetComponent<PlayerCharacterData>();
         if (characterData != null)
         {
-            string userId = conn.authenticationData as string;
             if (!string.IsNullOrEmpty(userId))
             {
                 InitializeCharacterData(userId, characterId, characterData);
@@ -762,6 +766,16 @@ public class ServerPlayerDataManager : MonoBehaviour
             else
                 networkManager.AddPlayerForConnection(conn, playerInstance);
         }
+
+        // Add to active players tracking (using the same userId variable)
+        activePlayers[conn] = new ActivePlayerInfo
+        {
+            UserId = userId,
+            CharacterId = characterId,
+            CharacterName = "" // Will be populated when character data loads
+        };
+
+        LogAllConnectedPlayers();
 
         Scene playerServerScene = playerInstance.scene;
         string clientTargetScene = sceneName;
@@ -815,6 +829,18 @@ public class ServerPlayerDataManager : MonoBehaviour
             characterData.characterClass = infoData.Child("characterClass").Value?.ToString();
             characterData.level = Convert.ToInt32(infoData.Child("level").Value);
             characterData.experience = Convert.ToInt32(infoData.Child("experience").Value);
+            
+            // Update the active player's character name
+            var conn = NetworkServer.connections.FirstOrDefault(c => 
+                c.Value != null && 
+                activePlayers.ContainsKey(c.Value) && 
+                activePlayers[c.Value].CharacterId == characterId).Value;
+                
+            if (conn != null && activePlayers.ContainsKey(conn))
+            {
+                activePlayers[conn].CharacterName = characterData.characterName;
+                Debug.Log($"Updated active player info - Name: {characterData.characterName}, CharacterId: {characterId}");
+            }
         }
 
         var equipTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("equipment").GetValueAsync();
@@ -920,11 +946,50 @@ public class ServerPlayerDataManager : MonoBehaviour
 
 
     /// Helper Classes and Methods
+ 
+    public class ActivePlayerInfo
+    {
+        public string UserId { get; set; }
+        public string CharacterId { get; set; }
+        public string CharacterName { get; set; }
+    }
+
+    public void HandlePlayerDisconnection(NetworkConnectionToClient conn)
+    {
+        if (activePlayers.ContainsKey(conn))
+        {
+            Debug.Log($"Player {activePlayers[conn].CharacterName} disconnected");
+            activePlayers.Remove(conn);
+        }
+        
+        // Clean up other dictionaries
+        connectionCharacterIds.Remove(conn);
+        SpawnDataByConnection.Remove(conn);
+    }
+
+    public ActivePlayerInfo GetActivePlayerInfo(NetworkConnectionToClient conn)
+    {
+        return activePlayers.TryGetValue(conn, out var info) ? info : null;
+    }
     public class PlayerSpawnData
     {
         public string CharacterId; // Character identifier
         public Vector3 Position; // Spawn position
         public string SceneName; // Scene name
+    }
+
+    public void LogAllConnectedPlayers()
+    {
+        Debug.Log("=== CONNECTED PLAYERS ===");
+        int index = 1;
+        foreach (var player in activePlayers)
+        {
+            var info = player.Value;
+            Debug.Log($"{index}. UserId: {info.UserId}, CharacterId: {info.CharacterId}, CharacterName: {info.CharacterName}");
+            index++;
+        }
+        Debug.Log($"Total Players Online: {activePlayers.Count}");
+        Debug.Log("========================");
     }
 
     public bool TryGetSpawnData(NetworkConnectionToClient conn, out PlayerSpawnData spawnData)
