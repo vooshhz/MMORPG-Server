@@ -54,64 +54,80 @@ public class ServerInventoryManager : MonoBehaviour
 
     }
 
-    [Server]
-    public async void AddItemToPlayerInventory(NetworkIdentity playerIdentity, int itemCode)
+  [Server]
+    public async void AddItemToPlayerInventory(PlayerCharacterData playerData, int itemCode)
     {
         Debug.Log($"[AddItemToPlayerInventory] Starting method with itemCode: {itemCode}");
-
-        if (playerIdentity == null)
+        
+        if (playerData == null)
         {
-            Debug.LogError("[AddItemToPlayerInventory] PlayerIdentity is null!");
+            Debug.LogError("[AddItemToPlayerInventory] PlayerCharacterData is null!");
             return;
         }
-
-        Debug.Log($"[AddItemToPlayerInventory] PlayerIdentity found: {playerIdentity.name}");
-
-        // Get userId from connection authentication data
-        string userId = playerIdentity.connectionToClient.authenticationData as string;
-        Debug.Log($"[AddItemToPlayerInventory] UserId from connection: {userId}");
-
-        // Get characterId from connection (stored when player spawns)
-        string characterId = ServerPlayerDataManager.Instance.GetCharacterIdForConnection(playerIdentity.connectionToClient);
-        if (string.IsNullOrEmpty(characterId))
-        {
-            Debug.LogError("[AddItemToPlayerInventory] CharacterId not found for this connection!");
-            return;
-        }
-        Debug.Log($"[AddItemToPlayerInventory] CharacterId from connection: {characterId}");
-
+        
+        Debug.Log($"[AddItemToPlayerInventory] PlayerData found - Character: {playerData.characterName}, Class: {playerData.characterClass}");
+        
+        // Get userId and characterId from PlayerCharacterData
+        string userId = playerData.userId;
+        string characterId = playerData.characterId;
+        
+        Debug.Log($"[AddItemToPlayerInventory] UserId: {userId}, CharacterId: {characterId}");
+        
         if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(characterId))
         {
             Debug.LogError($"[AddItemToPlayerInventory] Missing data - UserId: '{userId}', CharacterId: '{characterId}'");
             return;
         }
-
+        
+        // Validate item code
+        if (itemCode <= 0)
+        {
+            Debug.LogError($"[AddItemToPlayerInventory] Invalid item code: {itemCode}");
+            return;
+        }
+        
+        // Check if item exists in our item details dictionary
+        ItemDetails itemDetails = GetItemDetails(itemCode);
+        if (itemDetails == null)
+        {
+            Debug.LogError($"[AddItemToPlayerInventory] Item code {itemCode} not found in item details dictionary!");
+            return;
+        }
+        
+        Debug.Log($"[AddItemToPlayerInventory] Item details found - Name: {itemDetails.itemDescription}, Type: {itemDetails.itemType}");
+        
         try
         {
             Debug.Log($"[AddItemToPlayerInventory] Starting Firebase operations...");
-
+            
             // Get current inventory array from Firebase
             DatabaseReference inventoryRef = FirebaseDatabase.DefaultInstance
                 .GetReference($"users/{userId}/characters/{characterId}/inventory/items");
-
-            Debug.Log($"[AddItemToPlayerInventory] Firebase reference created: {inventoryRef.Key}");
-
+            
+            Debug.Log($"[AddItemToPlayerInventory] Firebase reference created for path: users/{userId}/characters/{characterId}/inventory/items");
+            
             DataSnapshot snapshot = await inventoryRef.GetValueAsync();
-
+            
             Debug.Log($"[AddItemToPlayerInventory] Firebase snapshot received. Exists: {snapshot.Exists}");
-
+            
             if (snapshot.Exists)
             {
                 Debug.Log($"[AddItemToPlayerInventory] Raw JSON data: {snapshot.GetRawJsonValue()}");
-
+                
                 // Convert to list for easier manipulation
                 var inventoryList = JsonConvert.DeserializeObject<List<InventoryItem>>(snapshot.GetRawJsonValue());
-
-                Debug.Log($"[AddItemToPlayerInventory] Inventory list deserialized. Count: {inventoryList?.Count}");
-
+                
+                if (inventoryList == null)
+                {
+                    Debug.LogError("[AddItemToPlayerInventory] Failed to deserialize inventory list!");
+                    return;
+                }
+                
+                Debug.Log($"[AddItemToPlayerInventory] Inventory list deserialized. Count: {inventoryList.Count}");
+                
                 // Find if item already exists
                 var existingItem = inventoryList.FirstOrDefault(x => x.itemCode == itemCode);
-
+                
                 if (existingItem != null)
                 {
                     Debug.Log($"[AddItemToPlayerInventory] Item {itemCode} already exists with quantity {existingItem.itemQuantity}. Incrementing...");
@@ -126,17 +142,18 @@ public class ServerInventoryManager : MonoBehaviour
                     var emptySlot = inventoryList.FirstOrDefault(x => x.itemCode == 0);
                     if (emptySlot != null)
                     {
-                        Debug.Log($"[AddItemToPlayerInventory] Empty slot found. Adding item {itemCode}");
+                        Debug.Log($"[AddItemToPlayerInventory] Empty slot found at position. Adding item {itemCode}");
                         emptySlot.itemCode = itemCode;
                         emptySlot.itemQuantity = 1;
-                        Debug.Log($"[AddItemToPlayerInventory] Item added to empty slot");
+                        Debug.Log($"[AddItemToPlayerInventory] Item {itemCode} added to empty slot with quantity 1");
                     }
                     else
                     {
-                        Debug.LogWarning($"[AddItemToPlayerInventory] No empty slots available in inventory!");
+                        Debug.LogWarning($"[AddItemToPlayerInventory] No empty slots available in inventory! Inventory full.");
+                        return;
                     }
                 }
-
+                
                 Debug.Log($"[AddItemToPlayerInventory] Saving updated inventory to Firebase...");
                 // Save back to Firebase
                 await inventoryRef.SetRawJsonValueAsync(JsonConvert.SerializeObject(inventoryList));
@@ -144,7 +161,7 @@ public class ServerInventoryManager : MonoBehaviour
             }
             else
             {
-                Debug.LogError($"[AddItemToPlayerInventory] Firebase snapshot does not exist!");
+                Debug.LogError($"[AddItemToPlayerInventory] Firebase snapshot does not exist for path: users/{userId}/characters/{characterId}/inventory/items");
             }
         }
         catch (System.Exception e)
@@ -152,10 +169,8 @@ public class ServerInventoryManager : MonoBehaviour
             Debug.LogError($"[AddItemToPlayerInventory] Failed to add item to Firebase: {e.Message}");
             Debug.LogError($"[AddItemToPlayerInventory] Stack trace: {e.StackTrace}");
         }
-
-        Debug.Log($"[AddItemToPlayerInventory] Method completed");
+        
+        Debug.Log($"[AddItemToPlayerInventory] Method completed for item {itemCode}");
     }
-    
-    
 }
 
