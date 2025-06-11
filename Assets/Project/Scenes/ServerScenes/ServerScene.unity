@@ -151,9 +151,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6caf1cc92dc27ef498e228b0737c6087, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
   itemList: {fileID: 11400000, guid: 8b66806db45539f45bdeebc3622dee9a, type: 2}
 --- !u!4 &1139365534
 Transform:
@@ -279,7 +276,26 @@ MonoBehaviour:
   playerPrefab: {fileID: 286690282312744990, guid: 7d7c319d413e40f4caab7d2f287db2bf, type: 3}
   autoCreatePlayer: 0
   playerSpawnMethod: 0
-  spawnPrefabs: []
+  spawnPrefabs:
+  - {fileID: 3332484677908877298, guid: 1c73868db8c41084aa81b1b6cc1b131a, type: 3}
+  - {fileID: 7455120293846811923, guid: 2292cb1b1c8be9d44bd5f06b94ef44b9, type: 3}
+  - {fileID: 718999405213143225, guid: bd62dadeb66f9d240b4c922257aee3df, type: 3}
+  - {fileID: 2686608118904891232, guid: 03cf2936e8831f246b4694ad9f25e536, type: 3}
+  - {fileID: 4374671831833953078, guid: d031a036281405545a4f251cc3a1b2ba, type: 3}
+  - {fileID: 4701464670919811761, guid: 73fbee1360721c342b07e630b89f9a31, type: 3}
+  - {fileID: 9219852107006858997, guid: cd2ac7e962b2c734598bc802eef5417a, type: 3}
+  - {fileID: 8825475580978850188, guid: 9a328e888b7516e4aaf916d6ed0d11ab, type: 3}
+  - {fileID: 6855559157735894721, guid: 22880a830e72a514cbf4b4282978e878, type: 3}
+  - {fileID: 8138136430807121651, guid: e18bcdacdc9ad2544aa1bb6c1c07b811, type: 3}
+  - {fileID: 382520620432267088, guid: fc9556fd682d7574aa860855114f5c5d, type: 3}
+  - {fileID: 1107113440916935703, guid: 90b3501522202a545a3a8497c586a548, type: 3}
+  - {fileID: 5199234041452895410, guid: 5be3ae093e2466d45af5199f41629d16, type: 3}
+  - {fileID: 4478081889124058819, guid: 083d2e7b62505ac49a5a7b00eecee37c, type: 3}
+  - {fileID: 4223776961566989236, guid: 34a4b1ab8afa1864caa2a21c9b1e6ea1, type: 3}
+  - {fileID: 9044641363572218335, guid: c5fa167480137a946bad453af77330e4, type: 3}
+  - {fileID: 1304102357073729672, guid: 24f57afed27af28419d633023abc437c, type: 3}
+  - {fileID: 5550326487560239644, guid: 833b683e8836c6d48861b6dc1c76c6e8, type: 3}
+  - {fileID: 5301907729591022299, guid: f0f9fa74551f3a04db47b31834e3a51b, type: 3}
   exceptionsDisconnect: 1
   snapshotSettings:
     bufferTimeMultiplier: 2

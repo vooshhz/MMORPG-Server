@@ -5,6 +5,8 @@ using Newtonsoft.Json;
 using System.Linq;
 using Mirror;
 using Firebase.Database;
+using System.Threading.Tasks;
+
 
 public class ServerInventoryManager : MonoBehaviour
 {
@@ -55,7 +57,7 @@ public class ServerInventoryManager : MonoBehaviour
     }
 
   [Server]
-    public async void AddItemToPlayerInventory(PlayerCharacterData playerData, int itemCode)
+    public async Task AddItemToPlayerInventory(PlayerCharacterData playerData, int itemCode)
     {
         Debug.Log($"[AddItemToPlayerInventory] Starting method with itemCode: {itemCode}");
         
