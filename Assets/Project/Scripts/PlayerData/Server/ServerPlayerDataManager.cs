@@ -800,6 +800,7 @@ public class ServerPlayerDataManager : MonoBehaviour
     private void InitializeCharacterData(string userId, string characterId, PlayerCharacterData characterData)
     {
         characterData.characterId = characterId;
+        characterData.userId = userId; // Add this line to set the user ID
 
         // Get PlayerInventory component
         PlayerInventory playerInventory = characterData.GetComponent<PlayerInventory>();
@@ -835,11 +836,13 @@ public class ServerPlayerDataManager : MonoBehaviour
                 c.Value != null && 
                 activePlayers.ContainsKey(c.Value) && 
                 activePlayers[c.Value].CharacterId == characterId).Value;
-                
+
             if (conn != null && activePlayers.ContainsKey(conn))
             {
                 activePlayers[conn].CharacterName = characterData.characterName;
                 Debug.Log($"Updated active player info - Name: {characterData.characterName}, CharacterId: {characterId}");
+                
+                LogAllConnectedPlayers();
             }
         }
 

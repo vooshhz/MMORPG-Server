@@ -6,6 +6,8 @@ public class PlayerCharacterData : NetworkBehaviour
     [Header("Character ID")]
     [SyncVar]
     public string characterId; // Synced unique identifier for this character
+    [SyncVar]
+    public string userId; // Synced user ID that owns this character
     
     [Header("Equipment")]
     [SyncVar(hook = nameof(OnHeadItemChanged))]
