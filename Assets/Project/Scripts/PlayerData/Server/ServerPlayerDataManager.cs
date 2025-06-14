@@ -144,6 +144,8 @@ public class ServerPlayerDataManager : MonoBehaviour
 
     private IEnumerator FetchCharacterInventory(NetworkConnectionToClient conn, string userId, string characterId)
     {
+        Debug.Log($"[INVENTORY FETCH] Starting inventory fetch for character {characterId}");
+        
         var inventoryTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("inventory").Child("items").GetValueAsync(); // Query inventory
 
         yield return new WaitUntil(() => inventoryTask.IsCompleted); // Wait for query to complete
@@ -157,20 +159,36 @@ public class ServerPlayerDataManager : MonoBehaviour
         DataSnapshot snapshot = inventoryTask.Result; // Get query result
         var items = new List<InventoryItem>(); // Create list for items
 
-        foreach (DataSnapshot itemData in snapshot.Children) // Process each item
-        {
-            var item = new InventoryItem
-            {
-                itemCode = Convert.ToInt32(itemData.Child("itemCode").Value),
-                itemQuantity = Convert.ToInt32(itemData.Child("itemQuantity").Value)  // Note: itemQuantity not quantity
-            };
+        Debug.Log($"[INVENTORY FETCH] Firebase query completed. Data exists: {snapshot.Exists}");
 
-            items.Add(item); // Add to list
+        if (snapshot.Exists)
+        {
+            foreach (DataSnapshot itemData in snapshot.Children) // Process each item
+            {
+                var item = new InventoryItem
+                {
+                    itemCode = Convert.ToInt32(itemData.Child("itemCode").Value),
+                    itemQuantity = Convert.ToInt32(itemData.Child("itemQuantity").Value) // Fixed: was "itemQua"
+                };
+
+                items.Add(item); // Add to list
+                Debug.Log($"[INVENTORY FETCH] Loaded item - Code: {item.itemCode}, Quantity: {item.itemQuantity}");
+            }
         }
+        else
+        {
+            Debug.Log($"[INVENTORY FETCH] No inventory items found for character {characterId}");
+        }
+
+        Debug.Log($"[INVENTORY FETCH] Sending {items.Count} items to client via RPC");
 
         if (conn.identity != null) // Check if connection has identity
         {
             conn.identity.GetComponent<PlayerNetworkController>().TargetReceiveInventoryData(conn, characterId, items.ToArray()); // Send to client
+        }
+        else
+        {
+            Debug.LogError($"[INVENTORY FETCH] Connection identity is null for character {characterId}");
         }
     }
 
@@ -830,18 +848,18 @@ public class ServerPlayerDataManager : MonoBehaviour
             characterData.characterClass = infoData.Child("characterClass").Value?.ToString();
             characterData.level = Convert.ToInt32(infoData.Child("level").Value);
             characterData.experience = Convert.ToInt32(infoData.Child("experience").Value);
-            
+
             // Update the active player's character name
-            var conn = NetworkServer.connections.FirstOrDefault(c => 
-                c.Value != null && 
-                activePlayers.ContainsKey(c.Value) && 
+            var conn = NetworkServer.connections.FirstOrDefault(c =>
+                c.Value != null &&
+                activePlayers.ContainsKey(c.Value) &&
                 activePlayers[c.Value].CharacterId == characterId).Value;
 
             if (conn != null && activePlayers.ContainsKey(conn))
             {
                 activePlayers[conn].CharacterName = characterData.characterName;
                 Debug.Log($"Updated active player info - Name: {characterData.characterName}, CharacterId: {characterId}");
-                
+
                 LogAllConnectedPlayers();
             }
         }
@@ -949,7 +967,7 @@ public class ServerPlayerDataManager : MonoBehaviour
 
 
     /// Helper Classes and Methods
- 
+
     public class ActivePlayerInfo
     {
         public string UserId { get; set; }
@@ -964,7 +982,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             Debug.Log($"Player {activePlayers[conn].CharacterName} disconnected");
             activePlayers.Remove(conn);
         }
-        
+
         // Clean up other dictionaries
         connectionCharacterIds.Remove(conn);
         SpawnDataByConnection.Remove(conn);
@@ -1037,15 +1055,30 @@ public class ServerPlayerDataManager : MonoBehaviour
 
         return currentItemCount >= bagData.maxSlots;
     }
-    
+
     public string GetCharacterIdForConnection(NetworkConnectionToClient conn)
     {
         if (connectionCharacterIds.TryGetValue(conn, out string characterId))
         {
             return characterId;
         }
-        
+
         Debug.LogWarning($"No character ID found for connection {conn.connectionId}");
         return null;
+    }
+    
+    public void HandleInventoryDataRequest(NetworkConnectionToClient conn, string characterId)
+    {
+        string userId = conn.authenticationData as string; // Get user ID from auth data
+        if (string.IsNullOrEmpty(userId)) // Verify authentication
+        {
+            Debug.LogError($"Connection {conn.connectionId} requested inventory data without valid auth"); // Log error
+            return; // Exit if not authenticated
+        }
+
+        Debug.Log($"[SERVER] Processing inventory request for character {characterId} by user {userId}");
+        
+        // Start coroutine to fetch only inventory data
+        StartCoroutine(FetchCharacterInventory(conn, userId, characterId)); // Fetch inventory
     }
 }

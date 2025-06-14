@@ -7,7 +7,7 @@ public class PlayerNetworkController : NetworkBehaviour
 {
     // Reference to the client data manager singleton
     private ClientPlayerDataManager clientDataManager;
-    
+
     // Character ID for this player instance
     public string characterId { get; private set; }
 
@@ -20,7 +20,7 @@ public class PlayerNetworkController : NetworkBehaviour
             clientDataManager = ClientPlayerDataManager.Instance;
         }
     }
-    
+
     /// <summary>
     /// Sets the character ID for this player instance
     /// </summary>
@@ -29,7 +29,7 @@ public class PlayerNetworkController : NetworkBehaviour
         // Store the character ID
         characterId = id;
     }
-    
+
     /// <summary>
     /// Client command to request all characters for the current user
     /// </summary>
@@ -39,7 +39,7 @@ public class PlayerNetworkController : NetworkBehaviour
         // Forward request to the server player data manager
         ServerPlayerDataManager.Instance.HandleAllCharacterDataRequest(connectionToClient);
     }
-    
+
     /// <summary>
     /// Client command to request detailed data for a specific character
     /// </summary>
@@ -49,7 +49,7 @@ public class PlayerNetworkController : NetworkBehaviour
         // Forward request to the server player data manager
         ServerPlayerDataManager.Instance.HandleCharacterDataRequest(connectionToClient, characterId);
     }
-    
+
     /// <summary>
     /// Server to clients: Receive basic character info for all characters
     /// </summary>
@@ -58,16 +58,16 @@ public class PlayerNetworkController : NetworkBehaviour
     {
         // Only process on the local player
         if (!isLocalPlayer) return;
-        
+
         // Convert array to list and pass to client data manager
         clientDataManager.ReceiveCharacterInfos(new List<ClientPlayerDataManager.CharacterInfo>(characters));
     }
-    
+
     /// <summary>
     /// Server to specific client: Receive equipment data for a character
     /// </summary>
     [TargetRpc]
-    public void TargetReceiveEquipmentData(NetworkConnection target, string characterId, 
+    public void TargetReceiveEquipmentData(NetworkConnection target, string characterId,
         int head, int body, int hair, int torso, int legs)
     {
         // Create equipment data object
@@ -79,16 +79,16 @@ public class PlayerNetworkController : NetworkBehaviour
             torso = torso,
             legs = legs
         };
-        
+
         // Pass to client data manager
         clientDataManager.ReceiveEquipmentData(characterId, equipment);
     }
-    
+
     /// <summary>
     /// Server to specific client: Receive inventory data for a character
     /// </summary>
     [TargetRpc]
-    public void TargetReceiveInventoryData(NetworkConnection target, string characterId, 
+    public void TargetReceiveInventoryData(NetworkConnection target, string characterId,
         InventoryItem[] items)
     {
         // Convert array to list and pass to client data manager
@@ -99,20 +99,29 @@ public class PlayerNetworkController : NetworkBehaviour
     /// Server to specific client: Receive location data for a character
     /// </summary>
     [TargetRpc]
-    public void TargetReceiveLocationData(NetworkConnection target, string characterId, 
+    public void TargetReceiveLocationData(NetworkConnection target, string characterId,
         string sceneName, Vector3 position)
     {
         // Only process on the local player
         if (!isLocalPlayer) return;
-        
+
         // Create location data object
         var locationData = new ClientPlayerDataManager.LocationData
         {
             sceneName = sceneName,
             position = position
         };
-        
+
         // Pass to client data manager
         clientDataManager.ReceiveLocationData(characterId, locationData);
+    }
+    
+    [Command]
+    public void CmdRequestInventoryData(string characterId)
+    {
+        Debug.Log($"[CLIENT REQUEST] Inventory data requested for character: {characterId}");
+        
+        // Forward request to the server player data manager
+        ServerPlayerDataManager.Instance.HandleInventoryDataRequest(connectionToClient, characterId);
     }
 }
