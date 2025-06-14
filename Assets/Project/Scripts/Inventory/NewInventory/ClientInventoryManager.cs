@@ -27,10 +27,7 @@ public class ClientInventoryManager : MonoBehaviour
         CreateItemDetailsDictionary();
     }
     
-    private void Start()
-    {
-        FindUIInventoryBar();
-    }
+    // Remove Start() method - no more searching needed
     
     private void CreateItemDetailsDictionary()
     {
@@ -45,19 +42,24 @@ public class ClientInventoryManager : MonoBehaviour
         }
     }
     
-    private void FindUIInventoryBar()
+    // New registration method
+    public void RegisterInventoryBar(UIInventoryBar bar)
     {
-        GameObject uiBarObject = GameObject.Find("UIInventoryBar");
-        if (uiBarObject != null)
+        inventoryBar = bar;
+        Debug.Log("UIInventoryBar registered with ClientInventoryManager");
+        
+        // If we already have inventory data, update the UI immediately
+        if (playerInventory.Count > 0)
         {
-            inventoryBar = uiBarObject.GetComponent<UIInventoryBar>();
-            Debug.Log("Client Inventory Manager found UIInventoryBar");
+            UpdateUI();
         }
-        else
-        {
-            Debug.LogWarning("UIInventoryBar not found, retrying...");
-            Invoke(nameof(FindUIInventoryBar), 0.5f);
-        }
+    }
+    
+    // New unregistration method
+    public void UnregisterInventoryBar()
+    {
+        inventoryBar = null;
+        Debug.Log("UIInventoryBar unregistered from ClientInventoryManager");
     }
     
     public void ReceiveInventoryData(List<InventoryItem> inventoryData)

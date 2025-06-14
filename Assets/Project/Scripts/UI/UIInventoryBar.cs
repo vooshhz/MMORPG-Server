@@ -8,11 +8,24 @@ public class UIInventoryBar : MonoBehaviour
     public GameObject inventoryBarDraggedItem;
     [HideInInspector] public GameObject inventoryTextBoxGameobject;
     
-    private void Awake() 
+    private void OnEnable()
     {
-        // Remove position switching functionality
+        // Register with ClientInventoryManager when enabled
+        if (ClientInventoryManager.Instance != null)
+        {
+            ClientInventoryManager.Instance.RegisterInventoryBar(this);
+        }
     }
-
+    
+    private void OnDisable()
+    {
+        // Unregister when disabled
+        if (ClientInventoryManager.Instance != null)
+        {
+            ClientInventoryManager.Instance.UnregisterInventoryBar();
+        }
+    }
+    
     public void InventoryUpdated(InventoryLocation inventoryLocation, List<InventoryItem> inventoryList)
     {
         if (inventoryLocation == InventoryLocation.player)
