@@ -13,23 +13,20 @@ public class ServerPlayerDataManager : MonoBehaviour
 {
     /// Singleton and References
     public static ServerPlayerDataManager Instance { get; private set; } // Singleton instance
-    private Dictionary<NetworkConnectionToClient, string> connectionCharacterIds = new Dictionary<NetworkConnectionToClient, string>(); // Maps connections to character IDs
+    private Dictionary<NetworkConnectionToClient, string> activeCharacterByConnection = new Dictionary<NetworkConnectionToClient, string>(); // Maps connections to character IDs
 
-    [Header("Player Prefab")]
-    [SerializeField] private GameObject playerPrefab; // Reference to player prefab for instantiation
+    private Dictionary<NetworkConnectionToClient, PlayerSpawnData> spawnQueueByConnection = new Dictionary<NetworkConnectionToClient, PlayerSpawnData>(); // Stores spawn data by connection
 
-    private Dictionary<NetworkConnectionToClient, PlayerSpawnData> SpawnDataByConnection = new Dictionary<NetworkConnectionToClient, PlayerSpawnData>(); // Stores spawn data by connection
-
-    private Dictionary<NetworkConnectionToClient, ActivePlayerInfo> activePlayers = new Dictionary<NetworkConnectionToClient, ActivePlayerInfo>();
+    private Dictionary<NetworkConnectionToClient, ActivePlayerInfo> activePlayers = new Dictionary<NetworkConnectionToClient, ActivePlayerInfo>(); // Active logged in players
 
     private DatabaseReference dbReference; // Firebase database reference
     [SerializeField] private CharacterCreationOptionsData characterCreationOptions; // Character creation configuration
 
     [Header("Bag System")]
-    [SerializeField] private SO_BagData bagList;
+    [SerializeField] private SO_BagData bagList; // List of bag item numbers and their slots
 
     /// Initialization
-    private void Awake()
+    private void Awake() // Set up singleton/don't destroy on load + get database reference from firebase
     {
         if (Instance != null && Instance != this) // Check if singleton exists
         {
@@ -51,58 +48,8 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
 
-    /// Character Data Retrieval
-    public void HandleAllCharacterDataRequest(NetworkConnectionToClient conn)
-    {
-        string userId = conn.authenticationData as string; // Get user ID from auth data
-        if (string.IsNullOrEmpty(userId)) // Verify authentication
-        {
-            Debug.LogError($"Connection {conn.connectionId} requested character data without valid auth"); // Log error
-            return; // Exit if not authenticated
-        }
-
-        StartCoroutine(FetchAllCharacterData(conn, userId)); // Start data fetch coroutine
-    }
-
-    private IEnumerator FetchAllCharacterData(NetworkConnectionToClient conn, string userId)
-    {
-        var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync(); // Query character data
-
-        yield return new WaitUntil(() => characterListTask.IsCompleted); // Wait for query to complete
-
-        if (characterListTask.IsFaulted) // Check for query error
-        {
-            Debug.LogError($"Failed to fetch character data: {characterListTask.Exception}"); // Log error
-            yield break; // Exit coroutine
-        }
-
-        DataSnapshot snapshot = characterListTask.Result; // Get query result
-        var characterInfos = new List<ClientPlayerDataManager.CharacterInfo>(); // Create list for character info
-
-        foreach (DataSnapshot characterSnapshot in snapshot.Children) // Process each character
-        {
-            string charId = characterSnapshot.Key; // Get character ID
-            DataSnapshot infoData = characterSnapshot.Child("info"); // Get character info node
-
-            var charInfo = new ClientPlayerDataManager.CharacterInfo // Create character info object
-            {
-                id = charId, // Set ID
-                characterName = infoData.Child("characterName").Value?.ToString(), // Set name
-                characterClass = infoData.Child("characterClass").Value?.ToString(), // Set class
-                level = Convert.ToInt32(infoData.Child("level").Value), // Set level
-                experience = Convert.ToInt32(infoData.Child("experience").Value) // Set experience
-            };
-
-            characterInfos.Add(charInfo); // Add to list
-        }
-
-        if (conn.identity != null) // Check if connection has identity
-        {
-            conn.identity.GetComponent<PlayerNetworkController>().RpcReceiveCharacterInfos(characterInfos.ToArray()); // Send to client
-        }
-    }
-
-    public void HandleCharacterDataRequest(NetworkConnectionToClient conn, string characterId)
+    // CHARACTER DATA RETRIEVAL METHODS
+    public void HandleCharacterDataRequest(NetworkConnectionToClient conn, string characterId) // Main handler for character data requests from the client
     {
         string userId = conn.authenticationData as string; // Get user ID from auth data
         if (string.IsNullOrEmpty(userId)) // Verify authentication
@@ -116,7 +63,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         StartCoroutine(FetchCharacterLocation(conn, userId, characterId)); // Fetch location
     }
 
-    private IEnumerator FetchCharacterEquipment(NetworkConnectionToClient conn, string userId, string characterId)
+    private IEnumerator FetchCharacterEquipment(NetworkConnectionToClient conn, string userId, string characterId)  // Coroutine to fetch equipment from Firebase, Called by HandleCharacterDataRequest()
     {
         var equipmentTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("equipment").GetValueAsync(); // Query equipment
 
@@ -142,7 +89,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
 
-    private IEnumerator FetchCharacterInventory(NetworkConnectionToClient conn, string userId, string characterId)
+    private IEnumerator FetchCharacterInventory(NetworkConnectionToClient conn, string userId, string characterId) // Coroutine to fetch inventory from Firebase, Called by HandleCharacterDataRequest()
     {
         Debug.Log($"[INVENTORY FETCH] Starting inventory fetch for character {characterId}");
         
@@ -192,7 +139,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
 
-    private IEnumerator FetchCharacterLocation(NetworkConnectionToClient conn, string userId, string characterId)
+    private IEnumerator FetchCharacterLocation(NetworkConnectionToClient conn, string userId, string characterId)  // Coroutine to fetch scene and xyz position from Firebase, Called by HandleCharacterDataRequest()
     {
         var locationTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("location").GetValueAsync(); // Query location
 
@@ -217,8 +164,11 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
 
-    /// Character Preview Data
-    public void HandleCharacterPreviewRequest(NetworkConnectionToClient conn, string userId)
+
+
+    /// Character Selection Preview Data
+    public void HandleCharacterPreviewRequest(NetworkConnectionToClient conn, string userId) // Handles requests for character selection screen data, called by network message handlers
+
     {
         if (dbReference == null) // Check if database reference is null
         {
@@ -244,7 +194,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         StartCoroutine(FetchCharacterPreviewData(conn, userId)); // Start data fetch coroutine
     }
 
-    private IEnumerator FetchCharacterPreviewData(NetworkConnectionToClient conn, string userId)
+    private IEnumerator FetchCharacterPreviewData(NetworkConnectionToClient conn, string userId) // // Coroutine to fetch all character previews for a user, called by HandleCharacterPreviewRequest
     {
         if (dbReference == null) // Check if database reference is null
         {
@@ -358,23 +308,11 @@ public class ServerPlayerDataManager : MonoBehaviour
         Debug.Log($"Sent character preview response with {characterInfos.Count} characters, {equipmentPairs.Count} equipment sets, and {locationPairs.Count} location data sets"); // Log success
     }
 
-    /// Character Data Saving
-    public void SaveCharacterPosition(string userId, string characterId, Vector3 position, string sceneName)
-    {
-        Dictionary<string, object> updates = new Dictionary<string, object> // Create updates dictionary
-        {
-            ["x"] = position.x, // Set X position
-            ["y"] = position.y, // Set Y position
-            ["z"] = position.z, // Set Z position
-            ["sceneName"] = sceneName // Set scene name
-        };
 
-        string path = $"users/{userId}/characters/{characterId}/location"; // Create database path
-        dbReference.Child(path).UpdateChildrenAsync(updates); // Update database
-    }
 
-    /// Character Creation
-    public bool ValidateCharacterCreation(string className, int bodyItem, int headItem, int hairItem, int torsoItem, int legsItem)
+
+    /// Character Creation methods
+    public bool ValidateCharacterCreation(string className, int bodyItem, int headItem, int hairItem, int torsoItem, int legsItem) // Validates character creation parameters against available options, called during character creation validation
     {
         bool validClass = false; // Initialize class validation flag
         foreach (var classOption in characterCreationOptions.availableClasses) // Check each class
@@ -399,7 +337,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         return validClass && validBody && validHead && validHair && validTorso && validLegs; // Return combined validation result
     }
 
-    public void SendCharacterCreationOptions(NetworkConnectionToClient conn)
+    public void SendCharacterCreationOptions(NetworkConnectionToClient conn) //  Sends available creation options to client, called by CheckCharacterLimitAndSendOptions
     {
         var msg = new CharacterCreationOptionsMessage // Create message
         {
@@ -415,7 +353,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         Debug.Log($"Sent character creation options to client {conn.connectionId}"); // Log success
     }
 
-    public void HandleCreateCharacterRequest(NetworkConnectionToClient conn, CreateCharacterRequestMessage msg)
+    public void HandleCreateCharacterRequest(NetworkConnectionToClient conn, CreateCharacterRequestMessage msg) // Validates authentication and creation parameters then delegates to name checking, called by network message handlers
     {
         string userId = conn.authenticationData as string; // Get user ID from auth data
         if (string.IsNullOrEmpty(userId)) // Verify authentication
@@ -454,7 +392,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         StartCoroutine(CheckNameAvailability(conn, userId, msg)); // Start name check coroutine
     }
 
-    private IEnumerator CreateCharacterInDatabase(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
+    private IEnumerator CreateCharacterInDatabase(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg) //  Saves new character data to Firebase database, called by CheckNameAvailability
     {
         string characterId = System.Guid.NewGuid().ToString(); // Generate unique ID
 
@@ -515,7 +453,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         SendCreateCharacterResponse(conn, true, "Character created successfully", characterId); // Send success response
     }
 
-    private Dictionary<string, object> CreateInventoryStructure(string characterClass)
+    private Dictionary<string, object> CreateInventoryStructure(string characterClass) // Creates default inventory structure for new characters, called by CreateCharacterInDatabase
     {
         int defaultBagId = characterCreationOptions.defaultBagId;
         var bagInfo = System.Array.Find(characterCreationOptions.bagData.bags, b => b.bagId == defaultBagId);
@@ -541,7 +479,7 @@ public class ServerPlayerDataManager : MonoBehaviour
 
         return inventory;
     }
-    private void SendCreateCharacterResponse(NetworkConnectionToClient conn, bool success, string message, string characterId = null)
+    private void SendCreateCharacterResponse(NetworkConnectionToClient conn, bool success, string message, string characterId = null) // Sends character creation result to client, called by HandleCreateCharacterRequest and CreateCharacterInDatabase
     {
         var response = new CreateCharacterResponseMessage // Create response message
         {
@@ -553,7 +491,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         conn.Send(response); // Send to client
     }
 
-    private IEnumerator CheckNameAvailability(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg)
+    private IEnumerator CheckNameAvailability(NetworkConnectionToClient conn, string userId, CreateCharacterRequestMessage msg) //  Verifies character name is unique across all users, called by HandleCreateCharacterRequest
     {
         var nameQuery = dbReference.Child("users").OrderByChild("characters").GetValueAsync(); // Query users
 
@@ -594,7 +532,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         StartCoroutine(CreateCharacterInDatabase(conn, userId, msg)); // Start character creation coroutine
     }
 
-    public void CheckCharacterLimitAndSendOptions(NetworkConnectionToClient conn)
+    public void CheckCharacterLimitAndSendOptions(NetworkConnectionToClient conn) // Validates user can create more characters and sends options, called by network message handlers
     {
         string userId = conn.authenticationData as string; // Get user ID from auth data
         if (string.IsNullOrEmpty(userId)) // Verify authentication
@@ -606,7 +544,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         StartCoroutine(CheckCharacterLimitCoroutine(conn, userId)); // Start character limit check coroutine
     }
 
-    private IEnumerator CheckCharacterLimitCoroutine(NetworkConnectionToClient conn, string userId)
+    private IEnumerator CheckCharacterLimitCoroutine(NetworkConnectionToClient conn, string userId) // Queries database to check current character count against limit, called by CheckCharacterLimitAndSendOptions
     {
         var characterListTask = dbReference.Child("users").Child(userId).Child("characters").GetValueAsync(); // Query characters
         yield return new WaitUntil(() => characterListTask.IsCompleted); // Wait for query to complete
@@ -642,7 +580,7 @@ public class ServerPlayerDataManager : MonoBehaviour
     }
 
     /// Player Spawning
-    public void HandlePlayerSpawnRequest(NetworkConnectionToClient conn, string characterId)
+    public void HandlePlayerSpawnRequest(NetworkConnectionToClient conn, string characterId) // Validates authentication and delegates to scene fetching for spawn, called by network message handlers
     {
         string userId = conn.authenticationData as string; // Get user ID from auth data
         if (string.IsNullOrEmpty(userId)) // Verify authentication
@@ -654,9 +592,9 @@ public class ServerPlayerDataManager : MonoBehaviour
         StartCoroutine(FetchCharacterSceneAndSpawn(conn, userId, characterId)); // Start spawn coroutine
     }
 
-    private IEnumerator FetchCharacterSceneAndSpawn(NetworkConnectionToClient conn, string userId, string characterId)
+    private IEnumerator FetchCharacterSceneAndSpawn(NetworkConnectionToClient conn, string userId, string characterId) // Queries character location and initiates spawn process, called by HandlePlayerSpawnRequest
     {
-        connectionCharacterIds[conn] = characterId; // Store character ID for connection
+        activeCharacterByConnection[conn] = characterId; // Store character ID for connection
 
         var locationTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("location").GetValueAsync(); // Query location
 
@@ -679,7 +617,7 @@ public class ServerPlayerDataManager : MonoBehaviour
 
         Debug.Log($"Character {characterId} location data: Scene={sceneName}, Position={spawnPosition}"); // Log info
 
-        SpawnDataByConnection[conn] = new PlayerSpawnData // Store spawn data
+        spawnQueueByConnection[conn] = new PlayerSpawnData // Store spawn data
         {
             CharacterId = characterId, // Set character ID
             Position = spawnPosition, // Set position
@@ -689,7 +627,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         SendGameSceneTransitionResponse(conn, true, sceneName, spawnPosition); // Send transition response
     }
 
-    private void SendGameSceneTransitionResponse(NetworkConnectionToClient conn, bool approved, string sceneName, Vector3 position, string message = "")
+    private void SendGameSceneTransitionResponse(NetworkConnectionToClient conn, bool approved, string sceneName, Vector3 position, string message = "") // Sends scene transition approval or denial to client, called by FetchCharacterSceneAndSpawn and HandleGameSceneTransitionRequest
     {
         conn.Send(new GameSceneTransitionResponseMessage // Create and send message
         {
@@ -700,7 +638,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         });
     }
 
-    public void HandleGameSceneTransitionRequest(NetworkConnectionToClient conn, string characterId, string targetScene)
+    public void HandleGameSceneTransitionRequest(NetworkConnectionToClient conn, string characterId, string targetScene) //  Validates scene transition requests and approves or denies, called by network message handlers
     {
         if (Enum.TryParse<GameScene>(targetScene, out GameScene targetGameScene)) // Parse scene name
         {
@@ -714,10 +652,10 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
 
-    public void SpawnPlayerForClient(NetworkConnectionToClient conn, string characterId, Vector3 position, bool isSceneTransition = false)
+    public void SpawnPlayerForClient(NetworkConnectionToClient conn, string characterId, Vector3 position, bool isSceneTransition = false) // Instantiates player GameObject in correct scene with proper setup, called by CustomNetworkManager
     {
         // Get the SpawnData to find the correct scene name
-        if (!SpawnDataByConnection.TryGetValue(conn, out PlayerSpawnData spawnData))
+        if (!spawnQueueByConnection.TryGetValue(conn, out PlayerSpawnData spawnData))
         {
             Debug.LogError($"No spawn data found for connection {conn.connectionId}");
             return;
@@ -733,7 +671,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
 
         // Create player instance in current active scene
-        GameObject playerInstance = Instantiate(playerPrefab, position, Quaternion.identity);
+        GameObject playerInstance = Instantiate(NetworkManager.singleton.playerPrefab, position, Quaternion.identity);
 
         // Move the player to the correct scene
         SceneManager.MoveGameObjectToScene(playerInstance, targetScene);
@@ -793,8 +731,6 @@ public class ServerPlayerDataManager : MonoBehaviour
             CharacterName = "" // Will be populated when character data loads
         };
 
-        LogAllConnectedPlayers();
-
         Scene playerServerScene = playerInstance.scene;
         string clientTargetScene = sceneName;
 
@@ -803,7 +739,7 @@ public class ServerPlayerDataManager : MonoBehaviour
             $"\nCLIENT: Loading into scene '{clientTargetScene}'");
     }
 
-    private void SetLayerRecursively(GameObject obj, int layerIndex)
+    private void SetLayerRecursively(GameObject obj, int layerIndex) // Sets rendering layer for player GameObject and all children, called by SpawnPlayerForClient
     {
         // Set layer for this object
         obj.layer = layerIndex;
@@ -815,7 +751,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
 
-    private void InitializeCharacterData(string userId, string characterId, PlayerCharacterData characterData)
+    private void InitializeCharacterData(string userId, string characterId, PlayerCharacterData characterData) // Sets up character data component and starts data loading, called by SpawnPlayerForClient
     {
         characterData.characterId = characterId;
         characterData.userId = userId; // Add this line to set the user ID
@@ -836,7 +772,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
     }
 
-    private IEnumerator FetchAndSetCharacterData(string userId, string characterId, PlayerCharacterData characterData)
+    private IEnumerator FetchAndSetCharacterData(string userId, string characterId, PlayerCharacterData characterData) //  Loads character stats and info from Firebase into component, called by InitializeCharacterData
     {
         var infoTask = dbReference.Child("users").Child(userId).Child("characters").Child(characterId).Child("info").GetValueAsync();
         yield return new WaitUntil(() => infoTask.IsCompleted);
@@ -884,7 +820,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         characterData.z = currentPosition.z;
     }
 
-    private IEnumerator FetchAndSetInventoryData(string userId, string characterId, PlayerInventory playerInventory)
+    private IEnumerator FetchAndSetInventoryData(string userId, string characterId, PlayerInventory playerInventory) // Loads inventory data from Firebase into component, called by InitializeCharacterData
     {
         Debug.Log($"[INVENTORY] Starting inventory fetch for character {characterId}");
 
@@ -968,14 +904,7 @@ public class ServerPlayerDataManager : MonoBehaviour
 
     /// Helper Classes and Methods
 
-    public class ActivePlayerInfo
-    {
-        public string UserId { get; set; }
-        public string CharacterId { get; set; }
-        public string CharacterName { get; set; }
-    }
-
-    public void HandlePlayerDisconnection(NetworkConnectionToClient conn)
+    public void HandlePlayerDisconnection(NetworkConnectionToClient conn) // Cleans up connection data when player disconnects, called by CustomNetworkManager
     {
         if (activePlayers.ContainsKey(conn))
         {
@@ -984,22 +913,16 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
 
         // Clean up other dictionaries
-        connectionCharacterIds.Remove(conn);
-        SpawnDataByConnection.Remove(conn);
+        activeCharacterByConnection.Remove(conn);
+        spawnQueueByConnection.Remove(conn);
     }
 
-    public ActivePlayerInfo GetActivePlayerInfo(NetworkConnectionToClient conn)
+    public ActivePlayerInfo GetActivePlayerInfo(NetworkConnectionToClient conn) // GetActivePlayerInfo - Returns stored information about connected player, called by other systems needing player info
     {
         return activePlayers.TryGetValue(conn, out var info) ? info : null;
     }
-    public class PlayerSpawnData
-    {
-        public string CharacterId; // Character identifier
-        public Vector3 Position; // Spawn position
-        public string SceneName; // Scene name
-    }
 
-    public void LogAllConnectedPlayers()
+    public void LogAllConnectedPlayers() // Debug method that logs all currently connected players, called by FetchAndSetCharacterData
     {
         Debug.Log("=== CONNECTED PLAYERS ===");
         int index = 1;
@@ -1013,14 +936,14 @@ public class ServerPlayerDataManager : MonoBehaviour
         Debug.Log("========================");
     }
 
-    public bool TryGetSpawnData(NetworkConnectionToClient conn, out PlayerSpawnData spawnData)
+    public bool TryGetSpawnData(NetworkConnectionToClient conn, out PlayerSpawnData spawnData) // Retrieves stored spawn data for a connection, called by CustomNetworkManager
     {
-        return SpawnDataByConnection.TryGetValue(conn, out spawnData); // Get spawn data if exists
+        return spawnQueueByConnection.TryGetValue(conn, out spawnData); // Get spawn data if exists
     }
 
-    public void StoreSpawnData(NetworkConnectionToClient conn, string characterId, Vector3 position, string sceneName)
+    public void StoreSpawnData(NetworkConnectionToClient conn, string characterId, Vector3 position, string sceneName) // Stores spawn data for later use during spawning, called by FetchCharacterSceneAndSpawn
     {
-        SpawnDataByConnection[conn] = new PlayerSpawnData // Store spawn data
+        spawnQueueByConnection[conn] = new PlayerSpawnData // Store spawn data
         {
             CharacterId = characterId, // Set character ID
             Position = position, // Set position
@@ -1030,14 +953,14 @@ public class ServerPlayerDataManager : MonoBehaviour
         Debug.Log($"Stored spawn data for character {characterId}: Scene={sceneName}, Position={position}"); // Log success
     }
 
-    string GetCharacterId(NetworkConnectionToClient conn)
-    {
-        if (connectionCharacterIds.TryGetValue(conn, out string characterId)) // Try get character ID
-            return characterId; // Return ID if exists
-        return null; // Return null if not found
-    }
+    // string GetCharacterId(NetworkConnectionToClient conn)
+    // {
+    //     if (activeCharacterByConnection.TryGetValue(conn, out string characterId)) // Try get character ID
+    //         return characterId; // Return ID if exists
+    //     return null; // Return null if not found
+    // }
 
-    public SO_BagData.BagData GetBagData(int bagId)
+    public SO_BagData.BagData GetBagData(int bagId) // Retrieves bag configuration data by ID, called by inventory system
     {
         if (bagList == null)
         {
@@ -1048,7 +971,7 @@ public class ServerPlayerDataManager : MonoBehaviour
         return bagList.GetBagById(bagId);
     }
 
-    public bool IsInventoryAtCapacity(int bagId, int currentItemCount)
+    public bool IsPlayerInventoryAtCapacity(int bagId, int currentItemCount) // Checks if inventory has reached maximum capacity, called by inventory system
     {
         var bagData = GetBagData(bagId);
         if (bagData == null) return true; // Assume at capacity if bag not found
@@ -1056,18 +979,18 @@ public class ServerPlayerDataManager : MonoBehaviour
         return currentItemCount >= bagData.maxSlots;
     }
 
-    public string GetCharacterIdForConnection(NetworkConnectionToClient conn)
-    {
-        if (connectionCharacterIds.TryGetValue(conn, out string characterId))
-        {
-            return characterId;
-        }
+    // public string GetCharacterIdForConnection(NetworkConnectionToClient conn)
+    // {
+    //     if (activeCharacterByConnection.TryGetValue(conn, out string characterId))
+    //     {
+    //         return characterId;
+    //     }
 
-        Debug.LogWarning($"No character ID found for connection {conn.connectionId}");
-        return null;
-    }
+    //     Debug.LogWarning($"No character ID found for connection {conn.connectionId}");
+    //     return null;
+    // }
     
-    public void HandleInventoryDataRequest(NetworkConnectionToClient conn, string characterId)
+    public void HandleInventoryDataRequest(NetworkConnectionToClient conn, string characterId) // Validates authentication and delegates to inventory fetching, called by network message handlers
     {
         string userId = conn.authenticationData as string; // Get user ID from auth data
         if (string.IsNullOrEmpty(userId)) // Verify authentication

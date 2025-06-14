@@ -5,7 +5,6 @@ using Mirror;
 public class EnterWorldButton : MonoBehaviour
 {
     [SerializeField] private Button enterWorldButton;
-    [SerializeField] private GameObject loadingIndicator; // Optional loading indicator
     
     private ClientPlayerDataManager dataManager;
     
@@ -21,10 +20,6 @@ public class EnterWorldButton : MonoBehaviour
         
         // Add this line to listen for character selection
         dataManager.OnCharacterSelected += OnCharacterSelected;
-        
-        // Hide loading indicator initially
-        if (loadingIndicator != null)
-            loadingIndicator.SetActive(false);
         
         enterWorldButton.onClick.AddListener(OnEnterWorldClicked);
 
@@ -53,11 +48,6 @@ public class EnterWorldButton : MonoBehaviour
             Debug.LogWarning("No character selected!");
             return;
         }
-        
-        // Show loading state
-        enterWorldButton.interactable = false;
-        if (loadingIndicator != null)
-            loadingIndicator.SetActive(true);
             
         // Send request to server
         Debug.Log($"Requesting to enter world with character: {characterId}");

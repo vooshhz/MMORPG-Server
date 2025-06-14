@@ -1,5 +1,5 @@
 Scene: Farm_Yard_Scene (Assets/Project/Scenes/GameScenes/Farm_Yard_Scene.unity)
-Extraction Time: 2025-05-24 8:30:44 PM
+Extraction Time: 2025-06-14 5:35:24 PM
 ------------------------------------------------------
 
 + Grid [Active]
@@ -43,19 +43,10 @@ Extraction Time: 2025-05-24 8:30:44 PM
         - TilemapRenderer
 + Cameras [Active]
   Components:
-    + VirtualCamera [Active]
-      Components:
-        - CinemachineVirtualCamera
-        + cm [Active]
-          Components:
-            - CinemachinePipeline
-            - CinemachineComposer
-            - CinemachineTransposer
     + SceneCamera [Active]
       Components:
         - Camera
         - UniversalAdditionalCameraData
-        - CinemachineBrain
 + Portal [Active]
   Components:
     - SpriteRenderer

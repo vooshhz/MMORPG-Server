@@ -10,7 +10,7 @@ public class ClientPlayerDataManager : MonoBehaviour
     public static ClientPlayerDataManager Instance { get; private set; } // Singleton instance  
 
     /// Events
-    public event Action OnNetworkIdentityReady; // Fired when network identity is ready
+    // public event Action OnNetworkIdentityReady; // Fired when network identity is ready
     public event Action OnCharacterDataReceived; // Fired when character info is received
     public event Action OnInventoryDataReceived; // Fired when inventory data is received
     public event Action OnEquipmentDataReceived; // Fired when equipment data is received

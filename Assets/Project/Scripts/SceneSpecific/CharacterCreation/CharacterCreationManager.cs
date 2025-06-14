@@ -42,7 +42,7 @@ public class CharacterCreationManager : MonoBehaviour
     // Current selection indices
     private int currentBodyIndex = 0;
     private int currentHairIndex = 0;
-    private int currentHeadIndex = 0;
+    // private int currentHeadIndex = 0;
     private int currentTorsoIndex = 0;
     private int currentLegsIndex = 0;
     
@@ -52,8 +52,6 @@ public class CharacterCreationManager : MonoBehaviour
     private bool atCharacterLimit = false;
     private bool isSubmitting = false;
 
-
-    
     private void Start()
     {
         // Set up button event listeners

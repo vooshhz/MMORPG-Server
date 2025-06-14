@@ -26,7 +26,7 @@ public class PlayerMovement : NetworkBehaviour
     private CharacterState currentState = CharacterState.Idle;
     
     // Track previous state to detect changes
-    private CharacterState previousState = CharacterState.Idle;
+    // private CharacterState previousState = CharacterState.Idle;
     
     private void Awake()
     {

@@ -1,5 +1,5 @@
 Scene: ServerScene (Assets/Project/Scenes/ServerScenes/ServerScene.unity)
-Extraction Time: 2025-05-24 8:30:45 PM
+Extraction Time: 2025-06-14 5:35:25 PM
 ------------------------------------------------------
 
 + NetworkManager [Active]
@@ -14,3 +14,6 @@ Extraction Time: 2025-05-24 8:30:45 PM
 + ServerPortalManager [Active]
   Components:
     - ServerPortalManager
++ ServerInventoryManager [Active]
+  Components:
+    - ServerInventoryManager

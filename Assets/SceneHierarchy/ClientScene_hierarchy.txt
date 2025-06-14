@@ -1,5 +1,5 @@
 Scene: ClientScene (Assets/Project/Scenes/ClientScene/ClientScene.unity)
-Extraction Time: 2025-05-24 8:30:43 PM
+Extraction Time: 2025-06-14 5:35:23 PM
 ------------------------------------------------------
 
 + LobbySceneManager [Active]
@@ -16,6 +16,9 @@ Extraction Time: 2025-05-24 8:30:43 PM
 + GameSceneManager [Active]
   Components:
     - GameSceneManager
-+ InventoryManager [Active]
++ ClientInventoryManager [Active]
   Components:
-    - InventoryManager
+    - ClientInventoryManager
++ ClientPlayerDataManager [Active]
+  Components:
+    - ClientPlayerDataManager

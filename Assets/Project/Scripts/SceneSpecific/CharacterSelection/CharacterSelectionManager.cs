@@ -36,7 +36,7 @@ public class CharacterSelectionManager : MonoBehaviour
 
     [Header("Create Character")]
     [SerializeField] private Button createCharacterButton;
-    [SerializeField] private string characterCreationSceneName = "CharacterCreationScene";
+    // [SerializeField] private string characterCreationSceneName = "CharacterCreationScene";
     
     private ClientPlayerDataManager dataManager;
     private RawImage selectedPanelImage;

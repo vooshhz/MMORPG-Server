@@ -33,12 +33,12 @@ public class PlayerNetworkController : NetworkBehaviour
     /// <summary>
     /// Client command to request all characters for the current user
     /// </summary>
-    [Command]
-    public void CmdRequestAllCharacterData()
-    {
-        // Forward request to the server player data manager
-        ServerPlayerDataManager.Instance.HandleAllCharacterDataRequest(connectionToClient);
-    }
+    // [Command]
+    // public void CmdRequestAllCharacterData()
+    // {
+    //     // Forward request to the server player data manager
+    //     ServerPlayerDataManager.Instance.HandleAllCharacterDataRequest(connectionToClient);
+    // }
 
     /// <summary>
     /// Client command to request detailed data for a specific character
@@ -53,15 +53,15 @@ public class PlayerNetworkController : NetworkBehaviour
     /// <summary>
     /// Server to clients: Receive basic character info for all characters
     /// </summary>
-    [ClientRpc]
-    public void RpcReceiveCharacterInfos(ClientPlayerDataManager.CharacterInfo[] characters)
-    {
-        // Only process on the local player
-        if (!isLocalPlayer) return;
+    // [ClientRpc]
+    // public void RpcReceiveCharacterInfos(ClientPlayerDataManager.CharacterInfo[] characters)
+    // {
+    //     // Only process on the local player
+    //     if (!isLocalPlayer) return;
 
-        // Convert array to list and pass to client data manager
-        clientDataManager.ReceiveCharacterInfos(new List<ClientPlayerDataManager.CharacterInfo>(characters));
-    }
+    //     // Convert array to list and pass to client data manager
+    //     clientDataManager.ReceiveCharacterInfos(new List<ClientPlayerDataManager.CharacterInfo>(characters));
+    // }
 
     /// <summary>
     /// Server to specific client: Receive equipment data for a character
