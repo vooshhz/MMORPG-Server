@@ -43,16 +43,52 @@ public class ClientInventoryManager : MonoBehaviour
     }
     
     // New registration method
-    public void RegisterInventoryBar(UIInventoryBar bar)
+        public void RegisterInventoryBar(UIInventoryBar bar)
     {
-        inventoryBar = bar;
-        Debug.Log("UIInventoryBar registered with ClientInventoryManager");
+    inventoryBar = bar;
+    Debug.Log("UIInventoryBar registered with ClientInventoryManager");
+    
+    // Debug: Check if we have data
+    if (ClientPlayerDataManager.Instance != null)
+    {
+        string selectedCharacterId = ClientPlayerDataManager.Instance.SelectedCharacterId;
+        Debug.Log($"Selected character: {selectedCharacterId}");
         
-        // If we already have inventory data, update the UI immediately
-        if (playerInventory.Count > 0)
+        if (!string.IsNullOrEmpty(selectedCharacterId))
         {
-            UpdateUI();
+            var inventoryData = ClientPlayerDataManager.Instance.GetInventory(selectedCharacterId);
+            Debug.Log($"Inventory data count: {inventoryData?.Count ?? 0}");
+            
+            if (inventoryData != null && inventoryData.Count > 0)
+            {
+                // Convert from ClientPlayerDataManager.InventoryItem to your InventoryItem
+                List<InventoryItem> convertedInventory = new List<InventoryItem>();
+                foreach (var item in inventoryData)
+                {
+                    convertedInventory.Add(new InventoryItem 
+                    { 
+                        itemCode = item.itemCode, 
+                        itemQuantity = item.itemQuantity
+                    });
+                }
+                
+                Debug.Log($"Converting {convertedInventory.Count} items for UI update");
+                ReceiveInventoryData(convertedInventory);
+            }
+            else
+            {
+                Debug.Log("No inventory data available - UI will remain empty");
+            }
         }
+        else
+        {
+            Debug.Log("No character selected - cannot load inventory");
+        }
+    }
+    else
+    {
+        Debug.Log("ClientPlayerDataManager not available");
+    }
     }
     
     // New unregistration method
