@@ -89,13 +89,10 @@ public class PlayerNetworkController : NetworkBehaviour
     /// </summary>
     [TargetRpc]
     public void TargetReceiveInventoryData(NetworkConnection target, string characterId, 
-        ClientPlayerDataManager.InventoryItem[] items)
+        InventoryItem[] items)
     {
-        // Only process on the local player
-        if (!isLocalPlayer) return;
-        
         // Convert array to list and pass to client data manager
-        clientDataManager.ReceiveInventoryData(characterId, new List<ClientPlayerDataManager.InventoryItem>(items));
+        clientDataManager.ReceiveInventoryData(characterId, new List<InventoryItem>(items));
     }
 
     /// <summary>

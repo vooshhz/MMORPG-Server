@@ -7,7 +7,7 @@ public class ClientPlayerDataManager : MonoBehaviour
 {
     /// Singleton and Instance Variables
     private Dictionary<string, bool> characterDataCompleteness = new Dictionary<string, bool>(); // Tracks if character data is fully loaded
-    public static ClientPlayerDataManager Instance { get; private set; } // Singleton instance
+    public static ClientPlayerDataManager Instance { get; private set; } // Singleton instance  
 
     /// Events
     public event Action OnNetworkIdentityReady; // Fired when network identity is ready
@@ -49,13 +49,6 @@ public class ClientPlayerDataManager : MonoBehaviour
         public int hair; // Hair equipment item ID
         public int torso; // Torso equipment item ID
         public int legs; // Legs equipment item ID
-    }
-
-    [System.Serializable]
-    public class InventoryItem
-    {
-        public int itemCode; // Item identifier code
-        public int quantity; // Quantity of the item
     }
 
     [System.Serializable]
@@ -166,6 +159,8 @@ public class ClientPlayerDataManager : MonoBehaviour
         inventoryData[characterId] = items; // Store inventory data
         HasInventoryData = true; // Set inventory data flag
         OnInventoryDataReceived?.Invoke(); // Notify listeners
+
+        ClientInventoryManager.Instance?.ReceiveInventoryData(items);
     }
 
     public void ReceiveLocationData(string characterId, LocationData location)

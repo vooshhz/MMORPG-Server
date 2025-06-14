@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,21 +7,10 @@ public class UIInventoryBar : MonoBehaviour
     [SerializeField] private UIInventorySlot[] inventorySlot = null;
     public GameObject inventoryBarDraggedItem;
     [HideInInspector] public GameObject inventoryTextBoxGameobject;
-    private RectTransform rectTransform;
-
-    private bool _isInventoryBarPositionBottom = true;
-
-    public bool IsInventoryBarPositionBottom { get => _isInventoryBarPositionBottom; set => _isInventoryBarPositionBottom = value;}
-
+    
     private void Awake() 
     {
-        rectTransform = GetComponent<RectTransform>();            
-    }
-
-    private void Update() 
-    {
-        //Switch inventory bar position depending on player position
-        SwitchInventoryBarPosition();   
+        // Remove position switching functionality
     }
 
     public void InventoryUpdated(InventoryLocation inventoryLocation, List<InventoryItem> inventoryList)
@@ -40,12 +28,12 @@ public class UIInventoryBar : MonoBehaviour
                     {
                         int itemCode = inventoryList[i].itemCode;
                         
-                        // ItemDetails itemDetails = InventoryManager.Instance.itemList.itemDetails.Find(x => x.itemCode == itemCode);
-                        ItemDetails itemDetails = InventoryManager.Instance.GetItemDetails(itemCode);
+                        // Get item details from client inventory manager
+                        ItemDetails itemDetails = ClientInventoryManager.Instance.GetItemDetails(itemCode);
 
                         if (itemDetails != null)
                         {
-                            // add images and detailsto inventory item slot
+                            // add images and details to inventory item slot
                             inventorySlot[i].inventorySlotImage.sprite = itemDetails.itemSprite;
                             inventorySlot[i].textMeshProUGUI.text = inventoryList[i].itemQuantity.ToString();
                             inventorySlot[i].itemDetails = itemDetails;
@@ -75,29 +63,4 @@ public class UIInventoryBar : MonoBehaviour
             }
         }
     }
-    private void SwitchInventoryBarPosition()
-    {
-        Vector3 playerViewportPosition = Player.Instance.GetPlayerViewportPosition();
-
-        if ((playerViewportPosition.y > 0.3f && IsInventoryBarPositionBottom == false))
-        {
-            rectTransform.pivot = new Vector2(0.5f, 0f);
-            rectTransform.anchorMin = new Vector2(0.5f, 0f);
-            rectTransform.anchorMax = new Vector2(0.5f, 0f);
-            rectTransform.anchoredPosition = new Vector2(0f, 2.5f);
-
-            IsInventoryBarPositionBottom = true;
-        }
-        else if ((playerViewportPosition.y <= 0.3f && IsInventoryBarPositionBottom == true))
-        {
-            rectTransform.pivot = new Vector2(0.5f, 1f);
-            rectTransform.anchorMin = new Vector2(0.5f, 1f);
-            rectTransform.anchorMax = new Vector2(0.5f, 1f);
-            rectTransform.anchoredPosition = new Vector2(0f, -2.5f);
-
-            IsInventoryBarPositionBottom = false;
-
-        }
-    }
-   
 }

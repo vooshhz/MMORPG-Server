@@ -155,14 +155,14 @@ public class ServerPlayerDataManager : MonoBehaviour
         }
 
         DataSnapshot snapshot = inventoryTask.Result; // Get query result
-        var items = new List<ClientPlayerDataManager.InventoryItem>(); // Create list for items
+        var items = new List<InventoryItem>(); // Create list for items
 
         foreach (DataSnapshot itemData in snapshot.Children) // Process each item
         {
-            var item = new ClientPlayerDataManager.InventoryItem // Create item object
+            var item = new InventoryItem
             {
-                itemCode = Convert.ToInt32(itemData.Child("itemCode").Value), // Set item code
-                quantity = Convert.ToInt32(itemData.Child("itemQuantity").Value) // Set quantity
+                itemCode = Convert.ToInt32(itemData.Child("itemCode").Value),
+                itemQuantity = Convert.ToInt32(itemData.Child("itemQuantity").Value)  // Note: itemQuantity not quantity
             };
 
             items.Add(item); // Add to list
