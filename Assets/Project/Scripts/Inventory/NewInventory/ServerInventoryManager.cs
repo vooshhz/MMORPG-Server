@@ -581,5 +581,116 @@ public class ServerInventoryManager : MonoBehaviour
             }
         }
     }
+
+    [Server]
+    public async Task SwapInventoryItems(PlayerCharacterData playerData, int fromSlot, int toSlot, 
+        int expectedFromItemCode, int expectedToItemCode)
+    {
+        string userId = playerData.userId;
+        string characterId = playerData.characterId;
+        
+        Debug.Log($"[SWAP] Validating swap - From: slot {fromSlot} expecting item {expectedFromItemCode}, " +
+                $"To: slot {toSlot} expecting item {expectedToItemCode}");
+        
+        try
+        {
+            // Get inventory from Firebase
+            DatabaseReference inventoryRef = FirebaseDatabase.DefaultInstance
+                .GetReference($"users/{userId}/characters/{characterId}/inventory/items");
+                
+            DataSnapshot snapshot = await inventoryRef.GetValueAsync();
+            
+            if (!snapshot.Exists)
+            {
+                Debug.LogError($"[SWAP] No inventory found for character {characterId}");
+                await ForceClientInventoryUpdate(userId, characterId);
+                return;
+            }
+            
+            var inventoryList = JsonConvert.DeserializeObject<List<InventoryItem>>(snapshot.GetRawJsonValue());
+            
+            // Validate slot numbers are in range
+            if (fromSlot < 0 || fromSlot >= inventoryList.Count || 
+                toSlot < 0 || toSlot >= inventoryList.Count)
+            {
+                Debug.LogError($"[SWAP] Invalid slot numbers: {fromSlot}, {toSlot}. Inventory size: {inventoryList.Count}");
+                await ForceClientInventoryUpdate(userId, characterId);
+                return;
+            }
+            
+            // Check if swapping with same slot
+            if (fromSlot == toSlot)
+            {
+                Debug.Log($"[SWAP] Same slot selected, no swap needed");
+                return;
+            }
+            
+            // Get the actual items from Firebase
+            var fromItem = inventoryList[fromSlot];
+            var toItem = inventoryList[toSlot];
+            
+            // Log what we found for debugging
+            Debug.Log($"[SWAP] Firebase validation:");
+            Debug.Log($"[SWAP] Slot {fromSlot}: ItemCode={fromItem.itemCode}, Quantity={fromItem.itemQuantity}");
+            Debug.Log($"[SWAP] Slot {toSlot}: ItemCode={toItem.itemCode}, Quantity={toItem.itemQuantity}");
+            
+            // Validate the items match what client expects
+            bool isValid = true;
+            
+            if (fromItem.itemCode != expectedFromItemCode)
+            {
+                Debug.LogError($"[SWAP] MISMATCH! Slot {fromSlot} has item {fromItem.itemCode}, " +
+                            $"but client expects {expectedFromItemCode}");
+                isValid = false;
+            }
+            
+            if (toItem.itemCode != expectedToItemCode)
+            {
+                Debug.LogError($"[SWAP] MISMATCH! Slot {toSlot} has item {toItem.itemCode}, " +
+                            $"but client expects {expectedToItemCode}");
+                isValid = false;
+            }
+            
+            // Additional validation: ensure at least one slot has an item (prevent swapping two empty slots)
+            if (fromItem.itemCode == 0 && toItem.itemCode == 0)
+            {
+                Debug.LogWarning($"[SWAP] Both slots are empty, no swap needed");
+                await ForceClientInventoryUpdate(userId, characterId);
+                return;
+            }
+            
+            if (!isValid)
+            {
+                Debug.LogError($"[SWAP] Client inventory out of sync! Forcing update...");
+                await ForceClientInventoryUpdate(userId, characterId);
+                return;
+            }
+            
+            // If validation passes, perform the swap
+            Debug.Log($"[SWAP] Validation passed, performing swap");
+            
+            // Perform the swap
+            inventoryList[fromSlot] = toItem;
+            inventoryList[toSlot] = fromItem;
+            
+            // Save back to Firebase
+            Debug.Log($"[SWAP] Saving swapped inventory to Firebase...");
+            await inventoryRef.SetRawJsonValueAsync(JsonConvert.SerializeObject(inventoryList));
+            
+            // Force UI update to ensure sync
+            await ForceClientInventoryUpdate(userId, characterId);
+            
+            Debug.Log($"[SWAP] Successfully swapped items between slots {fromSlot} and {toSlot}");
+            Debug.Log($"[SWAP] Final state - Slot {fromSlot}: ItemCode={toItem.itemCode}, Slot {toSlot}: ItemCode={fromItem.itemCode}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[SWAP] Failed to swap items: {e.Message}");
+            Debug.LogError($"[SWAP] Stack trace: {e.StackTrace}");
+            
+            // On any error, force update to resync
+            await ForceClientInventoryUpdate(userId, characterId);
+        }
+    }
 }
 

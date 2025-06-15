@@ -142,4 +142,17 @@ public class PlayerNetworkController : NetworkBehaviour
         }
     }
 
+    [Command]
+    public async void CmdSwapInventoryItems(int fromSlot, int toSlot, int expectedFromItemCode, int expectedToItemCode)
+    {
+        Debug.Log($"[SERVER] Swap request - From slot: {fromSlot} (expecting item {expectedFromItemCode}), To slot: {toSlot} (expecting item {expectedToItemCode})");
+        
+        PlayerCharacterData playerData = GetComponent<PlayerCharacterData>();
+        
+        if (playerData != null && ServerInventoryManager.Instance != null)
+        {
+            await ServerInventoryManager.Instance.SwapInventoryItems(
+                playerData, fromSlot, toSlot, expectedFromItemCode, expectedToItemCode);
+        }
+    }
 }   

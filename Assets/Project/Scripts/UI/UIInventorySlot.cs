@@ -86,23 +86,26 @@ public class UIInventorySlot : MonoBehaviour, IPointerClickHandler, IPointerEnte
     public void OnPointerClick(PointerEventData eventData)
     {
         // If there's already a selected slot and it's not this one, perform swap
-        if (currentlySelectedSlot != null && currentlySelectedSlot != this)
-        {
-            // Get the slot numbers
-            int fromSlot = currentlySelectedSlot.slotNumber;
-            int toSlot = this.slotNumber;
+            if (currentlySelectedSlot != null && currentlySelectedSlot != this)
+            {
+                int fromSlot = currentlySelectedSlot.slotNumber;
+                int toSlot = this.slotNumber;
+                
+                // Get expected item codes
+                int fromItemCode = currentlySelectedSlot.itemDetails?.itemCode ?? 0;
+                int toItemCode = this.itemDetails?.itemCode ?? 0;
 
-            // Perform the swap in InventoryManager
-            InventoryManager.Instance.SwapInventoryItems(InventoryLocation.player, fromSlot, toSlot);
+                PlayerNetworkController playerController = FindLocalPlayerController();
+                if (playerController != null)
+                {
+                    playerController.CmdSwapInventoryItems(fromSlot, toSlot, fromItemCode, toItemCode);
+                }
 
-            //Destroy inventory text box
-            DestroyInventoryTextBox();
-
-            // Unselect the current slot
-            currentlySelectedSlot.UnselectItem();
-
-            return;
-        }
+                DestroyInventoryTextBox();
+                currentlySelectedSlot.UnselectItem();
+                return;
+            }
+            
         // Toggle selected state
         if (!isSelected)
         {
@@ -168,88 +171,6 @@ public class UIInventorySlot : MonoBehaviour, IPointerClickHandler, IPointerEnte
             yield return new WaitForSeconds(0.5f);
         }
     }
-
-    // private void DropSelectedItemAtPlayerPosition()
-    // {
-    //     if (GridPropertiesManager.Instance == null)
-    //     {
-    //         Debug.LogError("GridPropertiesManager.Instance is NULL");
-    //         return;
-    //     }
-
-    //     if (GridPropertiesManager.Instance.grid == null)
-    //     {
-    //         Debug.LogError("Grid is NULL on GridPropertiesManager");
-    //         return;
-    //     }
-    //     if (itemDetails == null || !itemDetails.canBeDropped) return;
-
-    //     // Check if player transform exists
-    //     if (playerTransform == null)
-    //     {
-    //         Debug.LogError("Player transform reference is missing!");
-    //         return;
-    //     }
-
-    //     if (itemPrefab == null)
-    //     {
-    //         Debug.LogError("Item prefab is not assigned!");
-    //         return;
-    //     }
-
-    //     // Capture the player's current position once at the beginning
-    //     Vector3 playerPositionAtTimeOfDrop = playerTransform.position;
-
-    //     // Calculate start and end positions
-    //     Vector3 dropStartPosition = playerPositionAtTimeOfDrop;
-    //     Vector3 dropEndPosition = playerPositionAtTimeOfDrop + new Vector3(0, 1.8f, 0);
-
-    //     // If can drop item here
-    //     Vector3Int gridPosition = GridPropertiesManager.Instance.grid.WorldToCell(dropEndPosition);
-    //     GridPropertyDetails gridPropertyDetails = GridPropertiesManager.Instance.GetGridPropertyDetails(gridPosition.x, gridPosition.y);
-
-    //     if(gridPropertyDetails !=null && gridPropertyDetails.canDropItem)
-    //         {
-    //             // Create the item WITHOUT a parent initially
-    //             GameObject newItem = Instantiate(itemPrefab, dropStartPosition, Quaternion.identity);
-
-    //             // Disable the BoxCollider2D during animation
-    //             BoxCollider2D boxCollider = newItem.GetComponent<BoxCollider2D>();
-    //             if (boxCollider != null)
-    //             {
-    //                 boxCollider.enabled = false;
-    //             }
-
-    //             // Set up the item using InitAfterDrop instead of Init
-    //             Item itemComponent = newItem.GetComponent<Item>();
-    //             if (itemComponent != null)
-    //             {
-    //                 itemComponent.InitAfterDrop(itemDetails.itemCode);
-
-    //                 // Use InventoryManager to remove item from inventory
-    //                 InventoryManager.Instance.RemoveItem(InventoryLocation.player, itemDetails.itemCode);
-    //             }
-
-    //             // Prevent any automatic physics before our animation
-    //             Rigidbody2D rb2d = newItem.GetComponent<Rigidbody2D>();
-    //             if (rb2d != null)
-    //             {
-    //                 rb2d.isKinematic = true;
-    //                 rb2d.velocity = Vector2.zero;
-    //             }
-
-    //             // Now set parent after initial setup
-    //             if (parentItem != null)
-    //             {
-    //                 newItem.transform.SetParent(parentItem, true); // worldPositionStays = true
-    //             }
-
-    //             // Start the up-down animation with both captured positions
-    //             StartCoroutine(AnimateItemUpDown(newItem, dropStartPosition, dropEndPosition));
-    //         }
-
-    // }
-
     
     public void OnPointerEnter(PointerEventData eventData)
     {
