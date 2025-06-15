@@ -237,6 +237,10 @@ public class ServerInventoryManager : MonoBehaviour
         // Spawn it on the network so all clients can see it
         NetworkServer.Spawn(droppedItem);
 
+        Vector3 startPosition = dropPosition; // Player position
+        Vector3 endPosition = dropPosition + new Vector3(0, 2f, 0); // 2 units above player
+        StartCoroutine(AnimateItemUpDown(droppedItem, startPosition, endPosition));
+
         // Re-enable collider after animation completes (1.1 seconds)
         StartCoroutine(EnableColliderAfterDelay(droppedItem, boxCollider, 1.1f));
 
@@ -247,7 +251,7 @@ public class ServerInventoryManager : MonoBehaviour
     private IEnumerator EnableColliderAfterDelay(GameObject item, BoxCollider2D collider, float delay)
     {
         yield return new WaitForSeconds(delay);
-        
+
         // Check if item and collider still exist before re-enabling
         if (item != null && collider != null)
         {
@@ -270,10 +274,128 @@ public class ServerInventoryManager : MonoBehaviour
     private Task RemoveItemFromFirebase(string userId, string characterId, int itemCode, int slotNumber)
     {
         Debug.Log($"[FIREBASE] Removing item {itemCode} from slot {slotNumber} for character {characterId}");
-        
+
         // TODO: Implement Firebase removal
         // For now, just log (we can implement proper removal later)
         return Task.CompletedTask;
+    }
+    
+    private IEnumerator AnimateItemUpDown(GameObject item, Vector3 startPosition, Vector3 endPosition)
+    {
+        if (item == null) yield break;
+
+        // Store transform reference
+        Transform itemTransform = item.transform;
+
+        // Animation parameters
+        float upDuration = 0.5f;   // Time to move up
+        float downDuration = 0.4f; // Time to move down (slightly faster)
+        float yOffset = 2f;        // How far to move up
+        float totalDuration = upDuration + downDuration;
+
+        // Reset initial rotation to have some random starting angle
+        float startRotation = Random.Range(0f, 360f);
+        itemTransform.rotation = Quaternion.Euler(0f, 0f, startRotation);
+
+        // Define positions
+        Vector3 originalPosition = startPosition;
+        Vector3 topPosition = originalPosition + new Vector3(0, yOffset, 0);
+        Vector3 finalPosition = endPosition; // Final position where item should land
+
+        // Calculate target rotation that will end exactly at 0 degrees
+        // First, determine a consistent rotation speed (degrees per second)
+        float rotationSpeed = 720f;
+
+        // Calculate total possible rotation during the entire animation
+        float totalPossibleRotation = rotationSpeed * totalDuration;
+
+        // Calculate how many full rotations we'll complete plus the amount needed to end at 0
+        // We need to adjust our rotation so that: startRotation + totalRotation = 0 (or multiple of 360)
+        // Meaning totalRotation = N*360 - startRotation (where N is an integer)
+        int numFullRotations = Mathf.FloorToInt(totalPossibleRotation / 360f);
+        float targetRotation = (numFullRotations * 360f) + (360f - (startRotation % 360f));
+
+        // If the target rotation is too large for our duration, reduce it by 360 degrees
+        if (targetRotation > totalPossibleRotation)
+        {
+            targetRotation -= 360f;
+        }
+
+        // Now we have a rotation amount that fits within our time and ends at 0
+        float rotationPerSecond = targetRotation / totalDuration;
+
+        // Track elapsed time for the whole animation
+        float totalElapsedTime = 0f;
+
+        // MOVE UP PHASE
+        float elapsedTime = 0f;
+
+        while (elapsedTime < upDuration)
+        {
+            if (item == null) yield break;
+
+            float deltaTime = Time.deltaTime;
+            elapsedTime += deltaTime;
+            totalElapsedTime += deltaTime;
+
+            float t = Mathf.Clamp01(elapsedTime / upDuration);
+
+            // Ease out for slowing down at peak (for position only)
+            float smoothT = Mathf.Sin(t * Mathf.PI * 0.5f);
+
+            // Calculate new position (moving up)
+            Vector3 newPosition = Vector3.Lerp(originalPosition, topPosition, smoothT);
+            itemTransform.position = newPosition;
+
+            // Apply rotation based on elapsed time (consistent speed)
+            float currentRotation = startRotation + (totalElapsedTime * rotationPerSecond);
+            itemTransform.rotation = Quaternion.Euler(0f, 0f, currentRotation);
+
+            yield return null;
+        }
+
+        // Ensure it reached the top position
+        if (item == null) yield break;
+        itemTransform.position = topPosition;
+
+        // MOVE DOWN PHASE
+        elapsedTime = 0f;
+        while (elapsedTime < downDuration)
+        {
+            if (item == null) yield break;
+
+            float deltaTime = Time.deltaTime;
+            elapsedTime += deltaTime;
+            totalElapsedTime += deltaTime;
+
+            float t = Mathf.Clamp01(elapsedTime / downDuration);
+
+            // Ease in for acceleration due to "gravity" (for position only)
+            float smoothT = 1 - Mathf.Cos(t * Mathf.PI * 0.5f);
+
+            // Calculate new position (moving from top to final position)
+            Vector3 newPosition = Vector3.Lerp(topPosition, finalPosition, smoothT);
+            itemTransform.position = newPosition;
+
+            // Apply rotation based on elapsed time (consistent speed)
+            float currentRotation = startRotation + (totalElapsedTime * rotationPerSecond);
+            itemTransform.rotation = Quaternion.Euler(0f, 0f, currentRotation);
+
+            yield return null;
+        }
+
+        // Set final position and rotation exactly
+        if (item != null)
+        {
+            // Force exact final position
+            itemTransform.position = finalPosition;
+
+            // Rotation should naturally be at or very close to 0, but set it exactly to be safe
+            itemTransform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
+            // Log for verification
+            Debug.Log($"Item finalized at position: {finalPosition}, rotation: {itemTransform.rotation.eulerAngles}");
+        }
     }
 }
 

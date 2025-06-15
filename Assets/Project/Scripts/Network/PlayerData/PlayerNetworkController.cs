@@ -136,7 +136,7 @@ public class PlayerNetworkController : NetworkBehaviour
         if (playerData != null && ServerInventoryManager.Instance != null)
         {
             // Calculate drop position based on player's current position
-            Vector3 dropPosition = transform.position + new Vector3(0, 5f, 0);
+            Vector3 dropPosition = transform.position;
             
             await ServerInventoryManager.Instance.DropItemFromInventory(playerData, itemCode, slotNumber, dropPosition);
         }
