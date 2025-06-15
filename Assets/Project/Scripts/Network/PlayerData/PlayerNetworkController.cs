@@ -124,21 +124,22 @@ public class PlayerNetworkController : NetworkBehaviour
         // Forward request to the server player data manager
         ServerPlayerDataManager.Instance.HandleInventoryDataRequest(connectionToClient, characterId);
     }
-    
+
     [Command]
     public async void CmdDropItem(int itemCode, int slotNumber)
     {
         Debug.Log($"[SERVER] Drop item request - ItemCode: {itemCode}, Slot: {slotNumber}");
-        
+
         // Get player data from this connection
         PlayerCharacterData playerData = GetComponent<PlayerCharacterData>();
-        
+
         if (playerData != null && ServerInventoryManager.Instance != null)
         {
             // Calculate drop position based on player's current position
             Vector3 dropPosition = transform.position;
-            
+
             await ServerInventoryManager.Instance.DropItemFromInventory(playerData, itemCode, slotNumber, dropPosition);
         }
     }
-}
+
+}   

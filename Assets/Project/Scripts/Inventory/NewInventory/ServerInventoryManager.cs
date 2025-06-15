@@ -161,6 +161,9 @@ public class ServerInventoryManager : MonoBehaviour
                 // Save back to Firebase
                 await inventoryRef.SetRawJsonValueAsync(JsonConvert.SerializeObject(inventoryList));
                 Debug.Log($"[AddItemToPlayerInventory] Inventory successfully saved to Firebase!");
+
+                // Force UI update to show the new item/quantity immediately
+                await ForceClientInventoryUpdate(playerData.userId, playerData.characterId);
             }
             else
             {
@@ -198,6 +201,9 @@ public class ServerInventoryManager : MonoBehaviour
 
         // 4. Update client UI (this should trigger automatically through existing system)
         Debug.Log($"Item {itemCode} successfully dropped for {playerData.characterName}");
+
+        // 5. Force UI update to reflect the change immediately
+        await ForceClientInventoryUpdate(playerData.userId, playerData.characterId);
     }
 
     [Server]
@@ -260,26 +266,198 @@ public class ServerInventoryManager : MonoBehaviour
         }
     }
 
+
     [Server]
-    private Task<bool> ValidateItemInFirebase(string userId, string characterId, int itemCode, int slotNumber)
+    private async Task<bool> ValidateItemInFirebase(string userId, string characterId, int itemCode, int slotNumber)
     {
         Debug.Log($"[VALIDATION] Checking item {itemCode} in slot {slotNumber} for character {characterId}");
 
-        // TODO: Implement Firebase validation
-        // For now, return true (we can implement proper validation later)
-        return Task.FromResult(true);
+        try
+        {
+            // Get inventory from Firebase using same pattern as AddItemToPlayerInventory
+            DatabaseReference inventoryRef = FirebaseDatabase.DefaultInstance
+                .GetReference($"users/{userId}/characters/{characterId}/inventory/items");
+
+            DataSnapshot snapshot = await inventoryRef.GetValueAsync();
+
+            if (!snapshot.Exists)
+            {
+                Debug.LogError($"[VALIDATION] No inventory found for character {characterId}");
+                await ForceClientInventoryUpdate(userId, characterId);
+                return false;
+            }
+
+            // Deserialize inventory
+            var inventoryList = JsonConvert.DeserializeObject<List<InventoryItem>>(snapshot.GetRawJsonValue());
+
+            if (inventoryList == null || slotNumber >= inventoryList.Count || slotNumber < 0)
+            {
+                Debug.LogError($"[VALIDATION] Invalid slot number {slotNumber} for character {characterId}");
+                await ForceClientInventoryUpdate(userId, characterId);
+                return false;
+            }
+
+            // Check if slot contains expected item with quantity > 0
+            var slotItem = inventoryList[slotNumber];
+            bool isValid = (slotItem.itemCode == itemCode && slotItem.itemQuantity > 0);
+
+            if (!isValid)
+            {
+                Debug.LogWarning($"[VALIDATION] MISMATCH! Expected item {itemCode} in slot {slotNumber}, found item {slotItem.itemCode} with quantity {slotItem.itemQuantity}");
+                Debug.LogWarning($"[VALIDATION] Client inventory is out of sync - forcing immediate update");
+
+                // Force immediate client UI update and end the request
+                await ForceClientInventoryUpdate(userId, characterId);
+                return false;
+            }
+
+            Debug.Log($"[VALIDATION] SUCCESS! Item {itemCode} found in slot {slotNumber} with quantity {slotItem.itemQuantity}");
+            return true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[VALIDATION] Firebase error: {e.Message}");
+            // On error, force update to be safe
+            await ForceClientInventoryUpdate(userId, characterId);
+            return false;
+        }
     }
 
     [Server]
-    private Task RemoveItemFromFirebase(string userId, string characterId, int itemCode, int slotNumber)
+    private async Task ForceClientInventoryUpdate(string userId, string characterId)
+    {
+        Debug.Log($"[FORCE_UPDATE] Triggering immediate inventory update for character {characterId}");
+
+        try
+        {
+            // Find the player's NetworkConnectionToClient
+            PlayerCharacterData playerData = null;
+
+            // Search through active players to find the one with matching characterId
+            foreach (var conn in NetworkServer.connections.Values)
+            {
+                if (conn?.identity?.gameObject?.GetComponent<PlayerCharacterData>() is PlayerCharacterData data &&
+                    data.characterId == characterId)
+                {
+                    playerData = data;
+                    break;
+                }
+            }
+
+            if (playerData == null)
+            {
+                Debug.LogError($"[FORCE_UPDATE] Could not find active player with characterId {characterId}");
+                return;
+            }
+
+            // Get fresh inventory data from Firebase
+            DatabaseReference inventoryRef = FirebaseDatabase.DefaultInstance
+                .GetReference($"users/{userId}/characters/{characterId}/inventory/items");
+
+            DataSnapshot snapshot = await inventoryRef.GetValueAsync();
+
+            if (!snapshot.Exists)
+            {
+                Debug.LogError($"[FORCE_UPDATE] No inventory data found for character {characterId}");
+                return;
+            }
+
+            var inventoryList = JsonConvert.DeserializeObject<List<InventoryItem>>(snapshot.GetRawJsonValue());
+
+            if (inventoryList == null)
+            {
+                Debug.LogError($"[FORCE_UPDATE] Failed to deserialize inventory for character {characterId}");
+                return;
+            }
+
+            // Send updated inventory to the client via PlayerNetworkController
+            PlayerNetworkController networkController = playerData.GetComponent<PlayerNetworkController>();
+            if (networkController != null)
+            {
+                networkController.TargetReceiveInventoryData(playerData.connectionToClient, characterId, inventoryList.ToArray());
+                Debug.Log($"[FORCE_UPDATE] Sent corrected inventory data to client for character {characterId}");
+            }
+            else
+            {
+                Debug.LogError($"[FORCE_UPDATE] PlayerNetworkController not found for character {characterId}");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[FORCE_UPDATE] Error forcing inventory update: {e.Message}");
+        }
+    }
+
+
+    [Server]
+    private async Task RemoveItemFromFirebase(string userId, string characterId, int itemCode, int slotNumber)
     {
         Debug.Log($"[FIREBASE] Removing item {itemCode} from slot {slotNumber} for character {characterId}");
 
-        // TODO: Implement Firebase removal
-        // For now, just log (we can implement proper removal later)
-        return Task.CompletedTask;
+        try
+        {
+            // Get inventory from Firebase using same pattern as validation
+            DatabaseReference inventoryRef = FirebaseDatabase.DefaultInstance
+                .GetReference($"users/{userId}/characters/{characterId}/inventory/items");
+
+            DataSnapshot snapshot = await inventoryRef.GetValueAsync();
+
+            if (!snapshot.Exists)
+            {
+                Debug.LogError($"[FIREBASE] No inventory found for character {characterId}");
+                return;
+            }
+
+            // Deserialize inventory
+            var inventoryList = JsonConvert.DeserializeObject<List<InventoryItem>>(snapshot.GetRawJsonValue());
+
+            if (inventoryList == null || slotNumber >= inventoryList.Count || slotNumber < 0)
+            {
+                Debug.LogError($"[FIREBASE] Invalid slot number {slotNumber} for character {characterId}");
+                return;
+            }
+
+            // Get the item in the specified slot
+            var slotItem = inventoryList[slotNumber];
+
+            // Verify this is the correct item (extra safety check)
+            if (slotItem.itemCode != itemCode)
+            {
+                Debug.LogError($"[FIREBASE] Item mismatch! Expected {itemCode}, found {slotItem.itemCode} in slot {slotNumber}");
+                return;
+            }
+
+            // Verify we have quantity to remove
+            if (slotItem.itemQuantity <= 0)
+            {
+                Debug.LogError($"[FIREBASE] Cannot remove item {itemCode} - quantity is already {slotItem.itemQuantity}");
+                return;
+            }
+
+            // Decrease quantity by 1
+            slotItem.itemQuantity--;
+            Debug.Log($"[FIREBASE] Decreased item {itemCode} quantity to {slotItem.itemQuantity}");
+
+            // If quantity reaches 0, clear the slot (set to empty)
+            if (slotItem.itemQuantity == 0)
+            {
+                slotItem.itemCode = 0;
+                slotItem.itemQuantity = 0;
+                Debug.Log($"[FIREBASE] Slot {slotNumber} cleared - item stack fully consumed");
+            }
+
+            // Save updated inventory back to Firebase
+            Debug.Log($"[FIREBASE] Saving updated inventory to Firebase...");
+            await inventoryRef.SetRawJsonValueAsync(JsonConvert.SerializeObject(inventoryList));
+            Debug.Log($"[FIREBASE] Successfully removed item {itemCode} from slot {slotNumber}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[FIREBASE] Failed to remove item from Firebase: {e.Message}");
+            Debug.LogError($"[FIREBASE] Stack trace: {e.StackTrace}");
+        }
     }
-    
+
     private IEnumerator AnimateItemUpDown(GameObject item, Vector3 startPosition, Vector3 endPosition)
     {
         if (item == null) yield break;

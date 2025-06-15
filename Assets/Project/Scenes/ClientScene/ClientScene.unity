@@ -212,6 +212,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemList: {fileID: 11400000, guid: 8b66806db45539f45bdeebc3622dee9a, type: 2}
+  lootTrailPrefab: {fileID: 8342446131448785665, guid: 148f88cd0ff74ac4aa849bef1fa46e60, type: 3}
+  trailDuration: 2
+  followSpeed: 5
 --- !u!1 &1352269076
 GameObject:
   m_ObjectHideFlags: 0
@@ -318,7 +321,6 @@ MonoBehaviour:
   - {fileID: 382520620432267088, guid: fc9556fd682d7574aa860855114f5c5d, type: 3}
   - {fileID: 1107113440916935703, guid: 90b3501522202a545a3a8497c586a548, type: 3}
   - {fileID: 5199234041452895410, guid: 5be3ae093e2466d45af5199f41629d16, type: 3}
-  - {fileID: 286690282312744990, guid: 7d7c319d413e40f4caab7d2f287db2bf, type: 3}
   - {fileID: 4478081889124058819, guid: 083d2e7b62505ac49a5a7b00eecee37c, type: 3}
   - {fileID: 4223776961566989236, guid: 34a4b1ab8afa1864caa2a21c9b1e6ea1, type: 3}
   - {fileID: 9044641363572218335, guid: c5fa167480137a946bad453af77330e4, type: 3}

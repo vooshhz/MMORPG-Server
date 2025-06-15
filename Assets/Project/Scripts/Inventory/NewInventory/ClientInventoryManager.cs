@@ -1,5 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;  // ← ADD THIS for Image component
 using Mirror;
 
 public class ClientInventoryManager : MonoBehaviour
@@ -195,4 +197,5 @@ public class ClientInventoryManager : MonoBehaviour
 
         return itemTypeDescription;
     }
+
 }
