@@ -328,9 +328,6 @@ public class UIInventorySlot : MonoBehaviour, IPointerClickHandler, IPointerEnte
         if (item == null) yield break;
         itemTransform.position = topPosition;
 
-        // Get current rotation to continue from
-        float midRotation = itemTransform.rotation.eulerAngles.z;
-
         // MOVE DOWN PHASE
         elapsedTime = 0f;
         while (elapsedTime < downDuration)
@@ -368,44 +365,6 @@ public class UIInventorySlot : MonoBehaviour, IPointerClickHandler, IPointerEnte
 
             // Log for verification
             Debug.Log($"Item finalized at position: {finalPosition}, rotation: {itemTransform.rotation.eulerAngles}");
-
-            // Re-enable the collider
-            BoxCollider2D boxCollider = item.GetComponent<BoxCollider2D>();
-            if (boxCollider != null)
-            {
-                boxCollider.enabled = true;
-            }
-
-            // Handle physics
-            Rigidbody2D rb2d = item.GetComponent<Rigidbody2D>();
-            if (rb2d != null)
-            {
-                rb2d.velocity = Vector2.zero;
-                rb2d.angularVelocity = 0f;
-                rb2d.bodyType = RigidbodyType2D.Kinematic;
-            }
-
-            // Now that animation is complete, add ItemFloat component
-            Item itemComponent = item.GetComponent<Item>();
-            if (itemComponent != null)
-            {
-                // Get item details to check if it should float
-                ItemDetails details = InventoryManager.Instance.GetItemDetails(itemComponent.ItemCode);
-
-                // Add floating component to specific item types
-                if (details.itemType == ItemType.Seed ||
-                    details.itemType == ItemType.Commodity ||
-                    details.itemType == ItemType.Watering_tool ||
-                    details.itemType == ItemType.Hoeing_tool ||
-                    details.itemType == ItemType.Chopping_tool ||
-                    details.itemType == ItemType.Breaking_tool ||
-                    details.itemType == ItemType.Reaping_tool ||
-                    details.itemType == ItemType.Collecting_tool)
-                {
-                    // Add the float component and it will initialize with the current position
-                    ItemFloat floatComponent = item.AddComponent<ItemFloat>();
-                }
-            }
         }
     }
     public void OnPointerEnter(PointerEventData eventData)

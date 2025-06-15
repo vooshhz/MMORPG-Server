@@ -212,6 +212,14 @@ public class ServerInventoryManager : MonoBehaviour
         // Spawn the item using NetworkServer
         GameObject droppedItem = Instantiate(itemPrefab, dropPosition, Quaternion.identity);
 
+        // Disable BoxCollider2D during drop animation to prevent immediate pickup
+        BoxCollider2D boxCollider = droppedItem.GetComponent<BoxCollider2D>();
+        if (boxCollider != null)
+        {
+            boxCollider.enabled = false;
+            Debug.Log($"Item {itemCode} collider disabled during drop animation");
+        }
+
         // Set item to same layer as the player who dropped it
         if (playerWhoDropped != null)
         {
@@ -229,10 +237,26 @@ public class ServerInventoryManager : MonoBehaviour
         // Spawn it on the network so all clients can see it
         NetworkServer.Spawn(droppedItem);
 
+        // Re-enable collider after animation completes (1.1 seconds)
+        StartCoroutine(EnableColliderAfterDelay(droppedItem, boxCollider, 1.1f));
+
         Debug.Log($"Item {itemCode} spawned at position {dropPosition}");
     }
 
-[Server]
+    [Server]
+    private IEnumerator EnableColliderAfterDelay(GameObject item, BoxCollider2D collider, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        // Check if item and collider still exist before re-enabling
+        if (item != null && collider != null)
+        {
+            collider.enabled = true;
+            Debug.Log($"Item collider re-enabled after {delay} seconds");
+        }
+    }
+
+    [Server]
     private Task<bool> ValidateItemInFirebase(string userId, string characterId, int itemCode, int slotNumber)
     {
         Debug.Log($"[VALIDATION] Checking item {itemCode} in slot {slotNumber} for character {characterId}");
