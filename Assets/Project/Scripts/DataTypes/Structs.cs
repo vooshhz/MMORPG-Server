@@ -133,3 +133,9 @@ public struct PlayerSceneReadyMessage : NetworkMessage
 {
     public string characterId;    // Character that's ready in the new scene
 }
+
+public struct ItemDropRequestMessage : NetworkMessage
+{
+    public int itemCode;
+    public int slotNumber;
+}

@@ -151,6 +151,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6caf1cc92dc27ef498e228b0737c6087, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  itemPrefab: {fileID: 8138136430807121651, guid: e18bcdacdc9ad2544aa1bb6c1c07b811, type: 3}
   itemList: {fileID: 11400000, guid: 8b66806db45539f45bdeebc3622dee9a, type: 2}
 --- !u!4 &1139365534
 Transform:
@@ -417,7 +418,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b826d205031b07940a95088fa05c9d43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerPrefab: {fileID: 286690282312744990, guid: 7d7c319d413e40f4caab7d2f287db2bf, type: 3}
   characterCreationOptions: {fileID: 11400000, guid: 160acc500b6874843a974e7cb46ebdb6, type: 2}
   bagList: {fileID: 11400000, guid: 36b724fc89fbe154ab64795dd41adf87, type: 2}
 --- !u!1660057539 &9223372036854775807
