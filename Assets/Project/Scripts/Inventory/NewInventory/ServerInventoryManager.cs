@@ -282,6 +282,8 @@ public class ServerInventoryManager : MonoBehaviour
     
     private IEnumerator AnimateItemUpDown(GameObject item, Vector3 startPosition, Vector3 endPosition)
     {
+        ItemFloat itemFloat = item.GetComponent<ItemFloat>();
+        if (itemFloat != null) itemFloat.enabled = false;
         if (item == null) yield break;
 
         // Store transform reference
@@ -290,7 +292,6 @@ public class ServerInventoryManager : MonoBehaviour
         // Animation parameters
         float upDuration = 0.5f;   // Time to move up
         float downDuration = 0.4f; // Time to move down (slightly faster)
-        float yOffset = 2f;        // How far to move up
         float totalDuration = upDuration + downDuration;
 
         // Reset initial rotation to have some random starting angle
@@ -299,7 +300,7 @@ public class ServerInventoryManager : MonoBehaviour
 
         // Define positions
         Vector3 originalPosition = startPosition;
-        Vector3 topPosition = originalPosition + new Vector3(0, yOffset, 0);
+        Vector3 topPosition = originalPosition + new Vector3(0, 4f, 0);
         Vector3 finalPosition = endPosition; // Final position where item should land
 
         // Calculate target rotation that will end exactly at 0 degrees
@@ -395,6 +396,12 @@ public class ServerInventoryManager : MonoBehaviour
 
             // Log for verification
             Debug.Log($"Item finalized at position: {finalPosition}, rotation: {itemTransform.rotation.eulerAngles}");
+
+            if (itemFloat != null) 
+            {
+                itemFloat.ResetStartPosition(finalPosition);
+                itemFloat.enabled = true;
+            }
         }
     }
 }
