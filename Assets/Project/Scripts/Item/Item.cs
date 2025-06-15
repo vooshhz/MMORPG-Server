@@ -17,27 +17,48 @@ public class Item : NetworkBehaviour
 
     private void Start()
     {
-        if (ItemCode != 0)
-        {
-            Init(ItemCode);
-        }
+        if (isServer && ItemCode != 0)
+            {
+                Init(ItemCode);
+            }
     }
 
-    [Server]
+   [Server]
     public void Init(int itemCodeParam)
     {   
         if (itemCodeParam != 0)
         {
             ItemCode = itemCodeParam;
-
+            
             ItemDetails itemDetails = ServerInventoryManager.Instance.GetItemDetails(ItemCode);
             
-            spriteRenderer.sprite = itemDetails.itemSprite;
-
-            // If item type is reapable then add nudgeable component
-            if(itemDetails.itemType == ItemType.Reapable_scenary)
+            if (itemDetails != null)
             {
-                gameObject.AddComponent<ItemNudge>();
+                // Set sprite on server
+                spriteRenderer.sprite = itemDetails.itemSprite;
+                
+                // Sync sprite to all clients
+                RpcSetSprite(itemDetails.itemCode);
+                
+                // If item type is reapable then add nudgeable component
+                if(itemDetails.itemType == ItemType.Reapable_scenary)
+                {
+                    gameObject.AddComponent<ItemNudge>();
+                }
+            }
+        }
+    }
+
+    [ClientRpc]
+    private void RpcSetSprite(int itemCode)
+    {
+        // On clients, get item details from ClientInventoryManager
+        if (ClientInventoryManager.Instance != null)
+        {
+            ItemDetails itemDetails = ClientInventoryManager.Instance.GetItemDetails(itemCode);
+            if (itemDetails != null && spriteRenderer != null)
+            {
+                spriteRenderer.sprite = itemDetails.itemSprite;
             }
         }
     }

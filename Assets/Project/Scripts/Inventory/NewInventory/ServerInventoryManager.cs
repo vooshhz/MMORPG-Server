@@ -193,15 +193,15 @@ public class ServerInventoryManager : MonoBehaviour
         // 2. Remove item from Firebase inventory
         await RemoveItemFromFirebase(playerData.userId, playerData.characterId, itemCode, slotNumber);
 
-        // 3. Spawn item in world
-        SpawnItemInWorld(itemCode, dropPosition);
+        // 3. Spawn item in world with same layer as player
+        SpawnItemInWorld(itemCode, dropPosition, playerData.gameObject);
 
         // 4. Update client UI (this should trigger automatically through existing system)
         Debug.Log($"Item {itemCode} successfully dropped for {playerData.characterName}");
     }
 
     [Server]
-    private void SpawnItemInWorld(int itemCode, Vector3 dropPosition)
+    private void SpawnItemInWorld(int itemCode, Vector3 dropPosition, GameObject playerWhoDropped)
     {
         if (itemPrefab == null)
         {
@@ -211,6 +211,13 @@ public class ServerInventoryManager : MonoBehaviour
 
         // Spawn the item using NetworkServer
         GameObject droppedItem = Instantiate(itemPrefab, dropPosition, Quaternion.identity);
+
+        // Set item to same layer as the player who dropped it
+        if (playerWhoDropped != null)
+        {
+            droppedItem.layer = playerWhoDropped.layer;
+            Debug.Log($"Item {itemCode} set to layer: {LayerMask.LayerToName(playerWhoDropped.layer)}");
+        }
 
         // Initialize the item with the correct item code
         Item itemComponent = droppedItem.GetComponent<Item>();
