@@ -39,25 +39,16 @@ public class Item : NetworkBehaviour
 
                 // Sync sprite to all clients
                 RpcSetSprite(itemDetails.itemCode);
-
-                // If item type is reapable then add nudgeable component
-                if (itemDetails.itemType == ItemType.Reapable_scenary)
-                {
-                    gameObject.AddComponent<ItemNudge>();
-                }
-                
-                if (itemDetails.itemType == ItemType.Seed ||
-                itemDetails.itemType == ItemType.Commodity ||
-                itemDetails.itemType == ItemType.Watering_tool ||
-                itemDetails.itemType == ItemType.Hoeing_tool ||
-                itemDetails.itemType == ItemType.Chopping_tool ||
-                itemDetails.itemType == ItemType.Breaking_tool ||
-                itemDetails.itemType == ItemType.Reaping_tool ||
-                itemDetails.itemType == ItemType.Collecting_tool)
-                {
-                    gameObject.AddComponent<ItemFloat>();
-                }
             }
+        }
+    }
+
+    [ClientRpc]
+    public void RpcAddItemFloat()
+    {
+        if (!isServer) // Only on clients
+        {
+            gameObject.AddComponent<ItemFloat>();
         }
     }
 

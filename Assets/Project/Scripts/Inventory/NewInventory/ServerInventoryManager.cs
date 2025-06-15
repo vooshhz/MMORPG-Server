@@ -282,8 +282,6 @@ public class ServerInventoryManager : MonoBehaviour
     
     private IEnumerator AnimateItemUpDown(GameObject item, Vector3 startPosition, Vector3 endPosition)
     {
-        ItemFloat itemFloat = item.GetComponent<ItemFloat>();
-        if (itemFloat != null) itemFloat.enabled = false;
         if (item == null) yield break;
 
         // Store transform reference
@@ -397,10 +395,11 @@ public class ServerInventoryManager : MonoBehaviour
             // Log for verification
             Debug.Log($"Item finalized at position: {finalPosition}, rotation: {itemTransform.rotation.eulerAngles}");
 
-            if (itemFloat != null) 
+            // Add ItemFloat AFTER animation completes (much simpler approach!)
+            Item itemComponent = item.GetComponent<Item>();
+            if (itemComponent != null)
             {
-                itemFloat.ResetStartPosition(finalPosition);
-                itemFloat.enabled = true;
+                itemComponent.RpcAddItemFloat();
             }
         }
     }
